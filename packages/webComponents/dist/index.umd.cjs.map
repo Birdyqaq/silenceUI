@@ -1,0 +1,1 @@
+{"version":3,"file":"index.umd.cjs","sources":["../index.ts"],"sourcesContent":["console.log(11)"],"names":["console","log"],"mappings":"2FAAAA,QAAQC,IAAI"}

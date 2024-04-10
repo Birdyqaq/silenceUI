@@ -6,6 +6,7 @@
   "homepage": "https://github.com/Birdyqaq/silenceUI#readme",
   "license": "ISC",
   "main": "lib/webComponents.js",
+  "type": "module",
   "directories": {
     "lib": "lib",
     "test": "__tests__"
@@ -18,9 +19,21 @@
     "url": "git+https://github.com/Birdyqaq/silenceUI.git"
   },
   "scripts": {
-    "test": "node ./__tests__/webComponents.test.js"
+    "test": "node ./__tests__/webComponents.test.js",
+    "dev": "vite",
+    "build": "vite build"
   },
   "bugs": {
     "url": "https://github.com/Birdyqaq/silenceUI/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.4",
+    "vite": "^5.2.8",
+    "vite-plugin-dts": "^3.8.1"
+  },
+  "dependencies": {
+    "terser": "^5.30.3",
+    "unocss": "^0.59.0"
   }
 }
