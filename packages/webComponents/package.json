@@ -1,0 +1,26 @@
+{
+  "name": "webcomponents",
+  "version": "0.0.0",
+  "description": "> TODO: description",
+  "author": "wuzheng001 <1962443189@qq.com>",
+  "homepage": "https://github.com/Birdyqaq/silenceUI#readme",
+  "license": "ISC",
+  "main": "lib/webComponents.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Birdyqaq/silenceUI.git"
+  },
+  "scripts": {
+    "test": "node ./__tests__/webComponents.test.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Birdyqaq/silenceUI/issues"
+  }
+}
