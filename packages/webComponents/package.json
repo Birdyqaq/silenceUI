@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@unocss/preset-uno": "^0.59.1",
     "typescript": "^5.4.4",
     "vite": "^5.2.8",
     "vite-plugin-dts": "^3.8.1"
