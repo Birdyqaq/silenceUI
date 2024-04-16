@@ -1,0 +1,42 @@
+// 定义颜色变量
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+
+// !default 表示这个变量如果没有赋过别的值，默认为 common
+$namespace: 'sc' !default;      // 创建一个命名空间，用于定义规范类名的开头
+
+$block-sel: '-' !default;       // 创建一个连接，用于连接块名
+
+$element-sel: '__' !default;        // 创建一个连接，用于连接元素名
+
+$modify-sel: '--' !default;     // 创建一个连接，用于连接标识名
+
+@mixin bfc() {
+    height: 100%;
+    overflow: hidden;
+}
+
+@mixin b($bn) {
+    $name: $namespace + $block-sel + $bn;
+    .#{$name} {
+        @content;
+    }
+}
+
+@mixin e($en) {
+    $selector: &;
+    @at-root {
+    #{$selector + $element-sel + $en} {
+            @content;
+        }
+    }
+}
+
+@mixin m($mn) {
+    $selector: &;
+    @at-root {
+        #{$selector + $modify-sel + $mn} {
+            @content;
+        }
+    }
+}
