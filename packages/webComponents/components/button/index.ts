@@ -1,36 +1,16 @@
-import "./index.scss";
+import {LitElement, css, html} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+// import { LitElement, html } from 'lit';
 
-class CustomElement extends HTMLElement {
-    static get observedAttributes() {
-        return ["type", "size"];
+@customElement("my-component")
+class MyComponent extends LitElement {
+    render() {
+        return html`
+          <div @click="${this.handleClick}">111188881</>
+        `;
     }
 
-    _slot: HTMLSlotElement;
-    constructor() {
-        super();
-        const shadowRoot = this.attachShadow({ mode: "open" });
-        this._slot = document.createElement("slot");
-        const style = document.createElement('style');
-
-        shadowRoot.appendChild(style);
-
-        shadowRoot.appendChild(this._slot);
+    handleClick() {
+        alert('按钮被点击了！');
     }
-
-    connectedCallback() {
-        // this.updateStyle();
-        this.classList.add('sc-button')
-        this.classList.add("sc-button--primary")
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (newValue != oldValue) {
-            console.log(name, newValue, oldValue, '哈哈哈')
-        }
-
-    }
-
-
 }
-
-customElements.define("sc-button", CustomElement);

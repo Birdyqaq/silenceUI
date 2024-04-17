@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { resolve } from "path";
 import dts from 'vite-plugin-dts'
 import UnoCss from "unocss/vite";
-import sass from 'sass';
+// import sass from 'sass';
 export default defineConfig({
     build: {
         minify: 'terser',
@@ -14,13 +14,13 @@ export default defineConfig({
             formats: ["es", "umd"], // 打包生成的格式
         },
     },
-    css: {
-        preprocessorOptions: {
-            scss: {
-                implementation: sass,
-                additionalData: `@import "./styles/common.scss";`
-            }
-        },
-    },
+    // css: {
+    //     preprocessorOptions: {
+    //         scss: {
+    //             implementation: sass,
+    //             additionalData: `@import "./styles/common.scss";`
+    //         }
+    //     },
+    // },
     plugins: [dts(), UnoCss()]
 });
