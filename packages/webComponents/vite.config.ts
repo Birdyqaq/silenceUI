@@ -22,5 +22,9 @@ export default defineConfig({
     //         }
     //     },
     // },
-    plugins: [dts(), UnoCss()]
+    plugins: [dts(), UnoCss(
+        {
+            mode: 'shadow-dom',
+        }
+    )]
 });
