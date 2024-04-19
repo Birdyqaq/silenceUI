@@ -2,6 +2,8 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 @customElement('button-component')
+
+console.log(1)
 export class ButtonComponent extends LitElement {
 
   @property({ type: String }) _color = 'blue';
@@ -41,9 +43,9 @@ export class ButtonComponent extends LitElement {
       large: 'px-4 py-3 text-lg'
     }[this.size] || '';
     return html`
-      <button class="${sizeClasses} border-none cursor-pointer rounded bg-${this._color}">
+      <span class="${sizeClasses} border-none cursor-pointer inline-block rounded bg-${this._color}">
         <slot></slot>
-      </button>
+      </span>
     `;
   }
 }
