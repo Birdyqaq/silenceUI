@@ -2,6 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 @customElement('button-component')
+
 export class ButtonComponent extends LitElement {
 
   @property({ type: String }) _size = 'medium';
