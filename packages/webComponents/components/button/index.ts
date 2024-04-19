@@ -3,7 +3,6 @@ import { customElement, property } from 'lit/decorators.js';
 
 @customElement('button-component')
 
-console.log(1)
 export class ButtonComponent extends LitElement {
 
   @property({ type: String }) _color = 'blue';
