@@ -13,10 +13,11 @@ export default defineConfig({
     ],
     theme: {
         colors: {
-            primary: 'red', // 主要颜色
+            error: 'red', // 主要颜色
             secondary: '#6c757d', // 次要颜色
             success: '#28a745', // 成功颜色
             danger: '#dc3545', // 危险颜色
+            primary: "#cccccc",
             warning: '#ffc107', // 警告颜色
             info: '#17a2b8', // 信息颜色
 
