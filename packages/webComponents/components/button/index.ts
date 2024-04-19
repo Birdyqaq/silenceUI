@@ -1,45 +1,14 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-import uno from "../../uno.config.ts"
-type StringType = string | null | undefined;
 @customElement('button-component')
 export class ButtonComponent extends LitElement {
 
   @property({ type: String }) _size = 'medium';
-  @property({ type: String }) _status: StringType = 'primary';
-
+  @property({ type: String }) _status = 'primary';
+  // @property({ type: String }) _color = 'primary';
+  @property({ type: String }) type = 'primary';
   static styles = css`
-    :host {
-      box-sizing: border-box;
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-    }
-
-    button {
-      background: var(--set-bg, #cccccc);
-      color: var(--set-col, #fff);
-      transition: opacity 0.3s ease; 
-      position: relative;
-      overflow: hidden;
-    }
-    button:hover {
-      // opacity: 0.8; 
-    }
-    .ripple-effect {
-      position: absolute;
-      border-radius: 50%; /* 圆形效果 */
-      background-color: rgba(255, 255, 255, 0.4); /* 半透明白色 */
-      animation: ripple-animation 3s linear; /* 定义动画效果 */
-    }
-
-    @keyframes ripple-animation {
-      to {
-        transform: scale(2); /* 在 0.5s 内将大小放大到原来的两倍 */
-        opacity: 0; /* 透明度为 0 */
-      }
-    }
      @unocss-placeholder
   `
   constructor() {
@@ -94,15 +63,22 @@ export class ButtonComponent extends LitElement {
     }[this.size] || '';
 
 
-
-    const backgroundColor = uno.theme!.colors[this._status] || '';
-    console.log(this._status, '123')
-    this.style.setProperty('--set-bg', backgroundColor);
-    this.style.setProperty('--set-col', 'white');
+    const typeClasses = {
+      primary: 'bg-blue text-white hover:bg-blue-500 ',
+      secondary: 'bg-green text-white hover:bg-green-500',
+      success: 'bg-green-500 text-white hover:bg-green-600',
+      warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
+      danger: 'bg-red-500 text-white hover:bg-red-600',
+      info: 'bg-blue-500 text-white hover:bg-blue-600',
+      light: 'bg-gray-200 text-gray-600 hover:bg-gray-300',
+      dark: 'bg-gray-800 text-white hover:bg-gray-900',
+      link: 'text-blue-500 hover:text-blue-600 bg-transparent border-none line-height-normal'
+    }[this.type] || '';
+    // i-ph-anchor-simple-thin
 
     return html`
-      <button class="${sizeClasses} border-none cursor-pointer rounded" @click="${this.handleClick}">
-        <slot></slot>
+      <button class="${sizeClasses} border-none  i-carbon-sun dark:i-carbon-moon cursor-pointer rounded ${typeClasses}"  @click="${this.handleClick}">
+       <slot></slot> 
       </button>
     `;
   }
