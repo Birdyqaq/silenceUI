@@ -19,14 +19,14 @@ export default defineConfig({
     UnoCss({
         mode: 'shadow-dom',
         presets: [
+            // 其他预设配置...
             presetIcons({
-                scale: 1.5,
-                prefix: 'icon-',
-                collections: {
-                    quill: () => import('@iconify-json/quill').then(i => i.default), // 这里保持动态导入
+                mode: 'auto',
+                extraProperties: {
+                    // 添加额外的 CSS 属性，以使所有图标默认为 inline-block
+                    'display': 'inline-block',
                 },
             })
-            // 其他预设配置...
         ],
     }),
     ]

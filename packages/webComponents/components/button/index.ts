@@ -7,15 +7,17 @@ export class ButtonComponent extends LitElement {
 
   @property({ type: String }) _size = 'medium';
   @property({ type: String }) _status = 'primary';
-  // @property({ type: String }) _color = 'primary';
+  @property({ type: String }) iconClass = '';
   @property({ type: String }) type = 'primary';
   static styles = css`
+    import 'uno.css'
      @unocss-placeholder
   `
   constructor() {
     super();
     this._size = 'medium';
     this._status = 'primary';
+    this.classList.add('inline-block', "w-auto", "h-auto")
   }
 
   @property({ type: String })
@@ -75,12 +77,18 @@ export class ButtonComponent extends LitElement {
       dark: 'bg-gray-800 text-white hover:bg-gray-900',
       link: 'text-blue-500 hover:text-blue-600 bg-transparent border-none line-height-normal'
     }[this.type] || '';
-    // i-ph-anchor-simple-thin
 
     return html`
-      <button class="${sizeClasses} border-none  i-carbon-sun dark:i-carbon-moon cursor-pointer rounded ${typeClasses}"  @click="${this.handleClick}">
-       <slot></slot> 
-      </button>
+    <div>
+    
+    <button class="${sizeClasses} border-none   cursor-pointer rounded ${typeClasses}"  @click="${this.handleClick}">
+      
+     <slot>
+     
+     </slot> 
+    </button>
+    </div>
+    
     `;
   }
 }
