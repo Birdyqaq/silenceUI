@@ -80,15 +80,11 @@ export class ButtonComponent extends LitElement {
 
     return html`
     <div>
-    
-    <button class="${sizeClasses} border-none   cursor-pointer rounded ${typeClasses}"  @click="${this.handleClick}">
-      
-     <slot>
-     
-     </slot> 
-    </button>
+     <button class="${sizeClasses} border-none cursor-pointer rounded ${typeClasses}"  @click="${this.handleClick}">
+      <slot>
+      </slot> 
+     </button>
     </div>
-    
     `;
   }
 }
