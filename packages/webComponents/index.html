@@ -13,12 +13,10 @@
 <body>
     <script src="./index.ts" type="module">
     </script>
-    <div class="i-quill-arrow-left"></div>
-    <i class="i-academicons"></i>
-    <!-- A basic anchor icon from Phosphor icons -->
-    <div class="text-pink">sdsdsdsd</div>
+
+    <!-- <div class="text-pink">sdsdsdsd</div>
     <div class="i-ph-anchor-simple-thin" />
-    <!-- An orange alarm from Material Design Icons -->
+
     <div class="i-mdi-alarm text-orange-400" />
     <button-component type="primary">
         <i class="i-quill-arrow-left"></i> Default Button
@@ -31,12 +29,22 @@
     <button-component type="primary" size="small">Small Button</button-component>
     <button-component type="error" size="small">Small Blue Button</button-component>
     <button-component iconClass="i-quill-arrow-left" size="medium">Medium Red Button</button-component>
-    <button-component size="large">Large Green Button</button-component>
+    <button-component size="large">Large Green Button</button-component> -->
 
 
-    <line-component></line-component>
+    <!-- <line-component></line-component>
 
-    <my-form></my-form>
+    <my-form></my-form> -->
+
+    <div style="width:500px;height: 300px">
+
+        <se-table
+            columns='[{"key": "id", "label": "ID", "sortable": true}, {"key": "name", "label": "Name", "sortable": true, "filterable": true}, {"key": "email", "label": "Email", "filterable": true}]'
+            data='[{"id": 1, "name": "John Doe111111111111", "email": "john@example.com"}, {"id": 2, "name": "Jane Smith222222222", "email": "jane@example.com"}]'
+            sortable filterable></se-table>
+
+    </div>
+
 
 </body>
 

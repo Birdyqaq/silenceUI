@@ -18,9 +18,22 @@
     "url": "git+https://github.com/Birdyqaq/silenceUI.git"
   },
   "scripts": {
-    "test": "node ./__tests__/doc.test.js"
+    "test": "node ./__tests__/doc.test.js",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "bugs": {
     "url": "https://github.com/Birdyqaq/silenceUI/issues"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^1.9.0",
+    "@storybook/addon-essentials": "^8.3.0",
+    "@storybook/addon-links": "^8.3.0",
+    "@storybook/blocks": "^8.3.0",
+    "@storybook/test": "^8.3.0",
+    "@storybook/web-components": "^8.3.0",
+    "@storybook/web-components-vite": "^8.3.0",
+    "lit": "^3.2.0",
+    "storybook": "^8.3.0"
   }
 }
