@@ -1,6 +1,7 @@
 console.log(11)
-import 'unocss'
-import "./components/button/index"
-import "./components/line/index"
-import "./components/from/index"
-import "./components/table/index"
+// import 'uno.css'
+// 导出所有组件
+export * from './components/button/index';
+export * from './components/input/index';
+export * from './components/table/index';
+export * from './components/image/index';

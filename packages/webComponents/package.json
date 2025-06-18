@@ -19,25 +19,35 @@
     "url": "git+https://github.com/Birdyqaq/silenceUI.git"
   },
   "scripts": {
-    "test": "node ./__tests__/webComponents.test.js",
-    "build": "rollup -c",
-    "dev": "vite"
+    "test": "vitest",
+    "dev": "vite",
+    "build": "vite build"
   },
   "bugs": {
     "url": "https://github.com/Birdyqaq/silenceUI/issues"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.6",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/node": "^20.12.7",
-    "@unocss/preset-icons": "^0.59.4",
-    "@unocss/preset-uno": "^0.59.1",
+    "@unocss/preset-icons": "^66.2.3",
+    "@unocss/preset-uno": "^66.2.3",
+    "@unocss/vite": "^66.2.3",
+    "@vitest/ui": "^3.2.4",
+    "empty-module": "^0.0.2",
+    "node-stdlib-browser": "^1.3.1",
+    "package-manager-detector": "^1.3.0",
     "typescript": "^5.4.4",
-    "unocss": "^0.59.0",
-    "vite": "^5.2.8",
+    "unocss": "^66.2.3",
+    "vite": "^6.3.5",
     "vite-plugin-dts": "^3.8.1",
-    "vite-plugin-node-polyfills": "^0.22.0"
+    "vite-plugin-node-polyfills": "^0.22.0",
+    "vitest": "^3.2.4",
+    "jsdom": "^24.0.0"
   },
   "dependencies": {
-    "lit": "^3.1.3"
+    "lit": "^3.1.3",
+    "terser": "^5.43.0"
   }
 }

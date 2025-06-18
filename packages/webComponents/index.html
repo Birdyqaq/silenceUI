@@ -6,44 +6,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>ui</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.css">
     <style>
     </style>
 </head>
 
 <body>
-    <script src="./index.ts" type="module">
+    <script src="./dist/packages/webComponents/index.ts" type="module">
     </script>
-
-    <!-- <div class="text-pink">sdsdsdsd</div>
-    <div class="i-ph-anchor-simple-thin" />
-
-    <div class="i-mdi-alarm text-orange-400" />
-    <button-component type="primary">
-        <i class="i-quill-arrow-left"></i> Default Button
-    </button-component>
-    <button-component type="secondary">Secondary Button</button-component>
-    <button-component type="success">Success Button</button-component>
-    <button-component type="error">Error Button</button-component>
-    <button-component type="warning">Warning Button</button-component>
-    <button-component type="link">link Button</button-component>
-    <button-component type="primary" size="small">Small Button</button-component>
-    <button-component type="error" size="small">Small Blue Button</button-component>
-    <button-component iconClass="i-quill-arrow-left" size="medium">Medium Red Button</button-component>
-    <button-component size="large">Large Green Button</button-component> -->
-
-
-    <!-- <line-component></line-component>
-
-    <my-form></my-form> -->
+    <script src="./index.ts" type="module"></script>
+    <script src="./components/button/index.ts" type="module"></script>
 
     <div style="width:500px;height: 300px">
 
-        <se-table
+        <div style="width:500px;height: 300px">
+            <su-input label="Username" placeholder="Enter your username"
+                helperText="This is your unique username"></su-input>
+        </div>
+        <su-button type="primary" size="large">Button</su-button>
+        <su-button type="primary" size="large" rippleColor="rgba(255, 255, 255, 0.5)">Primary Button</su-button>
+        <su-button type="secondary" size="medium" disabled>Disabled Button</su-button>
+        <su-button type="success" size="small" loading>Loading Button</su-button>
+        <su-button type="danger" size="large" iconClass="i-quill-trash" iconPosition="left">Delete</su-button>
+        <su-button type="secondary" size="medium" rippleColor="rgba(0, 0, 0, 0.2)">Secondary Button</su-button>
+        <su-button type="success" size="small" rippleColor="rgba(0, 255, 0, 0.3)">Success Button</su-button>
+        <su-button type="danger" size="large" rippleColor="rgba(255, 0, 0, 0.3)">Danger Button</su-button>
+        <!-- <button-component type="secondary" size="large">Button</button-component> -->
+        <!-- <su-table
             columns='[{"key": "id", "label": "ID", "sortable": true}, {"key": "name", "label": "Name", "sortable": true, "filterable": true}, {"key": "email", "label": "Email", "filterable": true}]'
             data='[{"id": 1, "name": "John Doe111111111111", "email": "john@example.com"}, {"id": 2, "name": "Jane Smith222222222", "email": "jane@example.com"}]'
-            sortable filterable></se-table>
+            noDataText="No records found" borderStyle="1px solid #ccc" rowLines columnLines theadBgColor="bg-blue-800"
+            theadTextColor="text-blue-800" pageSize="5"></su-table> -->
 
     </div>
+
+
 
 
 </body>

@@ -1,15 +1,9 @@
-//uno.config.ts
-
-import { defineConfig, presetUno, presetIcons } from "unocss";
+import { defineConfig, presetUno, presetIcons } from 'unocss';
 
 export default defineConfig({
     presets: [
         presetUno(),
         presetIcons()
     ],
-    theme: {
-    },
-    rules: [
-
-    ],
+    // 可根据需要添加自定义规则、主题等
 });
