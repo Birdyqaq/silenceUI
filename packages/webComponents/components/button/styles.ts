@@ -1,11 +1,11 @@
 import { css } from 'lit';
 
 export const styleMap = `
-  @unocss-placeholder; // 确保占位符被解析
+  @unocss-placeholder; 
   import 'uno.css';
   :host {
     display: inline-block;
-    --ripple-color: rgba(0, 0, 0, 0.1); /* 默认水波纹颜色 */
+    --ripple-color: rgba(0, 0, 0, 0.1);
   }
 
   @keyframes ripple {

@@ -2,17 +2,15 @@
 import { html, LitElement, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { rippleEffect } from '../../utils/ripple';
-import { styleMap } from './styles';
 
-@customElement('su-button') // 修改这里
+@customElement('su-button')
 export class SuButton extends LitElement {
   static styles = css`
-   @unocss-placeholder; // 确保占位符被解析
+   @unocss-placeholder; 
   import 'uno.css';
-
   :host {
     display: inline-block;
-    --ripple-color: rgba(0, 0, 0, 0.1); /* 默认水波纹颜色 */
+    --ripple-color: rgba(0, 0, 0, 0.1);
   }
 
   @keyframes ripple {
@@ -45,11 +43,11 @@ export class SuButton extends LitElement {
     padding: 0;
     width: 100%;
     height: 100%;
-    background-color: inherit; /* 确保背景颜色继承 */
-    color: inherit; /* 确保文本颜色继承 */
+    background-color: inherit; 
+    color: inherit; 
     cursor: pointer;
     border-radius: inherit;
-    overflow: hidden; /* 为水波纹效果裁剪 */
+    overflow: hidden; 
   }
 
   button:disabled {
@@ -77,7 +75,7 @@ export class SuButton extends LitElement {
 
   private handleClick(e: MouseEvent) {
     if (this.disabled || this.loading) {
-      e.stopImmediatePropagation(); // 阻止事件冒泡
+      e.stopImmediatePropagation();
       e.preventDefault();
       return;
     }
@@ -91,6 +89,7 @@ export class SuButton extends LitElement {
         class=${this.getButtonClasses()}
         @click=${this.handleClick}
         ?disabled=${this.disabled}
+        type="button"
       >
         ${this.renderIcon('left')}
         ${this.loading ? this.renderSpinner() : html`<slot></slot>`}
@@ -105,7 +104,7 @@ export class SuButton extends LitElement {
       this.getSizeClasses(),
       this.getTypeClasses(),
       this.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-      'relative overflow-hidden' // 为水波纹效果添加
+      'relative overflow-hidden'
     ].join(' ');
   }
 
@@ -138,11 +137,6 @@ export class SuButton extends LitElement {
   private renderIcon(position: 'left' | 'right') {
     if (!this.iconClass || this.iconPosition !== position) return;
     return html`<i class="icon ${position === 'right' ? 'ml-2' : 'mr-2'} ${this.iconClass}"></i>`;
-  }
-
-  isPrimary() {
-    // 错误实现：本应 return true，但写成了 false
-    return false;
   }
 }
 

@@ -17,7 +17,7 @@ describe('SuButton', () => {
 
     it('should render slot content', async () => {
         if (!button) return
-        button.loading = false // 确保不是 loading 状态
+        button.loading = false
         button.innerHTML = 'Click Me'
         await button.updateComplete
         const btn = button.shadowRoot?.querySelector('button')
