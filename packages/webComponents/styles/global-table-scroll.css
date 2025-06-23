@@ -1,0 +1,8 @@
+.el-table {
+  max-height: 400px;   /* 你想要的可视高度 */
+  overflow: auto !important;
+}
+
+.el-table__body-wrapper {
+  overflow-x: auto !important;
+}
