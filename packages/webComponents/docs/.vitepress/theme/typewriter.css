@@ -1,0 +1,60 @@
+.typewriter {
+  overflow: hidden;
+  border-right: 2px solid var(--vp-c-brand);
+  white-space: nowrap;
+  margin: 0 auto;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0
+  }
+
+  to {
+    width: 100%
+  }
+}
+
+@keyframes blink-caret {
+
+  from,
+  to {
+    border-color: transparent
+  }
+
+  50% {
+    border-color: var(--vp-c-brand)
+  }
+}
+
+.typewriter-multiple {
+  height: 1.2em;
+  overflow: hidden;
+}
+
+.typewriter-text {
+  animation: typewriter-slide 8s infinite;
+}
+
+@keyframes typewriter-slide {
+
+  0%,
+  25% {
+    transform: translateY(0)
+  }
+
+  33%,
+  58% {
+    transform: translateY(-1.2em)
+  }
+
+  66%,
+  91% {
+    transform: translateY(-2.4em)
+  }
+
+  100% {
+    transform: translateY(0)
+  }
+}

@@ -4,7 +4,9 @@
   "workspaces": [
     "packages/*"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "vue": "2.x"
+  },
   "devDependencies": {
     "lerna": "^8.1.2"
   }

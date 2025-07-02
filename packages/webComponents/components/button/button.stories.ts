@@ -1,68 +1,68 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 
 export default {
-  title: 'SuButton',
+  title: 'Components/SuButton',
   component: 'su-button',
   tags: ['autodocs'],
-  argTypes: {
-    type: { control: 'select', options: ['primary', 'secondary', 'success', 'warning', 'danger', 'info', 'light', 'dark', 'link'] },
-    size: { control: 'select', options: ['small', 'medium', 'large'] },
-    disabled: { control: 'boolean' },
-    loading: { control: 'boolean' },
-    rippleColor: { control: 'text' },
-    iconClass: { control: 'text' },
-    iconPosition: { control: 'select', options: ['left', 'right'] },
+  parameters: {
+    docs: {
+      description: {
+        component: 'SilenceUI 按钮组件，支持多种样式和状态配置。'
+      }
+    }
   },
+  argTypes: {
+    type: {
+      control: 'select',
+      options: ['primary', 'secondary', 'success', 'warning', 'danger'],
+      description: '按钮类型'
+    },
+    size: {
+      control: 'select',
+      options: ['small', 'medium', 'large'],
+      description: '按钮尺寸'
+    },
+    disabled: {
+      control: 'boolean',
+      description: '是否禁用'
+    },
+    loading: {
+      control: 'boolean',
+      description: '是否加载中'
+    }
+  }
 } as Meta;
 
-type Story = StoryObj;
-
-export const Primary: Story = {
+export const Primary: StoryObj = {
   args: {
     type: 'primary',
-    size: 'large',
-    children: 'Primary Button',
+    children: 'Primary Button'
   },
-  render: ({ type, size, disabled, loading, rippleColor, iconClass, iconPosition, children }) =>
-    `<su-button type="${type}" size="${size}"${disabled ? ' disabled' : ''}${loading ? ' loading' : ''}${rippleColor ? ` rippleColor="${rippleColor}"` : ''}${iconClass ? ` iconClass="${iconClass}"` : ''}${iconPosition ? ` iconPosition="${iconPosition}"` : ''}>${children ?? ''}</su-button>`,
+  render: ({ type, size, disabled, loading, children }) =>
+    `<su-button type="${type}" size="${size || 'medium'}"${disabled ? ' disabled' : ''}${loading ? ' loading' : ''}>${children}</su-button>`
 };
 
-export const Secondary: Story = {
-  args: {
-    type: 'secondary',
-    size: 'medium',
-    children: 'Secondary Button',
-  },
-  render: Primary.render,
+export const AllVariants: StoryObj = {
+  render: () => `
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+      <su-button type="primary">Primary</su-button>
+      <su-button type="secondary">Secondary</su-button>
+      <su-button type="success">Success</su-button>
+      <su-button type="warning">Warning</su-button>
+      <su-button type="danger">Danger</su-button>
+    </div>
+  `
 };
 
-export const Disabled: Story = {
-  args: {
-    type: 'secondary',
-    size: 'medium',
-    disabled: true,
-    children: 'Disabled Button',
-  },
-  render: Primary.render,
+export const Sizes: StoryObj = {
+  render: () => `
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <su-button type="primary" size="small">Small</su-button>
+      <su-button type="primary" size="medium">Medium</su-button>
+      <su-button type="primary" size="large">Large</su-button>
+    </div>
+  `
 };
-
-export const Loading: Story = {
-  args: {
-    type: 'success',
-    size: 'small',
-    loading: true,
-    children: 'Loading Button',
   },
-  render: Primary.render,
-};
-
-export const Danger: Story = {
-  args: {
-    type: 'danger',
-    size: 'large',
-    iconClass: 'i-quill-trash',
-    iconPosition: 'left',
-    children: 'Delete',
-  },
-  render: Primary.render,
+render: Primary.render,
 };

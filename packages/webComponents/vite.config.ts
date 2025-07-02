@@ -17,7 +17,6 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        // exclude: ['package-manager-detector'],
         exclude: [
             '@iconify/utils',
             'pkg-types',
