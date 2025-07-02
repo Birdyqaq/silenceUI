@@ -1,15 +1,13 @@
-// 定义颜色变量
 $primary-color: #007bff;
 $secondary-color: #6c757d;
 
-// !default 表示这个变量如果没有赋过别的值，默认为 common
-$namespace: 'sc' !default;      // 创建一个命名空间，用于定义规范类名的开头
+$namespace: 'sc' !default;
 
-$block-sel: '-' !default;       // 创建一个连接，用于连接块名
+$block-sel: '-' !default;
 
-$element-sel: '__' !default;        // 创建一个连接，用于连接元素名
+$element-sel: '__' !default;
 
-$modify-sel: '--' !default;     // 创建一个连接，用于连接标识名
+$modify-sel: '--' !default;
 
 @mixin bfc() {
     height: 100%;
@@ -18,6 +16,7 @@ $modify-sel: '--' !default;     // 创建一个连接，用于连接标识名
 
 @mixin b($bn) {
     $name: $namespace + $block-sel + $bn;
+
     .#{$name} {
         @content;
     }
@@ -25,8 +24,9 @@ $modify-sel: '--' !default;     // 创建一个连接，用于连接标识名
 
 @mixin e($en) {
     $selector: &;
+
     @at-root {
-    #{$selector + $element-sel + $en} {
+        #{$selector + $element-sel + $en} {
             @content;
         }
     }
@@ -34,6 +34,7 @@ $modify-sel: '--' !default;     // 创建一个连接，用于连接标识名
 
 @mixin m($mn) {
     $selector: &;
+
     @at-root {
         #{$selector + $modify-sel + $mn} {
             @content;

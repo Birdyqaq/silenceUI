@@ -1,0 +1,23 @@
+.VPHeroInfo .text {
+  position: relative;
+}
+
+.VPHeroInfo .text::after {
+  content: '|';
+  color: var(--vp-c-brand-1);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1
+  }
+
+  51%,
+  100% {
+    opacity: 0
+  }
+}

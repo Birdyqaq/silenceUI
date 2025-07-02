@@ -1,0 +1,55 @@
+/* 自定义首页样式 */
+.VPHome .VPHero .text {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--vp-c-brand-1);
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0
+  }
+
+  to {
+    width: 100%
+  }
+}
+
+@keyframes blink-caret {
+
+  from,
+  to {
+    border-color: transparent
+  }
+
+  50% {
+    border-color: var(--vp-c-brand-1)
+  }
+}
+
+/* 自定义背景 */
+.VPHome {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 自定义 hero 区域 */
+.VPHero {
+  padding-top: 120px !important;
+  padding-bottom: 120px !important;
+}
+
+.VPHeroInfo .name {
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.VPHeroInfo .text {
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.VPHeroInfo .tagline {
+  color: rgba(255, 255, 255, 0.8);
+}

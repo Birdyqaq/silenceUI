@@ -17,36 +17,36 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        // exclude: ['package-manager-detector'],
         exclude: [
             '@iconify/utils',
-            '@antfu/install-pkg',
-            'package-manager-detector',
-            'local-pkg'
+            'pkg-types',
+            'mlly',
+            'pathe',
+            'local-pkg',
+            'package-manager-detector'
         ],
     },
     build: {
         minify: 'terser',
         sourcemap: true,
         lib: {
-            entry: resolve(__dirname, "index.ts"),  // 配置入口文件路径
+            entry: resolve(__dirname, "index.ts"),
             name: "SilenceUi",
             fileName: "index",
             formats: ["es", "umd", "cjs"], // 打包生成的格式
         },
         rollupOptions: {
             external: [
+                '@iconify/utils',
+                'pkg-types',
+                'mlly',
+                'pathe',
                 'local-pkg',
-                'package-manager-detector',
-                'tinyexec',
-                'existsSync',
-                'package-manager-detector', // 将 lit 标记为外部依赖
-                '@iconify/utils', // 避免打包 node 相关代码
-                '@antfu/install-pkg',
+                'package-manager-detector'
             ],
             output: {
                 globals: {
-                    lit: 'lit' // 全局变量名称
+                    lit: 'lit'
                 }
             }
         },
@@ -60,10 +60,3 @@ export default defineConfig({
         }), // 让其自动加载 uno.config.ts
     ]
 });
-// presetIcons({
-//     mode: 'auto',
-//     extraProperties: {
-//         // 添加额外的 CSS 属性，以使所有图标默认为 inline-block
-//         'display': 'inline-block',
-//     },
-// })

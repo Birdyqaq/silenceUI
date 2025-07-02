@@ -46,35 +46,37 @@ const r$4 = (t2) => new n$3("string" == typeof t2 ? t2 : t2 + "", void 0, s$2), 
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: i$2, defineProperty: e$1, getOwnPropertyDescriptor: h$1, getOwnPropertyNames: r$3, getOwnPropertySymbols: o$3, getPrototypeOf: n$2 } = Object, a$1 = globalThis, c$1 = a$1.trustedTypes, l$1 = c$1 ? c$1.emptyScript : "", p$1 = a$1.reactiveElementPolyfillSupport, d$1 = (t2, s2) => t2, u$1 = { toAttribute(t2, s2) {
-  switch (s2) {
-    case Boolean:
-      t2 = t2 ? l$1 : null;
-      break;
-    case Object:
-    case Array:
-      t2 = null == t2 ? t2 : JSON.stringify(t2);
+const { is: i$2, defineProperty: e$1, getOwnPropertyDescriptor: h$1, getOwnPropertyNames: r$3, getOwnPropertySymbols: o$3, getPrototypeOf: n$2 } = Object, a$1 = globalThis, c$1 = a$1.trustedTypes, l$1 = c$1 ? c$1.emptyScript : "", p$1 = a$1.reactiveElementPolyfillSupport, d$1 = (t2, s2) => t2, u$1 = {
+  toAttribute(t2, s2) {
+    switch (s2) {
+      case Boolean:
+        t2 = t2 ? l$1 : null;
+        break;
+      case Object:
+      case Array:
+        t2 = null == t2 ? t2 : JSON.stringify(t2);
+    }
+    return t2;
+  }, fromAttribute(t2, s2) {
+    let i2 = t2;
+    switch (s2) {
+      case Boolean:
+        i2 = null !== t2;
+        break;
+      case Number:
+        i2 = null === t2 ? null : Number(t2);
+        break;
+      case Object:
+      case Array:
+        try {
+          i2 = JSON.parse(t2);
+        } catch (t3) {
+          i2 = null;
+        }
+    }
+    return i2;
   }
-  return t2;
-}, fromAttribute(t2, s2) {
-  let i2 = t2;
-  switch (s2) {
-    case Boolean:
-      i2 = null !== t2;
-      break;
-    case Number:
-      i2 = null === t2 ? null : Number(t2);
-      break;
-    case Object:
-    case Array:
-      try {
-        i2 = JSON.parse(t2);
-      } catch (t3) {
-        i2 = null;
-      }
-  }
-  return i2;
-} }, f$1 = (t2, s2) => !i$2(t2, s2), b = { attribute: true, type: String, converter: u$1, reflect: false, useDefault: false, hasChanged: f$1 };
+}, f$1 = (t2, s2) => !i$2(t2, s2), b = { attribute: true, type: String, converter: u$1, reflect: false, useDefault: false, hasChanged: f$1 };
 Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), a$1.litPropertyMetadata ?? (a$1.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
 let y$1 = class y extends HTMLElement {
   static addInitializer(t2) {
@@ -90,15 +92,19 @@ let y$1 = class y extends HTMLElement {
     }
   }
   static getPropertyDescriptor(t2, s2, i2) {
-    const { get: e2, set: r2 } = h$1(this.prototype, t2) ?? { get() {
-      return this[s2];
-    }, set(t3) {
-      this[s2] = t3;
-    } };
-    return { get: e2, set(s3) {
-      const h2 = e2 == null ? void 0 : e2.call(this);
-      r2 == null ? void 0 : r2.call(this, s3), this.requestUpdate(t2, h2, i2);
-    }, configurable: true, enumerable: true };
+    const { get: e2, set: r2 } = h$1(this.prototype, t2) ?? {
+      get() {
+        return this[s2];
+      }, set(t3) {
+        this[s2] = t3;
+      }
+    };
+    return {
+      get: e2, set(s3) {
+        const h2 = e2 == null ? void 0 : e2.call(this);
+        r2 == null ? void 0 : r2.call(this, s3), this.requestUpdate(t2, h2, i2);
+      }, configurable: true, enumerable: true
+    };
   }
   static getPropertyOptions(t2) {
     return this.elementProperties.get(t2) ?? b;
@@ -295,7 +301,7 @@ const V = (t2, i2) => {
   for (let i3 = 0; i3 < s2; i3++) {
     const s3 = t2[i3];
     let a2, u2, d2 = -1, y3 = 0;
-    for (; y3 < s3.length && (c2.lastIndex = y3, u2 = c2.exec(s3), null !== u2); ) y3 = c2.lastIndex, c2 === f ? "!--" === u2[1] ? c2 = v : void 0 !== u2[1] ? c2 = _ : void 0 !== u2[2] ? ($.test(u2[2]) && (r2 = RegExp("</" + u2[2], "g")), c2 = m) : void 0 !== u2[3] && (c2 = m) : c2 === m ? ">" === u2[0] ? (c2 = r2 ?? f, d2 = -1) : void 0 === u2[1] ? d2 = -2 : (d2 = c2.lastIndex - u2[2].length, a2 = u2[1], c2 = void 0 === u2[3] ? m : '"' === u2[3] ? g : p) : c2 === g || c2 === p ? c2 = m : c2 === v || c2 === _ ? c2 = f : (c2 = m, r2 = void 0);
+    for (; y3 < s3.length && (c2.lastIndex = y3, u2 = c2.exec(s3), null !== u2);) y3 = c2.lastIndex, c2 === f ? "!--" === u2[1] ? c2 = v : void 0 !== u2[1] ? c2 = _ : void 0 !== u2[2] ? ($.test(u2[2]) && (r2 = RegExp("</" + u2[2], "g")), c2 = m) : void 0 !== u2[3] && (c2 = m) : c2 === m ? ">" === u2[0] ? (c2 = r2 ?? f, d2 = -1) : void 0 === u2[1] ? d2 = -2 : (d2 = c2.lastIndex - u2[2].length, a2 = u2[1], c2 = void 0 === u2[3] ? m : '"' === u2[3] ? g : p) : c2 === g || c2 === p ? c2 = m : c2 === v || c2 === _ ? c2 = f : (c2 = m, r2 = void 0);
     const x2 = c2 === m && t2[i3 + 1].startsWith("/>") ? " " : "";
     l2 += c2 === f ? s3 + n$1 : d2 >= 0 ? (o2.push(a2), s3.slice(0, d2) + e + s3.slice(d2) + h + x2) : s3 + h + (-2 === d2 ? i3 : x2);
   }
@@ -311,7 +317,7 @@ class N {
       const t3 = this.el.content.firstChild;
       t3.replaceWith(...t3.childNodes);
     }
-    for (; null !== (r2 = C.nextNode()) && d2.length < u2; ) {
+    for (; null !== (r2 = C.nextNode()) && d2.length < u2;) {
       if (1 === r2.nodeType) {
         if (r2.hasAttributes()) for (const t3 of r2.getAttributeNames()) if (t3.endsWith(e)) {
           const i2 = v2[a2++], s3 = r2.getAttribute(t3).split(h), e2 = /([.?@])?(.*)/.exec(i2);
@@ -328,7 +334,7 @@ class N {
       } else if (8 === r2.nodeType) if (r2.data === o$2) d2.push({ type: 2, index: c2 });
       else {
         let t3 = -1;
-        for (; -1 !== (t3 = r2.data.indexOf(h, t3 + 1)); ) d2.push({ type: 7, index: c2 }), t3 += h.length - 1;
+        for (; -1 !== (t3 = r2.data.indexOf(h, t3 + 1));) d2.push({ type: 7, index: c2 }), t3 += h.length - 1;
       }
       c2++;
     }
@@ -359,7 +365,7 @@ class M {
     const { el: { content: i2 }, parts: s2 } = this._$AD, e2 = ((t2 == null ? void 0 : t2.creationScope) ?? r$2).importNode(i2, true);
     C.currentNode = e2;
     let h2 = C.nextNode(), o2 = 0, n3 = 0, l2 = s2[0];
-    for (; void 0 !== l2; ) {
+    for (; void 0 !== l2;) {
       if (o2 === l2.index) {
         let i3;
         2 === l2.type ? i3 = new R(h2, h2.nextSibling, this, t2) : 1 === l2.type ? i3 = new l2.ctor(h2, l2.name, l2.strings, this, t2) : 6 === l2.type && (i3 = new z(h2, this, t2)), this._$AV.push(i3), l2 = s2[++n3];
@@ -426,7 +432,7 @@ class R {
   }
   _$AR(t2 = this._$AA.nextSibling, i2) {
     var _a2;
-    for ((_a2 = this._$AP) == null ? void 0 : _a2.call(this, false, true, i2); t2 && t2 !== this._$AB; ) {
+    for ((_a2 = this._$AP) == null ? void 0 : _a2.call(this, false, true, i2); t2 && t2 !== this._$AB;) {
       const i3 = t2.nextSibling;
       t2.remove(), t2 = i3;
     }
@@ -568,16 +574,18 @@ const o = { attribute: true, type: String, converter: u$1, reflect: false, hasCh
   let s2 = globalThis.litPropertyMetadata.get(i2);
   if (void 0 === s2 && globalThis.litPropertyMetadata.set(i2, s2 = /* @__PURE__ */ new Map()), "setter" === n3 && ((t2 = Object.create(t2)).wrapped = true), s2.set(r2.name, t2), "accessor" === n3) {
     const { name: o2 } = r2;
-    return { set(r3) {
-      const n4 = e2.get.call(this);
-      e2.set.call(this, r3), this.requestUpdate(o2, n4, t2);
-    }, init(e3) {
-      return void 0 !== e3 && this.C(o2, void 0, t2, e3), e3;
-    } };
+    return {
+      set(r3) {
+        const n4 = e2.get.call(this);
+        e2.set.call(this, r3), this.requestUpdate(o2, n4, t2);
+      }, init(e3) {
+        return void 0 !== e3 && this.C(o2, void 0, t2, e3), e3;
+      }
+    };
   }
   if ("setter" === n3) {
     const { name: o2 } = r2;
-    return function(r3) {
+    return function (r3) {
       const n4 = this[o2];
       e2.call(this, r3), this.requestUpdate(o2, n4, t2);
     };
