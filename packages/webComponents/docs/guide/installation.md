@@ -45,11 +45,11 @@ pnpm add webcomponents
 
 ```javascript
 // vite.config.js
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   // 配置项
-})
+});
 ```
 
 ### Webpack
@@ -58,7 +58,7 @@ export default defineConfig({
 // webpack.config.js
 module.exports = {
   // 配置项
-}
+};
 ```
 
 ## TypeScript 支持
@@ -66,9 +66,9 @@ module.exports = {
 如果你使用 TypeScript，组件库已经内置了类型定义文件，无需额外配置。
 
 ```typescript
-import 'webcomponents'
+import 'webcomponents';
 
 // TypeScript 会自动识别组件类型
-const button = document.createElement('su-button')
-button.type = 'primary' // 有类型提示
+// const button = document.createElement('su-button');
+// button.type = 'primary'; // 有类型提示
 ```

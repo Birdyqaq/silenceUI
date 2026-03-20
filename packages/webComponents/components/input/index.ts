@@ -11,6 +11,7 @@ export class SeInput extends LitElement {
   @property({ type: Boolean }) error: boolean = false; // 错误状态
   @property({ type: String }) label: string = ''; // 输入框标签
   @property({ type: String }) helperText: string = ''; // 辅助文本
+  @property({ type: Boolean }) clearable: boolean = false; // 支持清空
 
   static styles = css`
     :host {
@@ -66,6 +67,22 @@ export class SeInput extends LitElement {
       background-color: var(--error-bg-color, #fff5f5);
     }
 
+    .clear-btn {
+      position: absolute;
+      right: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #9ca3af;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+
+    .clear-btn:hover {
+      color: #4b5563;
+    }
+
     .helper-text {
       font-size: 12px;
       color: var(--helper-text-color, #666);
@@ -80,6 +97,14 @@ export class SeInput extends LitElement {
     const input = event.target as HTMLInputElement;
     this.value = input.value;
     this.dispatchEvent(new CustomEvent('input-change', { detail: { value: this.value } }));
+  }
+
+  private handleClear() {
+    if (this.disabled || this.readonly) return;
+    this.value = '';
+    this.dispatchEvent(new CustomEvent('input-change', { detail: { value: this.value } }));
+    const input = this.shadowRoot?.querySelector('input');
+    input?.focus();
   }
 
   render() {
@@ -101,6 +126,9 @@ export class SeInput extends LitElement {
             aria-invalid="${this.error ? 'true' : 'false'}"
             aria-readonly="${this.readonly ? 'true' : 'false'}"
           />
+          ${this.clearable && this.value
+        ? html`<button class="clear-btn" type="button" @click="${this.handleClear}">✕</button>`
+        : ''}
         </div>
         ${this.helperText
         ? html`<span class="helper-text ${this.error ? 'error' : ''}">
@@ -111,5 +139,3 @@ export class SeInput extends LitElement {
     `;
   }
 }
-
-export * from './index';

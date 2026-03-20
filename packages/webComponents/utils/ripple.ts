@@ -97,4 +97,5 @@ export const rippleEffect = (
             ripple.remove();
         }
     }, duration);
+   
 };

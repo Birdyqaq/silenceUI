@@ -1,8 +1,6 @@
 import {
     css
-}
-
-    from 'lit';
+} from 'lit';
 
 export const tableStyles = css`
 :host {

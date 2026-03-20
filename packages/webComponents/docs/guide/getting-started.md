@@ -124,4 +124,4 @@ export class AppComponent {
 ## 下一步
 
 - 查看 [组件文档](/components/) 了解所有可用组件
-- 浏览 [API 参考](/api/) 获取详细的属性和方法说明
+- 进入 [快速安装](/guide/installation) 完成本地集成

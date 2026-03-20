@@ -28,6 +28,18 @@ SilenceUI 提供了丰富的组件库，涵盖了常见的 UI 需求。
     <p>增强的图片组件，支持懒加载、预览等功能</p>
     <a href="./image" class="card-link">查看详情 →</a>
   </div>
+
+  <div class="component-card">
+    <h3>Line 分割线</h3>
+    <p>轻量的水平 / 垂直分割线组件</p>
+    <a href="./line" class="card-link">查看详情 →</a>
+  </div>
+
+  <div class="component-card">
+    <h3>AssetViewer 资源预览</h3>
+    <p>图片、视频、音频、PDF 等多场景资源预览</p>
+    <a href="./asset-viewer" class="card-link">查看详情 →</a>
+  </div>
 </div>
 
 ## 快速开始

@@ -43,7 +43,9 @@ export default defineConfig({
             { text: 'Button 按钮', link: '/components/button' },
             { text: 'Input 输入框', link: '/components/input' },
             { text: 'Table 表格', link: '/components/table' },
-            { text: 'Image 图片', link: '/components/image' }
+            { text: 'Image 图片', link: '/components/image' },
+            { text: 'Line 分割线', link: '/components/line' },
+            { text: 'AssetViewer 资源预览', link: '/components/asset-viewer' }
           ]
         }
       ]
