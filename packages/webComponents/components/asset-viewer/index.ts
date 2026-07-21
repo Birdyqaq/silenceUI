@@ -87,8 +87,8 @@ export class SeAssetViewer extends LitElement {
 
     button:hover,
     a.button-link:hover {
-      border-color: #2563eb;
-      color: #2563eb;
+      border-color: var(--su-color-primary-hover, #2563eb);
+      color: var(--su-color-primary-hover, #2563eb);
     }
 
     .overlay {

@@ -1,46 +1,42 @@
-import {
-    css
-} from 'lit';
+import { css } from 'lit';
 
 export const tableStyles = css`
-:host {
+  :host {
     display: block;
-}
+    color: var(--su-text-1);
+    font-size: var(--su-font-size-md);
+  }
 
-table {
+  table {
     width: 100%;
     border-collapse: collapse;
-}
+  }
 
-th,
-td {
+  th,
+  td {
     padding: 8px;
-    border: var(--border-style, 1px solid #ddd);
-    /* Use CSS variable */
-}
+    border: var(--border-style, 1px solid var(--su-border-color));
+  }
 
-th.sortable:hover {
+  th.sortable:hover {
     cursor: pointer;
-}
+  }
 
-/* Style for the table header */
-thead th {
-    background-color: #f2f2f2;
-    /* Background color for the header */
-    color: #333;
+  thead th {
+    background-color: var(--thead-bg-color, var(--su-bg-hover));
+    color: var(--thead-text-color, var(--su-text-1));
     font-weight: bold;
-}
+  }
 
-tbody tr {
+  tbody tr {
     border-bottom: var(--row-line);
-}
+  }
 
-td {
+  td {
     border-right: var(--column-line);
-}
+  }
 
-td:last-child {
+  td:last-child {
     border-right: none;
-    /* Remove right border for the last cell */
-}
+  }
 `;

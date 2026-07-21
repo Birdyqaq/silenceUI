@@ -1,0 +1,57 @@
+:root {
+  --su-color-primary: #3b82f6;
+  --su-color-primary-hover: #2563eb;
+  /* -rgb 为颜色的 RGB 三元组，用于生成浅色背景/聚焦光圈等衍生色；
+     -contrast 为叠加在该颜色上的文字色，由主题管理器按亮度自动计算 */
+  --su-color-primary-rgb: 59, 130, 246;
+  --su-color-primary-contrast: #ffffff;
+  --su-color-success: #10b981;
+  --su-color-success-rgb: 16, 185, 129;
+  --su-color-success-contrast: #ffffff;
+  --su-color-warning: #f59e0b;
+  --su-color-warning-rgb: 245, 158, 11;
+  --su-color-warning-contrast: #ffffff;
+  --su-color-error: #ef4444;
+  --su-color-error-rgb: 239, 68, 68;
+  --su-color-error-contrast: #ffffff;
+  --su-color-info: #0ea5e9;
+  --su-color-info-rgb: 14, 165, 233;
+  --su-color-info-contrast: #ffffff;
+
+  --su-text-1: #111827;
+  --su-text-2: #374151;
+  --su-text-3: #6b7280;
+  --su-bg-page: #f8fafc;
+  --su-bg-card: #ffffff;
+  --su-bg-hover: #f1f5f9;
+  --su-bg-muted: #f3f4f6;
+  --su-overlay: rgba(255, 255, 255, 0.65);
+
+  --su-border-color: #e5e7eb;
+  --su-border-color-hover: #cbd5e1;
+  --su-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --su-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  --su-radius-sm: 6px;
+  --su-radius-md: 10px;
+  --su-radius-lg: 14px;
+
+  --su-font-size-xs: 12px;
+  --su-font-size-sm: 13px;
+  --su-font-size-md: 14px;
+  --su-font-size-lg: 16px;
+}
+
+.su-theme-dark,
+[data-su-theme='dark'] {
+  --su-text-1: #e5e7eb;
+  --su-text-2: #cbd5e1;
+  --su-text-3: #9ca3af;
+  --su-bg-page: #0f172a;
+  --su-bg-card: #111827;
+  --su-bg-hover: #1e293b;
+  --su-bg-muted: #1f2937;
+  --su-overlay: rgba(15, 23, 42, 0.65);
+  --su-border-color: #334155;
+  --su-border-color-hover: #475569;
+}

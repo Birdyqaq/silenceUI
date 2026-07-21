@@ -3,33 +3,33 @@ import { customElement, property } from 'lit/decorators.js';
 
 @customElement('su-input')
 export class SeInput extends LitElement {
-  @property({ type: String }) value: string = '';
-  @property({ type: String }) placeholder: string = 'Enter text';
-  @property({ type: Boolean }) disabled: boolean = false;
-  @property({ type: String }) type: string = 'text'; // 'text', 'password', 'email', etc.
-  @property({ type: Boolean }) readonly: boolean = false;
-  @property({ type: Boolean }) error: boolean = false; // 错误状态
-  @property({ type: String }) label: string = ''; // 输入框标签
-  @property({ type: String }) helperText: string = ''; // 辅助文本
-  @property({ type: Boolean }) clearable: boolean = false; // 支持清空
+  @property({ type: String }) value = '';
+  @property({ type: String }) placeholder = '请输入';
+  @property({ type: Boolean }) disabled = false;
+  @property({ type: String }) type = 'text';
+  @property({ type: Boolean }) readonly = false;
+  @property({ type: Boolean }) error = false;
+  @property({ type: String }) label = '';
+  @property({ type: String }) helperText = '';
+  @property({ type: Boolean }) clearable = false;
 
   static styles = css`
     :host {
       display: block;
-      font-family: Arial, sans-serif;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
     }
 
     .input-container {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
     }
 
     .label {
-      font-size: 14px;
+      font-size: var(--su-font-size-sm);
       font-weight: 500;
-      color: var(--text-color, #333);
+      color: var(--su-text-2);
     }
 
     .input-wrapper {
@@ -40,31 +40,35 @@ export class SeInput extends LitElement {
 
     input {
       width: 100%;
-      padding: 10px 12px;
-      font-size: 14px;
-      border: 1px solid var(--border-color, #ccc);
-      border-radius: 4px;
+      padding: 9px 12px;
+      font-size: var(--su-font-size-md);
+      border: 1px solid var(--su-border-color);
+      border-radius: var(--su-radius-sm);
       outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      background-color: var(--background-color, #fff);
-      color: var(--text-color, #333);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background-color: var(--su-bg-card);
+      color: var(--su-text-1);
+    }
+
+    input:hover {
+      border-color: var(--su-border-color-hover);
     }
 
     input:focus {
-      border-color: var(--primary-color, #007bff);
-      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+      border-color: var(--su-color-primary);
+      box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
     }
 
     input:disabled {
-      background-color: var(--disabled-bg-color, #f5f5f5);
-      border-color: var(--disabled-border-color, #ddd);
-      color: var(--disabled-text-color, #aaa);
+      background-color: var(--su-bg-muted);
+      border-color: var(--su-border-color);
+      color: var(--su-text-3);
       cursor: not-allowed;
     }
 
     input.error {
-      border-color: var(--error-color, #dc3545);
-      background-color: var(--error-bg-color, #fff5f5);
+      border-color: var(--su-color-error);
+      background-color: #fef2f2;
     }
 
     .clear-btn {
@@ -73,23 +77,23 @@ export class SeInput extends LitElement {
       background: transparent;
       border: none;
       cursor: pointer;
-      color: #9ca3af;
+      color: var(--su-text-3);
       font-size: 14px;
       display: flex;
       align-items: center;
     }
 
     .clear-btn:hover {
-      color: #4b5563;
+      color: var(--su-text-1);
     }
 
     .helper-text {
-      font-size: 12px;
-      color: var(--helper-text-color, #666);
+      font-size: var(--su-font-size-xs);
+      color: var(--su-text-3);
     }
 
     .helper-text.error {
-      color: var(--error-color, #dc3545);
+      color: var(--su-color-error);
     }
   `;
 
@@ -110,9 +114,7 @@ export class SeInput extends LitElement {
   render() {
     return html`
       <div class="input-container">
-        ${this.label
-        ? html`<label class="label" for="input">${this.label}</label>`
-        : ''}
+        ${this.label ? html`<label class="label" for="input">${this.label}</label>` : ''}
         <div class="input-wrapper">
           <input
             id="input"
@@ -127,14 +129,12 @@ export class SeInput extends LitElement {
             aria-readonly="${this.readonly ? 'true' : 'false'}"
           />
           ${this.clearable && this.value
-        ? html`<button class="clear-btn" type="button" @click="${this.handleClear}">✕</button>`
-        : ''}
+            ? html`<button class="clear-btn" type="button" @click="${this.handleClear}">✕</button>`
+            : ''}
         </div>
         ${this.helperText
-        ? html`<span class="helper-text ${this.error ? 'error' : ''}">
-              ${this.helperText}
-            </span>`
-        : ''}
+          ? html`<span class="helper-text ${this.error ? 'error' : ''}">${this.helperText}</span>`
+          : ''}
       </div>
     `;
   }
