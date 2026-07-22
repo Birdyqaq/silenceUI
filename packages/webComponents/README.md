@@ -2,6 +2,8 @@
 
 基于 Lit + UnoCSS 的跨框架 Web Components 组件库，适用于后台管理系统场景。
 
+> Maintainer: [Birdyqaq](https://github.com/Birdyqaq)
+
 ## 安装
 
 ```bash
