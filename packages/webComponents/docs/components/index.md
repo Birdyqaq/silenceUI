@@ -1,93 +1,64 @@
 # 组件总览
 
-SilenceUI 提供了丰富的组件库，涵盖了常见的 UI 需求。
+面向后台管理系统的 Web Components 组件集合。
 
-## 基础组件
+## 表单
 
-<div class="component-grid">
-  <div class="component-card">
-    <h3>Button 按钮</h3>
-    <p>常用的操作按钮，支持多种类型和状态</p>
-    <a href="./button" class="card-link">查看详情 →</a>
-  </div>
+- `su-input` 输入框
+- `su-input-number` 数字输入框
+- `su-select` 选择器
+- `su-textarea` 多行输入
+- `su-checkbox` 复选框
+- `su-radio-group` 单选组
+- `su-switch` 开关
+- `su-form-item` 表单项容器
 
-  <div class="component-card">
-    <h3>Input 输入框</h3>
-    <p>基础表单输入组件，支持多种验证和交互</p>
-    <a href="./input" class="card-link">查看详情 →</a>
-  </div>
+## 数据展示
 
-  <div class="component-card">
-    <h3>Table 表格</h3>
-    <p>功能强大的数据表格组件，支持排序、筛选等</p>
-    <a href="./table" class="card-link">查看详情 →</a>
-  </div>
+- `se-table` 表格（排序/分页/虚拟滚动/无限加载）
+- `se-pagination` 分页
+- `su-card` 卡片容器
+- `su-stat-card` 指标卡片
+- `su-tag` 状态标签
+- `su-badge` 徽标数
+- `su-avatar` 头像
+- `su-empty` 空状态
+- `su-skeleton` 骨架屏
+- `su-descriptions` 描述列表（详情页字段展示）
+- `se-image` 图片预览
+- `se-asset-viewer` 资源预览卡
 
-  <div class="component-card">
-    <h3>Image 图片</h3>
-    <p>增强的图片组件，支持懒加载、预览等功能</p>
-    <a href="./image" class="card-link">查看详情 →</a>
-  </div>
-</div>
+## 导航
 
-## 快速开始
+- `su-menu` 菜单
+- `su-breadcrumb` 面包屑
+- `su-tabs` 标签页
+- `su-dropdown` 下拉菜单
+- `su-steps` 步骤条
 
-所有组件都基于 Web Components 标准，可以在任何前端项目中使用：
+## 反馈
 
-```html
-<!-- 在 HTML 中直接使用 -->
-<su-button type="primary">点击我</su-button>
-<su-input placeholder="请输入内容"></su-input>
+- `su-modal` 模态框
+- `su-drawer` 抽屉
+- `su-alert` 警告提示
+- `su-message` 全局消息（支持 `message.success('...')` 命令式调用）
+- `su-tooltip` 文字提示
+- `su-spin` 加载中
+- `su-progress` 进度条
+
+## 布局
+
+- `su-container` 后台布局容器（`sider/header/content`）
+- `su-divider` 分割线
+- `su-theme-toggle` 一键明暗主题切换按钮
+
+## 主题 API
+
+从包入口导出，支持自定义颜色与持久化：
+
+```ts
+import { toggleThemeMode, setThemeMode, setThemeColors, resetThemeColors } from 'webcomponents';
+
+toggleThemeMode();                       // 明暗一键切换
+setThemeColors({ primary: '#7c3aed' }); // 自定义品牌色，自动派生 hover 色
 ```
-
-```javascript
-// 在 JavaScript 中使用
-import 'webcomponents/lib/index.js'
-
-// 或按需引入
-import 'webcomponents/lib/button/index.js'
-```
-
-<style scoped>
-.component-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin: 32px 0;
-}
-
-.component-card {
-  border: 1px solid var(--vp-c-border);
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s ease;
-}
-
-.component-card:hover {
-  border-color: var(--vp-c-brand);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.component-card h3 {
-  margin: 0 0 12px 0;
-  color: var(--vp-c-text-1);
-  font-size: 18px;
-}
-
-.component-card p {
-  margin: 0 0 16px 0;
-  color: var(--vp-c-text-2);
-  line-height: 1.6;
-}
-
-.card-link {
-  color: var(--vp-c-brand);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.card-link:hover {
-  text-decoration: underline;
-}
-</style>

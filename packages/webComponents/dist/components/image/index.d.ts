@@ -11,8 +11,9 @@ export declare class seImage extends LitElement {
     private isError;
     private isPreviewVisible;
     private rotation;
+    private _isVisible;
+    private _observer?;
     static styles: import('lit').CSSResult;
-    private observer;
     firstUpdated(): void;
     loadImage(): void;
     handleError(): void;

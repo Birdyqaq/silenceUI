@@ -38,6 +38,20 @@
 <su-button type="primary" size="large">Large</su-button>
 ```
 
+## 块级与圆角胶囊
+
+<ClientOnly>
+  <div style="display: grid; gap: 12px; margin: 20px 0; max-width: 360px;">
+    <su-button type="primary" block>Block 按钮</su-button>
+    <su-button type="success" round>圆角胶囊</su-button>
+  </div>
+</ClientOnly>
+
+```html
+<su-button type="primary" block>Block 按钮</su-button>
+<su-button type="success" round>圆角胶囊</su-button>
+```
+
 ## 水波纹效果
 
 <ClientOnly>
@@ -87,3 +101,5 @@
 | ripple-color | 水波纹颜色 | `string` | `rgba(255, 255, 255, 0.3)` |
 | icon-class | 图标类名 | `string` | - |
 | icon-position | 图标位置 | `left` \| `right` | `left` |
+| block | 是否占满父容器宽度 | `boolean` | `false` |
+| round | 是否使用胶囊圆角 | `boolean` | `false` |

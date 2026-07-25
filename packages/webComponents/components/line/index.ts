@@ -3,33 +3,36 @@ import { customElement, property } from 'lit/decorators.js';
 
 @customElement('line-component')
 export class LineComponent extends LitElement {
+  @property({ type: String }) direction: 'horizontal' | 'vertical' = 'horizontal';
+  @property({ type: String }) color: string = '#000';
 
-    @property({ type: String }) direction: 'horizontal' | 'vertical' = 'horizontal';
-    @property({ type: String }) color: string = '#000';
-
-    static styles = css`
-    import 'uno.css';
-    @unocss-placeholder;
-
-    .line {
-      @apply bg-current;
+  static styles = css`
+    :host {
+      display: block;
     }
 
-    .horizontal {
-      @apply w-full h-1;
+    :host([direction='vertical']) {
+      display: inline-block;
+      height: 100%;
     }
 
-    .vertical {
-      @apply h-full w-1;
+    .line.horizontal {
+      width: 100%;
+      height: 4px;
+    }
+
+    .line.vertical {
+      height: 100%;
+      width: 4px;
     }
   `;
 
-    render() {
-        return html`
-         <div
-           class="line ${this.direction === 'horizontal' ? 'horizontal' : 'vertical'}"
-           style="background-color: ${this.color};"
-         ></div>
-      `;
-    }
+  render() {
+    return html`
+      <div
+        class="line ${this.direction === 'horizontal' ? 'horizontal' : 'vertical'}"
+        style="background-color: ${this.color};"
+      ></div>
+    `;
+  }
 }
