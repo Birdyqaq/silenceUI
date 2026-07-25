@@ -39,7 +39,8 @@ export default defineConfig({
           text: '进阶',
           items: [
             { text: '设计方案', link: '/guide/design' },
-            { text: '主题定制', link: '/guide/theme' }
+            { text: '主题定制', link: '/guide/theme' },
+            { text: '开发规范', link: '/guide/development' }
           ]
         }
       ],

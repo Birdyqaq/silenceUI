@@ -1,23 +1,23 @@
-// src/button/se-button.ts
 import { html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { rippleEffect } from '../../utils/ripple';
 import { styleMap } from './styles';
+import type { ButtonIconPosition, ButtonSize, ButtonType } from './type';
 
 @customElement('su-button')
 export class SuButton extends LitElement {
   static styles = styleMap;
 
-  @property({ type: String, reflect: true }) size = 'medium';
-  @property({ type: String, reflect: true }) type = 'primary';
+  @property({ type: String, reflect: true }) size: ButtonSize = 'medium';
+  @property({ type: String, reflect: true }) type: ButtonType = 'primary';
   @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: Boolean, reflect: true }) loading = false;
   @property({ type: String }) iconClass = '';
-  @property({ type: String }) iconPosition: 'left' | 'right' = 'left';
+  @property({ type: String }) iconPosition: ButtonIconPosition = 'left';
   @property({ type: String }) rippleColor = '';
-  @property({ type: Boolean }) ripple = true; // 新增：控制水波纹效果的开关
-  @property({ type: Boolean, reflect: true }) block = false; // 占满父容器
-  @property({ type: Boolean, reflect: true }) round = false; // 胶囊形
+  @property({ type: Boolean }) ripple = true;
+  @property({ type: Boolean, reflect: true }) block = false;
+  @property({ type: Boolean, reflect: true }) round = false;
 
   private handleClick(e: MouseEvent) {
     if (this.disabled || this.loading) {
@@ -85,3 +85,6 @@ export class SuButton extends LitElement {
     return html`<i class="icon ${position} ${this.iconClass}"></i>`;
   }
 }
+
+export type { ButtonIconPosition, ButtonSize, ButtonType } from './type';
+

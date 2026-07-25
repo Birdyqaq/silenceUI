@@ -32,9 +32,15 @@ export class SuTextarea extends LitElement {
         border-color: var(--su-border-color-hover);
       }
 
+      textarea:focus {
+        border-color: var(--su-color-primary);
+        box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
+        outline: none;
+      }
+
       textarea:disabled {
         color: var(--su-text-3);
-        background: #f3f4f6;
+        background: var(--su-bg-muted);
         cursor: not-allowed;
       }
     `
