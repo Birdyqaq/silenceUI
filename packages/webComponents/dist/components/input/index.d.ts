@@ -10,8 +10,9 @@ export declare class SeInput extends LitElement {
     label: string;
     helperText: string;
     clearable: boolean;
-    static styles: import('lit').CSSResult;
-    handleInput(event: Event): void;
+    static styles: import('lit').CSSResult[];
+    private emitChange;
+    private handleInput;
     private handleClear;
     render(): import('lit').TemplateResult<1>;
 }

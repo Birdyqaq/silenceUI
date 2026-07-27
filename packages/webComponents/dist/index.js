@@ -760,183 +760,279 @@ function n2(t2) {
 function r$1(r2) {
   return n2({ ...r2, state: true, attribute: false });
 }
-const rippleEffect = (event, options = {}, targetElement) => {
+function rippleEffect(event, options = {}, targetElement) {
   const button = targetElement || event.currentTarget;
-  const computedStyle = getComputedStyle(button);
-  if (computedStyle.position === "static") {
-    button.style.position = "relative";
-  }
-  if (computedStyle.overflow !== "hidden") {
-    button.style.overflow = "hidden";
-  }
-  const ripple = document.createElement("div");
+  if (!button)
+    return;
   const rect = button.getBoundingClientRect();
   const centerX = event.clientX - rect.left;
   const centerY = event.clientY - rect.top;
   const distances = [
-    Math.sqrt(centerX ** 2 + centerY ** 2),
-    // 到左上角
-    Math.sqrt((rect.width - centerX) ** 2 + centerY ** 2),
-    // 到右上角
-    Math.sqrt(centerX ** 2 + (rect.height - centerY) ** 2),
-    // 到左下角
-    Math.sqrt((rect.width - centerX) ** 2 + (rect.height - centerY) ** 2)
-    // 到右下角
+    Math.hypot(centerX, centerY),
+    Math.hypot(rect.width - centerX, centerY),
+    Math.hypot(centerX, rect.height - centerY),
+    Math.hypot(rect.width - centerX, rect.height - centerY)
   ];
-  const maxDistance = Math.max(...distances);
-  const diameter = maxDistance * 2;
-  const x2 = centerX - diameter / 2;
-  const y3 = centerY - diameter / 2;
+  const diameter = Math.max(...distances) * 2;
+  const duration = options.duration ?? 560;
+  button.querySelectorAll(".ripple-effect").forEach((el) => el.remove());
+  const ripple = document.createElement("span");
   ripple.className = "ripple-effect";
-  ripple.style.cssText = `
-        position: absolute;
-        left: ${x2}px;
-        top: ${y3}px;
-        width: ${diameter}px;
-        height: ${diameter}px;
-        border-radius: 50%;
-        background-color: ${options.color || "rgba(255, 255, 255, 0.5)"};
-        pointer-events: none;
-        z-index: 999;
-        transform: scale(0);
-        opacity: 1;
-        animation: rippleExpand ${options.duration || 600}ms ease-out forwards;
-    `;
-  if (!document.getElementById("ripple-styles")) {
-    const style = document.createElement("style");
-    style.id = "ripple-styles";
-    style.textContent = `
-            @keyframes rippleExpand {
-                0% {
-                    transform: scale(0);
-                    opacity: 1;
-                }
-                100% {
-                    transform: scale(1);
-                    opacity: 0;
-                }
-            }
-        `;
-    document.head.appendChild(style);
+  ripple.setAttribute("aria-hidden", "true");
+  ripple.style.left = `${centerX - diameter / 2}px`;
+  ripple.style.top = `${centerY - diameter / 2}px`;
+  ripple.style.width = `${diameter}px`;
+  ripple.style.height = `${diameter}px`;
+  if (options.color) {
+    ripple.style.backgroundColor = options.color;
   }
-  const existingRipples = button.querySelectorAll(".ripple-effect");
-  existingRipples.forEach((el) => el.remove());
+  if (options.duration) {
+    ripple.style.animationDuration = `${duration}ms`;
+  }
   button.appendChild(ripple);
-  const duration = options.duration || 600;
-  setTimeout(() => {
-    if (ripple && ripple.parentNode) {
-      ripple.remove();
-    }
-  }, duration);
-};
-const styleMap = i$4`
+  window.setTimeout(() => ripple.remove(), duration);
+}
+const baseControlStyles = i$4`
   :host {
-    display: inline-block;
-    --su-button-min-width: 72px;
-    --su-button-min-height: 36px;
-    min-width: var(--su-button-min-width);
-    min-height: var(--su-button-min-height);
-    border-radius: var(--su-radius-sm);
+    box-sizing: border-box;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: var(--su-text-1);
+  }
+
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
   }
-
-  button {
-    all: unset;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    gap: 6px;
-    border-radius: inherit;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: var(--su-font-size-md);
-    font-weight: 500;
-  }
-
-  button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  .spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid currentcolor;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: su-spin 0.8s linear infinite;
-  }
-
-  @keyframes su-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  :host([type='primary']) button {
-    background: var(--su-color-primary);
-    color: var(--su-color-primary-contrast, #fff);
-  }
-
-  :host([type='primary']) button:hover {
-    background: var(--su-color-primary-hover);
-  }
-
-  :host([type='secondary']) button {
-    background: #334155;
-    color: #fff;
-  }
-
-  :host([type='secondary']) button:hover {
-    background: #1e293b;
-  }
-
-  :host([type='success']) button {
-    background: var(--su-color-success);
-    color: var(--su-color-success-contrast, #fff);
-  }
-
-  :host([type='warning']) button {
-    background: var(--su-color-warning);
-    color: var(--su-color-warning-contrast, #fff);
-  }
-
-  :host([type='danger']) button {
-    background: var(--su-color-error);
-    color: var(--su-color-error-contrast, #fff);
-  }
-
-  :host([size='small']) {
-    --su-button-min-width: 56px;
-    --su-button-min-height: 30px;
-  }
-
-  :host([size='large']) {
-    --su-button-min-width: 92px;
-    --su-button-min-height: 42px;
-  }
-
-  :host([block]) {
-    display: block;
-    width: 100%;
-  }
-
-  :host([round]) {
-    border-radius: 999px;
-  }
-
-  :host([disabled]) {
-    opacity: 0.7;
-    pointer-events: none;
-  }
-
-  :host([loading]) button {
-    cursor: wait;
+`;
+const focusRingStyles = i$4`
+  :focus-visible {
+    outline: 2px solid var(--su-color-primary);
+    outline-offset: 1px;
   }
 `;
+const styleMap = [
+  focusRingStyles,
+  i$4`
+    :host {
+      display: inline-block;
+      --su-button-min-width: 72px;
+      --su-button-min-height: 36px;
+      --su-button-font-size: var(--su-font-size-md);
+      --su-button-padding-x: 14px;
+      min-width: var(--su-button-min-width);
+      min-height: var(--su-button-min-height);
+      border-radius: var(--su-radius-sm);
+      box-sizing: border-box;
+      vertical-align: middle;
+    }
+
+    button {
+      all: unset;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      min-height: var(--su-button-min-height);
+      padding: 0 var(--su-button-padding-x);
+      gap: 6px;
+      border-radius: inherit;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+      font-size: var(--su-button-font-size);
+      font-weight: 500;
+      line-height: 1;
+      user-select: none;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    :host([loading]) button:disabled {
+      cursor: wait;
+      opacity: 0.85;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      flex: none;
+      border: 2px solid currentcolor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: su-spin 0.8s linear infinite;
+    }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    :host([loading]) .label {
+      opacity: 0.72;
+    }
+
+    .icon {
+      flex: none;
+      line-height: 1;
+    }
+
+    @keyframes su-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes su-ripple-expand {
+      from {
+        transform: scale(0);
+        opacity: 0.45;
+      }
+      to {
+        transform: scale(1);
+        opacity: 0;
+      }
+    }
+
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      background: color-mix(in srgb, currentColor 28%, transparent);
+      transform: scale(0);
+      animation: su-ripple-expand 560ms ease-out forwards;
+      z-index: 1;
+    }
+
+    /* types */
+    :host([type='primary']) button {
+      background: var(--su-color-primary);
+      color: var(--su-color-primary-contrast, #fff);
+    }
+
+    :host([type='primary']) button:hover:not(:disabled) {
+      background: var(--su-color-primary-hover);
+    }
+
+    :host([type='secondary']) button {
+      background: var(--su-text-2);
+      color: var(--su-bg-card);
+    }
+
+    :host([type='secondary']) button:hover:not(:disabled) {
+      background: var(--su-text-1);
+    }
+
+    :host([type='success']) button {
+      background: var(--su-color-success);
+      color: var(--su-color-success-contrast, #fff);
+    }
+
+    :host([type='success']) button:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    :host([type='warning']) button {
+      background: var(--su-color-warning);
+      color: var(--su-color-warning-contrast, #fff);
+    }
+
+    :host([type='warning']) button:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    :host([type='danger']) button {
+      background: var(--su-color-error);
+      color: var(--su-color-error-contrast, #fff);
+    }
+
+    :host([type='danger']) button:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    :host([type='info']) button {
+      background: var(--su-color-info);
+      color: var(--su-color-info-contrast, #fff);
+    }
+
+    :host([type='info']) button:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    :host([type='light']) button {
+      background: var(--su-bg-hover);
+      color: var(--su-text-1);
+      border-color: var(--su-border-color);
+    }
+
+    :host([type='light']) button:hover:not(:disabled) {
+      background: var(--su-bg-muted);
+      border-color: var(--su-border-color-hover);
+    }
+
+    :host([type='dark']) button {
+      background: var(--su-text-1);
+      color: var(--su-bg-card);
+    }
+
+    :host([type='dark']) button:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    :host([type='link']) button {
+      background: transparent;
+      color: var(--su-color-primary);
+      min-width: 0;
+      padding: 0;
+    }
+
+    :host([type='link']) button:hover:not(:disabled) {
+      color: var(--su-color-primary-hover);
+      text-decoration: underline;
+    }
+
+    /* sizes */
+    :host([size='small']) {
+      --su-button-min-width: 56px;
+      --su-button-min-height: 30px;
+      --su-button-font-size: var(--su-font-size-sm);
+      --su-button-padding-x: 10px;
+    }
+
+    :host([size='large']) {
+      --su-button-min-width: 92px;
+      --su-button-min-height: 42px;
+      --su-button-font-size: var(--su-font-size-lg);
+      --su-button-padding-x: 18px;
+    }
+
+    :host([block]) {
+      display: block;
+      width: 100%;
+    }
+
+    :host([round]) {
+      border-radius: 999px;
+    }
+
+    :host([type='link']) {
+      min-width: 0;
+      min-height: auto;
+    }
+  `
+];
 var __defProp$B = Object.defineProperty;
 var __getOwnPropDesc$B = Object.getOwnPropertyDescriptor;
 var __decorateClass$B = (decorators, target, key, kind) => {
@@ -961,64 +1057,52 @@ let SuButton = class extends i$1 {
     this.ripple = true;
     this.block = false;
     this.round = false;
+    this.nativeType = "button";
   }
-  // 胶囊形
+  get isInactive() {
+    return this.disabled || this.loading;
+  }
   handleClick(e2) {
-    if (this.disabled || this.loading) {
+    if (this.isInactive) {
       e2.stopImmediatePropagation();
       e2.preventDefault();
       return;
     }
-    if (this.ripple) {
-      let color = this.rippleColor;
-      if (!color) {
-        switch (this.type) {
-          case "primary":
-          case "secondary":
-          case "success":
-          case "warning":
-          case "danger":
-            color = "rgba(255, 255, 255, 0.3)";
-            break;
-          default:
-            color = "rgba(0, 0, 0, 0.1)";
-        }
-      }
-      try {
-        const target = e2.currentTarget;
-        rippleEffect(e2, { color }, target ?? this);
-      } catch (error) {
-        console.error("Error creating ripple effect:", error);
-      }
+    if (!this.ripple)
+      return;
+    try {
+      const target = e2.currentTarget;
+      rippleEffect(
+        e2,
+        this.rippleColor ? { color: this.rippleColor } : {},
+        target ?? void 0
+      );
+    } catch (error) {
+      console.error("Error creating ripple effect:", error);
     }
+  }
+  renderIcon(position) {
+    if (!this.iconClass || this.iconPosition !== position)
+      return E;
+    return x`<i class="icon ${position} ${this.iconClass}" aria-hidden="true"></i>`;
   }
   render() {
     return x`
       <button
-        class=${this.getButtonClasses()}
+        type=${this.nativeType}
+        ?disabled=${this.isInactive}
+        aria-busy=${this.loading ? "true" : "false"}
+        aria-disabled=${this.isInactive ? "true" : "false"}
         @click=${this.handleClick}
-        ?disabled=${this.disabled}
-        type="button"
       >
-        ${this.renderIcon("left")}
-        ${this.loading ? this.renderSpinner() : x`<slot></slot>`}
-        ${this.renderIcon("right")}
+        ${this.loading ? x`<span class="spinner" aria-hidden="true"></span>` : E}
+        <span class="label">
+          ${this.renderIcon("left")}
+          <slot></slot>
+          ${this.renderIcon("right")}
+        </span>
       </button>
     `;
-  }
-  getButtonClasses() {
-    return [
-      this.disabled ? "disabled" : "",
-      this.loading ? "loading" : ""
-    ].filter(Boolean).join(" ");
-  }
-  renderSpinner() {
-    return x`<span class="spinner"></span>`;
-  }
-  renderIcon(position) {
-    if (!this.iconClass || this.iconPosition !== position)
-      return;
-    return x`<i class="icon ${position} ${this.iconClass}"></i>`;
   }
 };
 SuButton.styles = styleMap;
@@ -1052,6 +1136,9 @@ __decorateClass$B([
 __decorateClass$B([
   n2({ type: Boolean, reflect: true })
 ], SuButton.prototype, "round", 2);
+__decorateClass$B([
+  n2({ type: String })
+], SuButton.prototype, "nativeType", 2);
 SuButton = __decorateClass$B([
   t$2("su-button")
 ], SuButton);
@@ -1079,19 +1166,27 @@ let SeInput = class extends i$1 {
     this.helperText = "";
     this.clearable = false;
   }
+  emitChange() {
+    this.dispatchEvent(
+      new CustomEvent("input-change", {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
   handleInput(event) {
     const input = event.target;
     this.value = input.value;
-    this.dispatchEvent(new CustomEvent("input-change", { detail: { value: this.value } }));
+    this.emitChange();
   }
   handleClear() {
-    var _a2;
+    var _a2, _b;
     if (this.disabled || this.readonly)
       return;
     this.value = "";
-    this.dispatchEvent(new CustomEvent("input-change", { detail: { value: this.value } }));
-    const input = (_a2 = this.shadowRoot) == null ? void 0 : _a2.querySelector("input");
-    input == null ? void 0 : input.focus();
+    this.emitChange();
+    (_b = (_a2 = this.shadowRoot) == null ? void 0 : _a2.querySelector("input")) == null ? void 0 : _b.focus();
   }
   render() {
     return x`
@@ -1100,106 +1195,115 @@ let SeInput = class extends i$1 {
         <div class="input-wrapper">
           <input
             id="input"
-            class="${this.error ? "error" : ""}"
-            .value="${this.value}"
-            .placeholder="${this.placeholder}"
-            .type="${this.type}"
-            ?disabled="${this.disabled}"
-            ?readonly="${this.readonly}"
-            @input="${this.handleInput}"
-            aria-invalid="${this.error ? "true" : "false"}"
-            aria-readonly="${this.readonly ? "true" : "false"}"
+            class="${this.error ? "error" : ""} ${this.clearable ? "clearable" : ""}"
+            .value=${this.value}
+            .placeholder=${this.placeholder}
+            .type=${this.type}
+            ?disabled=${this.disabled}
+            ?readonly=${this.readonly}
+            @input=${this.handleInput}
+            aria-invalid=${this.error ? "true" : "false"}
+            aria-readonly=${this.readonly ? "true" : "false"}
           />
-          ${this.clearable && this.value ? x`<button class="clear-btn" type="button" @click="${this.handleClear}">✕</button>` : ""}
+          ${this.clearable && this.value ? x`<button class="clear-btn" type="button" aria-label="清空" @click=${this.handleClear}>✕</button>` : ""}
         </div>
         ${this.helperText ? x`<span class="helper-text ${this.error ? "error" : ""}">${this.helperText}</span>` : ""}
       </div>
     `;
   }
 };
-SeInput.styles = i$4`
-    :host {
-      display: block;
-      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    }
+SeInput.styles = [
+  baseControlStyles,
+  focusRingStyles,
+  i$4`
+      :host {
+        display: block;
+      }
 
-    .input-container {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+      }
 
-    .label {
-      font-size: var(--su-font-size-sm);
-      font-weight: 500;
-      color: var(--su-text-2);
-    }
+      .label {
+        font-size: var(--su-font-size-sm);
+        font-weight: 500;
+        color: var(--su-text-2);
+      }
 
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
 
-    input {
-      width: 100%;
-      padding: 9px 12px;
-      font-size: var(--su-font-size-md);
-      border: 1px solid var(--su-border-color);
-      border-radius: var(--su-radius-sm);
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      background-color: var(--su-bg-card);
-      color: var(--su-text-1);
-    }
+      input {
+        width: 100%;
+        padding: 9px 12px;
+        font-size: var(--su-font-size-md);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background-color: var(--su-bg-card);
+        color: var(--su-text-1);
+      }
 
-    input:hover {
-      border-color: var(--su-border-color-hover);
-    }
+      input.clearable {
+        padding-right: 32px;
+      }
 
-    input:focus {
-      border-color: var(--su-color-primary);
-      box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
-    }
+      input:hover:not(:disabled) {
+        border-color: var(--su-border-color-hover);
+      }
 
-    input:disabled {
-      background-color: var(--su-bg-muted);
-      border-color: var(--su-border-color);
-      color: var(--su-text-3);
-      cursor: not-allowed;
-    }
+      input:focus {
+        border-color: var(--su-color-primary);
+        box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
+      }
 
-    input.error {
-      border-color: var(--su-color-error);
-      background-color: #fef2f2;
-    }
+      input:disabled {
+        background-color: var(--su-bg-muted);
+        border-color: var(--su-border-color);
+        color: var(--su-text-3);
+        cursor: not-allowed;
+      }
 
-    .clear-btn {
-      position: absolute;
-      right: 8px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: var(--su-text-3);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-    }
+      input.error {
+        border-color: var(--su-color-error);
+        background-color: rgba(var(--su-color-error-rgb, 239, 68, 68), 0.08);
+      }
 
-    .clear-btn:hover {
-      color: var(--su-text-1);
-    }
+      .clear-btn {
+        position: absolute;
+        right: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--su-text-3);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        line-height: 1;
+      }
 
-    .helper-text {
-      font-size: var(--su-font-size-xs);
-      color: var(--su-text-3);
-    }
+      .clear-btn:hover {
+        color: var(--su-text-1);
+      }
 
-    .helper-text.error {
-      color: var(--su-color-error);
-    }
-  `;
+      .helper-text {
+        font-size: var(--su-font-size-xs);
+        color: var(--su-text-3);
+      }
+
+      .helper-text.error {
+        color: var(--su-color-error);
+      }
+    `
+];
 __decorateClass$A([
   n2({ type: String })
 ], SeInput.prototype, "value", 2);
@@ -1602,7 +1706,9 @@ let seTable = class extends i$1 {
       this.resetViewportScroll();
       this.dispatchEvent(
         new CustomEvent("sort-change", {
-          detail: { column: col.key, direction: nextDirection }
+          detail: { column: col.key, direction: nextDirection },
+          bubbles: true,
+          composed: true
         })
       );
     };
@@ -1730,7 +1836,10 @@ let seTable = class extends i$1 {
     }
     const viewportHeight = this.viewportHeight || 420;
     const visible = Math.ceil(viewportHeight / this.virtualRowHeight) + this.virtualBuffer * 2;
-    const start = Math.max(0, Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer);
+    const start = Math.max(
+      0,
+      Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer
+    );
     const end = Math.min(rows.length, start + visible);
     return {
       start,
@@ -1788,11 +1897,20 @@ let seTable = class extends i$1 {
     return this.normalizeSpan(this.spanMethod(args));
   }
   setCurrentPage(nextPage) {
-    const bounded = Math.min(this.totalPages, Math.max(1, Number.isFinite(nextPage) ? nextPage : 1));
+    const bounded = Math.min(
+      this.totalPages,
+      Math.max(1, Number.isFinite(nextPage) ? nextPage : 1)
+    );
     this.currentPage = bounded;
     this.scrollTop = 0;
     this.resetViewportScroll();
-    this.dispatchEvent(new CustomEvent("page-change", { detail: { currentPage: bounded } }));
+    this.dispatchEvent(
+      new CustomEvent("page-change", {
+        detail: { currentPage: bounded },
+        bubbles: true,
+        composed: true
+      })
+    );
   }
   handlePaginationChange(event) {
     var _a2;
@@ -1810,7 +1928,9 @@ let seTable = class extends i$1 {
       new CustomEvent("load-more", {
         detail: {
           loadedCount: this.sortedData.length
-        }
+        },
+        bubbles: true,
+        composed: true
       })
     );
   }
@@ -1828,7 +1948,9 @@ let seTable = class extends i$1 {
         detail: {
           row,
           rowIndex
-        }
+        },
+        bubbles: true,
+        composed: true
       })
     );
   }
@@ -1849,7 +1971,10 @@ let seTable = class extends i$1 {
           ` : E;
     const bottomSpacer = virtual.bottomPadding > 0 ? x`
             <tr class="virtual-spacer" aria-hidden="true">
-              <td colspan="${this.totalColumnCount}" style="height: ${virtual.bottomPadding}px;"></td>
+              <td
+                colspan="${this.totalColumnCount}"
+                style="height: ${virtual.bottomPadding}px;"
+              ></td>
             </tr>
           ` : E;
     const sourceOffset = this.shouldUsePagination ? (this.currentPage - 1) * this.pageSize : 0;
@@ -1863,13 +1988,15 @@ let seTable = class extends i$1 {
         return x`
           <tr
             class="${this.striped ? "striped" : ""} ${this.hoverable ? "hoverable" : ""}"
-            @click="${() => this.handleRowClick(row, rowIndex)}">
+            @click="${() => this.handleRowClick(row, rowIndex)}"
+          >
             ${this.selectable ? x`
                   <td class="selection-cell" @click="${(e2) => e2.stopPropagation()}">
                     <input
                       type="checkbox"
                       .checked="${this.isRowSelected(row, rowIndex)}"
-                      @change="${() => this.toggleRowSelection(row, rowIndex)}" />
+                      @change="${() => this.toggleRowSelection(row, rowIndex)}"
+                    />
                   </td>
                 ` : E}
             ${this.sortedColumns.map((col, columnIndex) => {
@@ -1900,7 +2027,8 @@ let seTable = class extends i$1 {
                   class="${col.ellipsis ? "ellipsis" : ""}"
                   rowspan="${span.rowspan}"
                   colspan="${span.colspan}"
-                  style="text-align: ${align}; max-width: ${col.width || "auto"};">
+                  style="text-align: ${align}; max-width: ${col.width || "auto"};"
+                >
                   ${value}
                 </td>
               `;
@@ -1920,7 +2048,8 @@ let seTable = class extends i$1 {
         .currentPage="${this.currentPage}"
         .total="${this.sortedData.length}"
         .pageSize="${this.pageSize}"
-        @page-change="${this.handlePaginationChange}"></se-pagination>
+        @page-change="${this.handlePaginationChange}"
+      ></se-pagination>
     `;
   }
   renderLoadMoreStatus() {
@@ -1946,7 +2075,8 @@ let seTable = class extends i$1 {
           aria-label="全选"
           .checked="${allSelected}"
           .indeterminate="${indeterminate}"
-          @change="${() => this.toggleAllSelection()}" />
+          @change="${() => this.toggleAllSelection()}"
+        />
       </th>
     `;
   }
@@ -1957,7 +2087,8 @@ let seTable = class extends i$1 {
         <div
           class="table-viewport ${scrollable ? "scrollable" : ""}"
           style="${scrollable ? `height: ${this.effectiveHeight};` : ""}"
-          @scroll="${this.handleBodyScroll}">
+          @scroll="${this.handleBodyScroll}"
+        >
           <table>
             <thead class="${this.stickyHeader && scrollable ? "sticky" : ""}">
               <tr>
@@ -1968,7 +2099,8 @@ let seTable = class extends i$1 {
                       class="${col.sortable ? "sortable" : ""}"
                       style="width: ${col.width || "auto"}; text-align: ${col.align || "center"};"
                       data-sort="${col.sortDirection === "asc" ? "↑" : col.sortDirection === "desc" ? "↓" : "⇅"}"
-                      @click="${() => this.sortColumn(index)}">
+                      @click="${() => this.sortColumn(index)}"
+                    >
                       ${col.label}
                     </th>
                   `
@@ -1981,8 +2113,7 @@ let seTable = class extends i$1 {
           </table>
         </div>
         ${this.loading ? x`<div class="loading-overlay"><span class="loading-spinner"></span></div>` : E}
-        ${this.renderLoadMoreStatus()}
-        ${this.renderPagination()}
+        ${this.renderLoadMoreStatus()} ${this.renderPagination()}
       </div>
     `;
   }
@@ -2226,7 +2357,7 @@ let seImagePreview = class extends i$1 {
     this.rotation = 0;
   }
   handleClose() {
-    this.dispatchEvent(new CustomEvent("close"));
+    this.dispatchEvent(new CustomEvent("close", { bubbles: true, composed: true }));
   }
   handleRotate() {
     this.rotation = (this.rotation + 90) % 360;
@@ -2358,7 +2489,10 @@ let seImage = class extends i$1 {
   }
   render() {
     return x`
-      <div class="image-container" style="width: ${this.width + "px"}; height: ${this.height + "px"};">
+      <div
+        class="image-container"
+        style="width: ${this.width + "px"}; height: ${this.height + "px"};"
+      >
         <img
           class="w-full h-auto block cursor-pointer"
           src="${this.isError ? this.errorPlaceholder : this.lazy ? this.placeholder : this.src}"
@@ -2369,11 +2503,11 @@ let seImage = class extends i$1 {
         />
         <button class="preview-icon" @click="${this.handleImageClick}">预览</button>
         ${this.isPreviewVisible ? x`
-          <se-image-preview
-            .src="${this.src}"
-            @close="${this.handleClosePreview}"
-          ></se-image-preview>
-        ` : ""}
+              <se-image-preview
+                .src="${this.src}"
+                @close="${this.handleClosePreview}"
+              ></se-image-preview>
+            ` : ""}
       </div>
     `;
   }
@@ -2573,7 +2707,13 @@ let SeAssetViewer = class extends i$1 {
     if (!this.src)
       return;
     this.previewVisible = true;
-    this.dispatchEvent(new CustomEvent("asset-open", { detail: { src: this.src, type: this.resolveType() } }));
+    this.dispatchEvent(
+      new CustomEvent("asset-open", {
+        detail: { src: this.src, type: this.resolveType() },
+        bubbles: true,
+        composed: true
+      })
+    );
   }
   closePreview() {
     this.previewVisible = false;
@@ -2612,142 +2752,148 @@ let SeAssetViewer = class extends i$1 {
   render() {
     return x`
       <div class="card">
-        <div class="preview" @click=${this.openPreview}>
-          ${this.renderPreviewThumb()}
-        </div>
+        <div class="preview" @click=${this.openPreview}>${this.renderPreviewThumb()}</div>
         <div class="meta">
           <p class="title">${this.title || this.src}</p>
           <small>${this.resolveType().toUpperCase()} · 点击预览</small>
         </div>
         <div class="actions">
           <button @click=${this.openPreview}>预览</button>
-          ${this.downloadable && this.src ? x`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer">下载</a>` : null}
+          ${this.downloadable && this.src ? x`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer"
+                >下载</a
+              >` : null}
         </div>
       </div>
       ${this.renderOverlay()}
     `;
   }
 };
-SeAssetViewer.styles = i$4`
-    :host {
-      display: block;
-      font-family: Arial, sans-serif;
-    }
+SeAssetViewer.styles = [
+  baseControlStyles,
+  i$4`
+      :host {
+        display: block;
+      }
 
-    .card {
-      border: 1px solid var(--asset-border, #e5e7eb);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      background: var(--asset-bg, #fff);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
+      .card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-md);
+        background: var(--su-bg-card);
+        box-shadow: var(--su-shadow-sm);
+      }
 
-    .preview {
-      width: 96px;
-      height: 72px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f8fafc;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      position: relative;
-    }
+      .preview {
+        position: relative;
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 96px;
+        height: 72px;
+        overflow: hidden;
+        border-radius: var(--su-radius-sm);
+        background: var(--su-bg-muted);
+        color: var(--su-text-3);
+        cursor: pointer;
+      }
 
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+      .preview img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-    .meta {
-      flex: 1;
-      min-width: 0;
-    }
+      .meta {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .title {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0 0 6px 0;
-      color: #111827;
-      line-height: 1.4;
-    }
+      .title {
+        margin: 0 0 6px;
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-sm);
+        font-weight: 600;
+        line-height: 1.4;
+      }
 
-    .meta small {
-      display: block;
-      color: #6b7280;
-      line-height: 1.6;
-    }
+      .meta small {
+        display: block;
+        color: var(--su-text-3);
+        line-height: 1.6;
+      }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-    }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
 
-    button,
-    a.button-link {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      color: #111827;
-      font-size: 12px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
+      button,
+      a.button-link {
+        padding: 6px 10px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        background: var(--su-bg-card);
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-xs);
+        cursor: pointer;
+        text-decoration: none;
+        transition: border-color 0.2s ease, color 0.2s ease;
+      }
 
-    button:hover,
-    a.button-link:hover {
-      border-color: var(--su-color-primary-hover, #2563eb);
-      color: var(--su-color-primary-hover, #2563eb);
-    }
+      button:hover,
+      a.button-link:hover {
+        border-color: var(--su-color-primary-hover);
+        color: var(--su-color-primary-hover);
+      }
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.55);
-      display: grid;
-      place-items: center;
-      z-index: 9999;
-      padding: 24px;
-    }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.55);
+      }
 
-    .overlay-content {
-      background: #fff;
-      padding: 12px;
-      border-radius: 10px;
-      max-width: min(90vw, 960px);
-      max-height: 90vh;
-      display: grid;
-      gap: 10px;
-    }
+      .overlay-content {
+        display: grid;
+        gap: 10px;
+        max-width: min(90vw, 960px);
+        max-height: 90vh;
+        padding: 12px;
+        border-radius: var(--su-radius-md);
+        background: var(--su-bg-card);
+        box-shadow: var(--su-shadow-md);
+      }
 
-    .overlay header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
+      .overlay header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
 
-    .overlay header h3 {
-      margin: 0;
-      font-size: 15px;
-    }
+      .overlay header h3 {
+        margin: 0;
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-md);
+      }
 
-    .overlay img,
-    .overlay iframe,
-    .overlay video,
-    .overlay audio {
-      max-width: 100%;
-      max-height: 72vh;
-      border-radius: 8px;
-    }
-  `;
+      .overlay img,
+      .overlay iframe,
+      .overlay video,
+      .overlay audio {
+        max-width: 100%;
+        max-height: 72vh;
+        border-radius: var(--su-radius-sm);
+      }
+    `
+];
 __decorateClass$u([
   n2({ type: String })
 ], SeAssetViewer.prototype, "src", 2);
@@ -2769,25 +2915,6 @@ __decorateClass$u([
 SeAssetViewer = __decorateClass$u([
   t$2("se-asset-viewer")
 ], SeAssetViewer);
-const baseControlStyles = i$4`
-  :host {
-    box-sizing: border-box;
-    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    color: var(--su-text-1);
-  }
-
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-`;
-const focusRingStyles = i$4`
-  :focus-visible {
-    outline: 2px solid var(--su-color-primary);
-    outline-offset: 1px;
-  }
-`;
 function parseJsonArray(value, fallback) {
   if (!value)
     return fallback;
@@ -3044,9 +3171,15 @@ SuTextarea.styles = [
         border-color: var(--su-border-color-hover);
       }
 
+      textarea:focus {
+        border-color: var(--su-color-primary);
+        box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
+        outline: none;
+      }
+
       textarea:disabled {
         color: var(--su-text-3);
-        background: #f3f4f6;
+        background: var(--su-bg-muted);
         cursor: not-allowed;
       }
     `

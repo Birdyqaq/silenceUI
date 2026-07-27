@@ -4,14 +4,13 @@ import './preview';
 
 @customElement('se-image')
 export class seImage extends LitElement {
-
   @property({ type: String }) src: string = '';
   @property({ type: String }) alt: string = '';
   @property({ type: Boolean }) lazy: boolean = false;
   @property({ type: String }) placeholder: string = '';
   @property({ type: String }) errorPlaceholder: string = '';
-  @property({ type: Number }) width: Number = 100;
-  @property({ type: Number }) height: Number = 100;
+  @property({ type: Number }) width: number = 100;
+  @property({ type: Number }) height: number = 100;
   @state() private isError: boolean = false;
   @state() private isPreviewVisible: boolean = false;
   @state() private rotation: number = 0;
@@ -59,7 +58,7 @@ export class seImage extends LitElement {
 
   firstUpdated() {
     if (this.lazy) {
-      this._observer = new IntersectionObserver(entries => {
+      this._observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
           this._isVisible = true;
           this._observer?.disconnect();
@@ -95,24 +94,28 @@ export class seImage extends LitElement {
 
   render() {
     return html`
-      <div class="image-container" style="width: ${this.width + 'px'}; height: ${this.height + 'px'};">
+      <div
+        class="image-container"
+        style="width: ${this.width + 'px'}; height: ${this.height + 'px'};"
+      >
         <img
           class="w-full h-auto block cursor-pointer"
-          src="${this.isError ? this.errorPlaceholder : (this.lazy ? this.placeholder : this.src)}"
+          src="${this.isError ? this.errorPlaceholder : this.lazy ? this.placeholder : this.src}"
           alt="${this.alt}"
           @error="${this.handleError}"
           @click="${this.handleImageClick}"
           loading="${this.lazy ? 'lazy' : 'eager'}"
         />
         <button class="preview-icon" @click="${this.handleImageClick}">预览</button>
-        ${this.isPreviewVisible ? html`
-          <se-image-preview
-            .src="${this.src}"
-            @close="${this.handleClosePreview}"
-          ></se-image-preview>
-        ` : ''}
+        ${this.isPreviewVisible
+          ? html`
+              <se-image-preview
+                .src="${this.src}"
+                @close="${this.handleClosePreview}"
+              ></se-image-preview>
+            `
+          : ''}
       </div>
     `;
   }
 }
-

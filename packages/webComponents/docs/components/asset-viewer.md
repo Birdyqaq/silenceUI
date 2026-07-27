@@ -14,7 +14,8 @@
 ```html
 <se-asset-viewer
   title="风景照片"
-  src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800">
+  src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800"
+>
 </se-asset-viewer>
 ```
 
@@ -56,18 +57,31 @@
   title="自定义封面"
   src="https://.../original.png"
   thumbnail="https://.../thumb.png"
-  id="asset-custom-thumb">
+  id="asset-custom-thumb"
+>
 </se-asset-viewer>
 
 <script type="module">
-  document.querySelector('#asset-custom-thumb').downloadable = false
+  document.querySelector('#asset-custom-thumb').downloadable = false;
 </script>
 ```
 
-## 事件
+## API
 
-| 事件名 | 说明 | 回调参数 |
-| --- | --- | --- |
+### 属性
+
+| 属性           | 说明                                            | 类型                                                  | 默认值    |
+| -------------- | ----------------------------------------------- | ----------------------------------------------------- | --------- |
+| `src`          | 资源地址                                        | `string`                                              | `''`      |
+| `thumbnail`    | 缩略图地址，仅图片类型优先使用                  | `string`                                              | `''`      |
+| `title`        | 标题；为空时显示 `src`                          | `string`                                              | `''`      |
+| `downloadable` | 是否显示下载链接，false 需通过 JS property 设置 | `boolean`                                             | `true`    |
+| `type`         | 资源类型；`unknown` 时按后缀推断                | `'image' \| 'video' \| 'audio' \| 'pdf' \| 'unknown'` | `unknown` |
+
+### 事件
+
+| 事件名     | 说明           | 回调参数                                                                     |
+| ---------- | -------------- | ---------------------------------------------------------------------------- |
 | asset-open | 开启预览时触发 | `{ src: string, type: 'image' \| 'video' \| 'audio' \| 'pdf' \| 'unknown' }` |
 
 > 预览层点击空白区域或“关闭”按钮即可退出。

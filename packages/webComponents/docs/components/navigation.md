@@ -1,36 +1,61 @@
 # 导航组件
 
-## Menu 菜单 `su-menu`
+导航组件用于后台侧边栏、路径导航、标签页、下拉操作与流程展示。列表型数据均支持 JS property 与 `itemsJson` 两种传法。
 
-后台侧边栏菜单：
+## Menu 菜单 `su-menu`
 
 ```html
 <su-menu id="menu" activeKey="dashboard"></su-menu>
-<script>
-  const menu = document.querySelector('#menu')
+
+<script type="module">
+  const menu = document.querySelector('#menu');
   menu.items = [
-    { key: 'dashboard', label: '工作台', icon: '📊' },
-    { key: 'orders', label: '订单管理', icon: '📦' },
-    { key: 'users', label: '用户管理', icon: '👥' }
-  ]
-  menu.addEventListener('select', (e) => console.log(e.detail.key))
+    { key: 'dashboard', label: '工作台', icon: 'D' },
+    { key: 'orders', label: '订单管理', icon: 'O' },
+    { key: 'users', label: '用户管理', icon: 'U' },
+  ];
+  menu.addEventListener('select', (event) => console.log(event.detail.key));
 </script>
 ```
+
+| 属性        | 说明                            | 类型         | 默认值  |
+| ----------- | ------------------------------- | ------------ | ------- |
+| `items`     | 菜单项，需通过 JS property 设置 | `MenuItem[]` | `[]`    |
+| `itemsJson` | 菜单项 JSON 字符串              | `string`     | `''`    |
+| `activeKey` | 当前激活项 key                  | `string`     | `''`    |
+| `collapsed` | 是否收起，仅显示 icon           | `boolean`    | `false` |
+
+事件：`select`，detail 直接是当前 `MenuItem`。
+
+`MenuItem`：
+
+| 字段    | 说明         | 类型     |
+| ------- | ------------ | -------- |
+| `key`   | 唯一标识     | `string` |
+| `label` | 文案         | `string` |
+| `icon`  | 可选图标文本 | `string` |
 
 ## Breadcrumb 面包屑 `su-breadcrumb`
 
 ```html
 <su-breadcrumb id="crumb" separator="/"></su-breadcrumb>
-<script>
+
+<script type="module">
   document.querySelector('#crumb').items = [
     { label: '首页', key: 'home' },
     { label: '订单管理', key: 'orders' },
-    { label: '订单详情' }
-  ]
+    { label: '订单详情' },
+  ];
 </script>
 ```
 
-事件：`navigate` → `{ item, index }`
+| 属性        | 说明                              | 类型               | 默认值 |
+| ----------- | --------------------------------- | ------------------ | ------ |
+| `items`     | 面包屑项，需通过 JS property 设置 | `BreadcrumbItem[]` | `[]`   |
+| `itemsJson` | 面包屑项 JSON 字符串              | `string`           | `''`   |
+| `separator` | 分隔符                            | `string`           | `/`    |
+
+事件：`navigate`，detail 为 `{ item: BreadcrumbItem, index: number }`。
 
 ## Tabs 标签页 `su-tabs`
 
@@ -41,47 +66,80 @@
   <div slot="basic">基本信息面板</div>
   <div slot="logs">操作日志面板</div>
 </su-tabs>
-<script>
-  const tabs = document.querySelector('#tabs')
+
+<script type="module">
+  const tabs = document.querySelector('#tabs');
   tabs.items = [
     { key: 'basic', label: '基本信息' },
     { key: 'logs', label: '操作日志' },
-    { key: 'other', label: '其他', disabled: true }
-  ]
-  tabs.addEventListener('change', (e) => console.log(e.detail.key))
+    { key: 'other', label: '其他', disabled: true },
+  ];
+  tabs.addEventListener('change', (event) => console.log(event.detail.key));
 </script>
 ```
+
+| 属性        | 说明                            | 类型        | 默认值 |
+| ----------- | ------------------------------- | ----------- | ------ |
+| `items`     | 标签项，需通过 JS property 设置 | `TabItem[]` | `[]`   |
+| `itemsJson` | 标签项 JSON 字符串              | `string`    | `''`   |
+| `activeKey` | 当前激活 key；为空时默认第一项  | `string`    | `''`   |
+
+事件：`change`，detail 为 `{ key: string, item: TabItem }`。
 
 ## Dropdown 下拉菜单 `su-dropdown`
 
 ```html
 <su-dropdown id="actions">
-  <su-button>操作 ▾</su-button>
+  <su-button>操作</su-button>
 </su-dropdown>
-<script>
-  const dropdown = document.querySelector('#actions')
+
+<script type="module">
+  const dropdown = document.querySelector('#actions');
   dropdown.items = [
     { key: 'edit', label: '编辑' },
     { key: 'copy', label: '复制' },
-    { key: 'delete', label: '删除', danger: true }
-  ]
-  dropdown.addEventListener('select', (e) => console.log(e.detail.key))
+    { key: 'delete', label: '删除', danger: true },
+  ];
+  dropdown.addEventListener('select', (event) => console.log(event.detail.key));
 </script>
 ```
 
 点击触发器展开，点击外部区域自动收起。
 
+| 属性        | 说明                            | 类型             | 默认值 |
+| ----------- | ------------------------------- | ---------------- | ------ |
+| `items`     | 下拉项，需通过 JS property 设置 | `DropdownItem[]` | `[]`   |
+| `itemsJson` | 下拉项 JSON 字符串              | `string`         | `''`   |
+
+事件：`select`，detail 为 `{ key: string, item: DropdownItem }`。
+
 ## Steps 步骤条 `su-steps`
 
 ```html
 <su-steps id="steps" current="1"></su-steps>
-<script>
+
+<script type="module">
   document.querySelector('#steps').items = [
     { title: '填写信息', description: '基础资料' },
     { title: '确认订单' },
-    { title: '完成' }
-  ]
+    { title: '完成' },
+  ];
 </script>
 ```
 
-`current` 为当前步骤下标（从 0 开始），之前的步骤显示为已完成（✓）。
+`current` 为当前步骤下标，从 0 开始；之前的步骤显示为已完成。
+
+| 属性        | 说明                            | 类型         | 默认值 |
+| ----------- | ------------------------------- | ------------ | ------ |
+| `items`     | 步骤项，需通过 JS property 设置 | `StepItem[]` | `[]`   |
+| `itemsJson` | 步骤项 JSON 字符串              | `string`     | `''`   |
+| `current`   | 当前步骤下标                    | `number`     | `0`    |
+
+## 类型汇总
+
+| 类型             | 字段                                                                   |
+| ---------------- | ---------------------------------------------------------------------- |
+| `BreadcrumbItem` | `{ label: string; key?: string }`                                      |
+| `TabItem`        | `{ key: string; label: string; disabled?: boolean }`                   |
+| `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }` |
+| `StepItem`       | `{ title: string; description?: string }`                              |

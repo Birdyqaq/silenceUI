@@ -6,8 +6,8 @@ export declare class seImage extends LitElement {
     lazy: boolean;
     placeholder: string;
     errorPlaceholder: string;
-    width: Number;
-    height: Number;
+    width: number;
+    height: number;
     private isError;
     private isPreviewVisible;
     private rotation;

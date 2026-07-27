@@ -14,14 +14,20 @@ export class SuExample extends LitElement {
   @property({ type: String }) value = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
 
-  static styles = [baseControlStyles, focusRingStyles, css`/* ... */`];
+  static styles = [
+    baseControlStyles,
+    focusRingStyles,
+    css`
+      /* ... */
+    `,
+  ];
 
   private emitChange() {
     this.dispatchEvent(
       new CustomEvent('change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -41,6 +47,8 @@ export class SuExample extends LitElement {
 5. **生命周期清理**：在 `connectedCallback` 注册的全局监听，必须在 `disconnectedCallback` 移除。
 6. **共享能力**：基础字体/盒模型用 `baseControlStyles`，可聚焦控件叠加 `focusRingStyles`。
 7. **目录**：按 `form` / `data` / `navigation` / `feedback` / `layout` 归类，并在 `index.ts` 同步 import + export。
+8. **布尔属性**：文档示例不能写 `disabled="false"` 这类用法；需要 false 时用 JS property。
+9. **类型入口**：新导出的公共 API 要能从 `index.ts` 追踪到 `dist/index.d.ts`。
 
 ## 建议遵守
 
@@ -58,6 +66,7 @@ export class SuExample extends LitElement {
 ## 提交前检查
 
 ```bash
+npx tsc -p tsconfig.json --noEmit
 pnpm build
 pnpm test -- --run
 pnpm docs:build

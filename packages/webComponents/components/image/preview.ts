@@ -3,11 +3,10 @@ import { customElement, property, state } from 'lit/decorators.js';
 
 @customElement('se-image-preview')
 export class seImagePreview extends LitElement {
+  @property({ type: String }) src: string = '';
+  @state() private rotation: number = 0;
 
-    @property({ type: String }) src: string = '';
-    @state() private rotation: number = 0;
-
-    static styles = css`
+  static styles = css`
     import 'uno.css';
     @unocss-placeholder;
 
@@ -29,21 +28,21 @@ export class seImagePreview extends LitElement {
     }
   `;
 
-    handleClose() {
-        this.dispatchEvent(new CustomEvent('close'));
-    }
+  handleClose() {
+    this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+  }
 
-    handleRotate() {
-        this.rotation = (this.rotation + 90) % 360;
-    }
+  handleRotate() {
+    this.rotation = (this.rotation + 90) % 360;
+  }
 
-    render() {
-        return html`
+  render() {
+    return html`
       <div class="preview">
         <img src="${this.src}" style="--rotation: ${this.rotation}deg;" />
         <button class="close-btn" @click="${this.handleClose}">关闭</button>
         <button class="rotate-btn" @click="${this.handleRotate}">旋转</button>
       </div>
     `;
-    }
+  }
 }

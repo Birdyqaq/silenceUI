@@ -4,14 +4,10 @@
     "jsx": "preserve",
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "useDefineForClassFields": false,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "allowJs": false,
     "strict": true,
@@ -19,12 +15,16 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
-    "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "skipLibCheck": false
   },
-  "include": [
-    "components/**/*.ts"
+  "include": ["index.ts", "global.d.ts", "components/**/*.ts", "utils/theme.ts"],
+  "exclude": [
+    "components/**/*.test.ts",
+    "components/**/*.stories.ts",
+    "dist",
+    "docs/.vitepress/cache",
+    "docs/.vitepress/dist"
   ]
 }

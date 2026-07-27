@@ -64,7 +64,7 @@
     <div style="display: flex; gap: 16px; align-items: center;">
       <su-button type="warning" ripple="true">Warning 默认水波纹</su-button>
       <su-button type="danger" ripple="true">Danger 默认水波纹</su-button>
-      <su-button type="primary" ripple="false">禁用水波纹</su-button>
+      <su-button type="primary" :ripple="false">禁用水波纹</su-button>
     </div>
     <div style="display: flex; gap: 16px; align-items: center;">
       <su-button type="primary" ripple-color="rgba(255, 0, 0, 0.4)">红色水波纹</su-button>
@@ -80,7 +80,11 @@
 <su-button type="secondary" ripple="true">Secondary 默认水波纹</su-button>
 
 <!-- 禁用水波纹 -->
-<su-button type="primary" ripple="false">禁用水波纹</su-button>
+<su-button id="no-ripple-button" type="primary">禁用水波纹</su-button>
+
+<script type="module">
+  document.querySelector('#no-ripple-button').ripple = false;
+</script>
 
 <!-- 自定义水波纹颜色 -->
 <su-button type="primary" ripple-color="rgba(255, 0, 0, 0.4)">红色水波纹</su-button>
@@ -91,15 +95,18 @@
 
 ### 属性
 
-| 属性 | 说明 | 类型 | 默认值 |
-| --- | --- | --- | --- |
-| type | 按钮类型 | `primary` \| `secondary` \| `success` \| `warning` \| `danger` | `primary` |
-| size | 按钮尺寸 | `small` \| `medium` \| `large` | `medium` |
-| disabled | 是否禁用 | `boolean` | `false` |
-| loading | 是否加载中 | `boolean` | `false` |
-| ripple | 是否启用水波纹效果 | `boolean` | `true` |
-| ripple-color | 水波纹颜色 | `string` | `rgba(255, 255, 255, 0.3)` |
-| icon-class | 图标类名 | `string` | - |
-| icon-position | 图标位置 | `left` \| `right` | `left` |
-| block | 是否占满父容器宽度 | `boolean` | `false` |
-| round | 是否使用胶囊圆角 | `boolean` | `false` |
+| 属性          | 说明                 | 类型                                                                                                    | 默认值                     |
+| ------------- | -------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------- |
+| type          | 按钮类型             | `primary` \| `secondary` \| `success` \| `warning` \| `danger` \| `info` \| `light` \| `dark` \| `link` | `primary`                  |
+| size          | 按钮尺寸             | `small` \| `medium` \| `large`                                                                          | `medium`                   |
+| disabled      | 是否禁用             | `boolean`                                                                                               | `false`                    |
+| loading       | 是否加载中           | `boolean`                                                                                               | `false`                    |
+| ripple        | 是否启用水波纹效果   | `boolean`                                                                                               | `true`                     |
+| ripple-color  | 水波纹颜色           | `string`                                                                                                | `rgba(255, 255, 255, 0.3)` |
+| icon-class    | 图标类名             | `string`                                                                                                | -                          |
+| icon-position | 图标位置             | `left` \| `right`                                                                                       | `left`                     |
+| block         | 是否占满父容器宽度   | `boolean`                                                                                               | `false`                    |
+| round         | 是否使用胶囊圆角     | `boolean`                                                                                               | `false`                    |
+| nativeType    | 内部原生 button 类型 | `button` \| `submit` \| `reset`                                                                         | `button`                   |
+
+布尔属性遵循 HTML 语义，禁用水波纹请通过 JS property 设置：`button.ripple = false`。
