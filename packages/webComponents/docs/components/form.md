@@ -2,6 +2,20 @@
 
 表单组件以原生控件行为为基础，统一使用主题 token、焦点样式和 `CustomEvent`。复杂选项通过 DOM property 赋值；纯 HTML 场景可使用 `optionsJson`。
 
+所有控件设置 `name` 后都能参与外层原生 `<form>` 提交，并支持 `form.reset()`。复选框和开关仅在选中时提交其 `value`。
+
+<ClientOnly>
+  <FormDemo />
+</ClientOnly>
+
+```html
+<form id="settings">
+  <su-input name="keyword" value="Lit"></su-input>
+  <su-switch name="enabled" value="yes"></su-switch>
+  <su-button native-type="submit">保存</su-button>
+</form>
+```
+
 ## Select 选择器 `su-select`
 
 ```html
@@ -30,6 +44,7 @@
 | `options`     | 选项，需通过 JS property 设置 | `SelectOption[]` | `[]`     |
 | `optionsJson` | 选项 JSON 字符串              | `string`         | `''`     |
 | `value`       | 当前值                        | `string`         | `''`     |
+| `name`        | 表单字段名                    | `string`         | `''`     |
 | `placeholder` | 占位提示                      | `string`         | `请选择` |
 | `disabled`    | 是否禁用                      | `boolean`        | `false`  |
 
@@ -51,13 +66,14 @@
 
 输入或点击按钮时会按 `min` / `max` 裁剪最终值。
 
-| 属性       | 说明     | 类型      | 默认值                    |
-| ---------- | -------- | --------- | ------------------------- |
-| `value`    | 当前值   | `number`  | `0`                       |
-| `min`      | 最小值   | `number`  | `Number.MIN_SAFE_INTEGER` |
-| `max`      | 最大值   | `number`  | `Number.MAX_SAFE_INTEGER` |
-| `step`     | 步进     | `number`  | `1`                       |
-| `disabled` | 是否禁用 | `boolean` | `false`                   |
+| 属性       | 说明       | 类型      | 默认值                    |
+| ---------- | ---------- | --------- | ------------------------- |
+| `value`    | 当前值     | `number`  | `0`                       |
+| `name`     | 表单字段名 | `string`  | `''`                      |
+| `min`      | 最小值     | `number`  | `Number.MIN_SAFE_INTEGER` |
+| `max`      | 最大值     | `number`  | `Number.MAX_SAFE_INTEGER` |
+| `step`     | 步进       | `number`  | `1`                       |
+| `disabled` | 是否禁用   | `boolean` | `false`                   |
 
 事件：`change`，detail 为 `{ value: number }`。
 
@@ -67,11 +83,13 @@
 <su-checkbox label="记住我" checked></su-checkbox>
 ```
 
-| 属性       | 说明                              | 类型      | 默认值  |
-| ---------- | --------------------------------- | --------- | ------- |
-| `checked`  | 是否选中，会 reflect 到 attribute | `boolean` | `false` |
-| `disabled` | 是否禁用                          | `boolean` | `false` |
-| `label`    | 文案                              | `string`  | `''`    |
+| 属性       | 说明           | 类型      | 默认值  |
+| ---------- | -------------- | --------- | ------- |
+| `checked`  | 是否选中       | `boolean` | `false` |
+| `disabled` | 是否禁用       | `boolean` | `false` |
+| `name`     | 表单字段名     | `string`  | `''`    |
+| `value`    | 选中时提交的值 | `string`  | `on`    |
+| `label`    | 文案           | `string`  | `''`    |
 
 事件：`change`，detail 为 `{ checked: boolean }`。
 
@@ -94,7 +112,8 @@
 | `options`     | 单选项，需通过 JS property 设置 | `RadioOption[]` | `[]`     |
 | `optionsJson` | 单选项 JSON 字符串              | `string`        | `''`     |
 | `value`       | 当前值                          | `string`        | `''`     |
-| `name`        | 内部 radio name                 | `string`        | 随机生成 |
+| `name`        | 表单字段名及内部 radio name     | `string`        | 随机生成 |
+| `disabled`    | 是否禁用整个单选组              | `boolean`       | `false`  |
 
 事件：`change`，detail 为 `{ value: string }`。
 
@@ -104,10 +123,12 @@
 <su-switch checked></su-switch>
 ```
 
-| 属性       | 说明                              | 类型      | 默认值  |
-| ---------- | --------------------------------- | --------- | ------- |
-| `checked`  | 是否开启，会 reflect 到 attribute | `boolean` | `false` |
-| `disabled` | 是否禁用                          | `boolean` | `false` |
+| 属性       | 说明           | 类型      | 默认值  |
+| ---------- | -------------- | --------- | ------- |
+| `checked`  | 是否开启       | `boolean` | `false` |
+| `disabled` | 是否禁用       | `boolean` | `false` |
+| `name`     | 表单字段名     | `string`  | `''`    |
+| `value`    | 开启时提交的值 | `string`  | `on`    |
 
 事件：`change`，detail 为 `{ checked: boolean }`。
 
@@ -117,12 +138,14 @@
 <su-textarea placeholder="请输入备注" rows="4"></su-textarea>
 ```
 
-| 属性          | 说明     | 类型      | 默认值   |
-| ------------- | -------- | --------- | -------- |
-| `value`       | 当前值   | `string`  | `''`     |
-| `placeholder` | 占位提示 | `string`  | `请输入` |
-| `rows`        | 行数     | `number`  | `4`      |
-| `disabled`    | 是否禁用 | `boolean` | `false`  |
+| 属性          | 说明       | 类型      | 默认值   |
+| ------------- | ---------- | --------- | -------- |
+| `value`       | 当前值     | `string`  | `''`     |
+| `name`        | 表单字段名 | `string`  | `''`     |
+| `placeholder` | 占位提示   | `string`  | `请输入` |
+| `rows`        | 行数       | `number`  | `4`      |
+| `disabled`    | 是否禁用   | `boolean` | `false`  |
+| `readonly`    | 是否只读   | `boolean` | `false`  |
 
 事件：`input-change`，detail 为 `{ value: string }`。
 

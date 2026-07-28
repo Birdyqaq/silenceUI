@@ -1,6 +1,8 @@
 import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
+export * from './types';
+
 // 恢复持久化的主题模式与自定义颜色
 initTheme();
 

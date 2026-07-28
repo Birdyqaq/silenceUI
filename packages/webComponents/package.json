@@ -5,6 +5,11 @@
   "author": "wuzheng001 <1962443189@qq.com>",
   "homepage": "https://github.com/Birdyqaq/silenceUI#readme",
   "license": "ISC",
+  "packageManager": "pnpm@8.15.9",
+  "engines": {
+    "node": ">=22.17.1 <23",
+    "pnpm": "8.15.9"
+  },
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,6 +38,7 @@
   },
   "scripts": {
     "test": "vitest",
+    "test:run": "vitest --run",
     "test:ui": "vitest --ui",
     "dev": "vite",
     "build": "vite build",
@@ -40,6 +46,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "lint": "eslint . --ext .ts,.js,.vue",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:dist": "tsc -p type-tests/tsconfig.json --noEmit",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p type-tests/tsconfig.json --noEmit && eslint . --ext .ts,.js,.vue && vitest --run && vite build && vitepress build docs",
     "format": "prettier --write \"**/*.{js,ts,vue,json,md}\""
   },
   "bugs": {
@@ -50,6 +59,8 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "@unocss/preset-icons": "^66.2.3",
     "@unocss/preset-uno": "^66.2.3",
     "@unocss/vite": "^66.2.3",
@@ -68,8 +79,8 @@
     "vite": "^4.5.0",
     "vite-plugin-dts": "^3.8.1",
     "vite-plugin-node-polyfills": "^0.22.0",
-    "vitest": "^3.2.4",
     "vitepress": "^1.0.0",
+    "vitest": "^1.6.1",
     "vue": "^3.4.0"
   },
   "dependencies": {

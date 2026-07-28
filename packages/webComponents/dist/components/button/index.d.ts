@@ -15,7 +15,10 @@ export declare class SuButton extends LitElement {
     round: boolean;
     /** 原生 button 的 type，表单场景可设为 submit / reset */
     nativeType: 'button' | 'submit' | 'reset';
+    static get observedAttributes(): string[];
+    attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     private get isInactive();
+    private get resolvedNativeType();
     private handleClick;
     private renderIcon;
     render(): import('lit').TemplateResult<1>;

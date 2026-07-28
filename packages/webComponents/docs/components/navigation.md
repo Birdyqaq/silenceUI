@@ -61,6 +61,15 @@
 
 面板内容通过 slot 传入，slot 名对应 tab 的 `key`：
 
+<ClientOnly>
+  <su-tabs
+    activeKey="basic"
+    itemsJson='[{"key":"basic","label":"基本信息"},{"key":"logs","label":"操作日志"},{"key":"other","label":"其他","disabled":true}]'>
+    <div slot="basic">基本信息面板</div>
+    <div slot="logs">操作日志面板</div>
+  </su-tabs>
+</ClientOnly>
+
 ```html
 <su-tabs id="tabs" activeKey="basic">
   <div slot="basic">基本信息面板</div>
@@ -86,7 +95,16 @@
 
 事件：`change`，detail 为 `{ key: string, item: TabItem }`。
 
+键盘操作：`ArrowLeft` / `ArrowRight` 循环切换可用标签，`Home` / `End` 跳到首个 / 最后一个可用标签。组件使用 roving tabindex，并为 tab 与 panel 建立 ARIA 关联。
+
 ## Dropdown 下拉菜单 `su-dropdown`
+
+<ClientOnly>
+  <su-dropdown
+    itemsJson='[{"key":"edit","label":"编辑"},{"key":"copy","label":"复制"},{"key":"delete","label":"删除","danger":true}]'>
+    <su-button>操作</su-button>
+  </su-dropdown>
+</ClientOnly>
 
 ```html
 <su-dropdown id="actions">
@@ -104,14 +122,18 @@
 </script>
 ```
 
-点击触发器展开，点击外部区域自动收起。
+点击触发器展开，点击外部区域自动收起。触发器应是可聚焦元素；若传入纯文本，组件会自动为触发区域补充键盘焦点。
 
-| 属性        | 说明                            | 类型             | 默认值 |
-| ----------- | ------------------------------- | ---------------- | ------ |
-| `items`     | 下拉项，需通过 JS property 设置 | `DropdownItem[]` | `[]`   |
-| `itemsJson` | 下拉项 JSON 字符串              | `string`         | `''`   |
+| 属性        | 说明                            | 类型             | 默认值  |
+| ----------- | ------------------------------- | ---------------- | ------- |
+| `items`     | 下拉项，需通过 JS property 设置 | `DropdownItem[]` | `[]`    |
+| `itemsJson` | 下拉项 JSON 字符串              | `string`         | `''`    |
+| `open`      | 是否展开，可用于受控场景        | `boolean`        | `false` |
+| `disabled`  | 是否禁用                        | `boolean`        | `false` |
 
 事件：`select`，detail 为 `{ key: string, item: DropdownItem }`。
+
+键盘操作：`ArrowDown` 打开并聚焦第一项；菜单内支持 `ArrowUp` / `ArrowDown`、`Home` / `End`；`Escape` 收起并把焦点还给触发器。
 
 ## Steps 步骤条 `su-steps`
 

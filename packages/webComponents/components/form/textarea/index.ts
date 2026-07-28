@@ -1,13 +1,23 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 @customElement('su-textarea')
 export class SuTextarea extends LitElement {
+  static formAssociated = true;
+
   @property({ type: String }) value = '';
+  @property({ type: String }) name = '';
   @property({ type: String }) placeholder = '请输入';
   @property({ type: Number }) rows = 4;
-  @property({ type: Boolean }) disabled = false;
+  @property({ type: Boolean, reflect: true }) disabled = false;
+  @property({ type: Boolean }) readonly = false;
+
+  private defaultValue = '';
+  private readonly formValue = new FormValueController(this, () =>
+    this.disabled ? null : this.value
+  );
 
   static styles = [
     baseControlStyles,
@@ -43,7 +53,7 @@ export class SuTextarea extends LitElement {
         background: var(--su-bg-muted);
         cursor: not-allowed;
       }
-    `
+    `,
   ];
 
   private handleInput(event: Event) {
@@ -52,9 +62,25 @@ export class SuTextarea extends LitElement {
       new CustomEvent('input-change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
+  }
+
+  firstUpdated() {
+    this.defaultValue = this.value;
+  }
+
+  formResetCallback() {
+    this.value = this.defaultValue;
+  }
+
+  formStateRestoreCallback(state: string | File | FormData | null) {
+    if (typeof state === 'string') this.value = state;
+  }
+
+  focus(options?: FocusOptions) {
+    this.shadowRoot?.querySelector('textarea')?.focus(options);
   }
 
   render() {
@@ -64,7 +90,9 @@ export class SuTextarea extends LitElement {
         placeholder=${this.placeholder}
         rows=${this.rows}
         ?disabled=${this.disabled}
-        @input=${this.handleInput}></textarea>
+        ?readonly=${this.readonly}
+        @input=${this.handleInput}
+      ></textarea>
     `;
   }
 }

@@ -25,7 +25,11 @@ describe('SuButton', () => {
     button.textContent = 'Click Me';
     await button.updateComplete;
     const slot = button.shadowRoot?.querySelector('slot');
-    const assigned = slot?.assignedNodes().map((n) => n.textContent).join('') ?? '';
+    const assigned =
+      slot
+        ?.assignedNodes()
+        .map((n) => n.textContent)
+        .join('') ?? '';
     expect(assigned).toContain('Click Me');
   });
 
@@ -46,6 +50,43 @@ describe('SuButton', () => {
     expect(btn?.getAttribute('aria-busy')).toBe('true');
     expect(button.shadowRoot?.querySelector('.spinner')).toBeTruthy();
     expect(button.shadowRoot?.querySelector('slot')).toBeTruthy();
+  });
+
+  it('supports native-type and the legacy nativetype attribute', async () => {
+    if (!button) return;
+    button.setAttribute('nativetype', 'submit');
+    await button.updateComplete;
+    expect(button.nativeType).toBe('submit');
+
+    button.setAttribute('native-type', 'reset');
+    await button.updateComplete;
+    expect(button.nativeType).toBe('reset');
+  });
+
+  it('submits and resets the closest form', async () => {
+    if (!button) return;
+    const form = document.createElement('form');
+    document.body.append(form);
+    form.append(button);
+    button.nativeType = 'submit';
+    await button.updateComplete;
+
+    let submitted = false;
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitted = true;
+    });
+    button.shadowRoot?.querySelector('button')?.click();
+    expect(submitted).toBe(true);
+
+    let reset = false;
+    form.addEventListener('reset', () => {
+      reset = true;
+    });
+    button.nativeType = 'reset';
+    await button.updateComplete;
+    button.shadowRoot?.querySelector('button')?.click();
+    expect(reset).toBe(true);
   });
 
   it('should emit click event when active', async () => {

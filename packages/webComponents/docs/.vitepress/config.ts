@@ -6,6 +6,14 @@ export default defineConfig({
   base: '/silenceUI/',
   appearance: true, // 启用深色模式切换
 
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+      },
+    },
+  },
+
   vite: {
     define: {
       global: 'globalThis',

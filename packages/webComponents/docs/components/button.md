@@ -107,6 +107,18 @@
 | icon-position | 图标位置             | `left` \| `right`                                                                                       | `left`                     |
 | block         | 是否占满父容器宽度   | `boolean`                                                                                               | `false`                    |
 | round         | 是否使用胶囊圆角     | `boolean`                                                                                               | `false`                    |
-| nativeType    | 内部原生 button 类型 | `button` \| `submit` \| `reset`                                                                         | `button`                   |
+| native-type   | 内部原生 button 类型 | `button` \| `submit` \| `reset`                                                                         | `button`                   |
 
 布尔属性遵循 HTML 语义，禁用水波纹请通过 JS property 设置：`button.ripple = false`。
+
+## 表单按钮
+
+HTML 使用 `native-type="submit"` / `native-type="reset"`；JavaScript 对应 property 为 `button.nativeType`。它会作用于组件所在的最近一层原生 `<form>`，包括组件嵌套在其他 Shadow DOM 中的场景。
+
+```html
+<form>
+  <su-input name="title"></su-input>
+  <su-button native-type="reset" type="secondary">重置</su-button>
+  <su-button native-type="submit">提交</su-button>
+</form>
+```

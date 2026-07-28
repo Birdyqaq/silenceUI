@@ -1,18 +1,27 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { FormValueController } from '../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../_shared/styles';
 
 @customElement('su-input')
-export class SeInput extends LitElement {
+export class SuInput extends LitElement {
+  static formAssociated = true;
+
   @property({ type: String }) value = '';
+  @property({ type: String }) name = '';
   @property({ type: String }) placeholder = '请输入';
-  @property({ type: Boolean }) disabled = false;
+  @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: String }) type = 'text';
   @property({ type: Boolean }) readonly = false;
   @property({ type: Boolean }) error = false;
   @property({ type: String }) label = '';
   @property({ type: String }) helperText = '';
   @property({ type: Boolean }) clearable = false;
+
+  private defaultValue = '';
+  private readonly formValue = new FormValueController(this, () =>
+    this.disabled ? null : this.value
+  );
 
   static styles = [
     baseControlStyles,
@@ -104,7 +113,7 @@ export class SeInput extends LitElement {
       .helper-text.error {
         color: var(--su-color-error);
       }
-    `
+    `,
   ];
 
   private emitChange() {
@@ -112,7 +121,7 @@ export class SeInput extends LitElement {
       new CustomEvent('input-change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -127,7 +136,24 @@ export class SeInput extends LitElement {
     if (this.disabled || this.readonly) return;
     this.value = '';
     this.emitChange();
+    this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     this.shadowRoot?.querySelector('input')?.focus();
+  }
+
+  firstUpdated() {
+    this.defaultValue = this.value;
+  }
+
+  formResetCallback() {
+    this.value = this.defaultValue;
+  }
+
+  formStateRestoreCallback(state: string | File | FormData | null) {
+    if (typeof state === 'string') this.value = state;
+  }
+
+  focus(options?: FocusOptions) {
+    this.shadowRoot?.querySelector('input')?.focus(options);
   }
 
   render() {
@@ -148,7 +174,14 @@ export class SeInput extends LitElement {
             aria-readonly=${this.readonly ? 'true' : 'false'}
           />
           ${this.clearable && this.value
-            ? html`<button class="clear-btn" type="button" aria-label="清空" @click=${this.handleClear}>✕</button>`
+            ? html`<button
+                class="clear-btn"
+                type="button"
+                aria-label="清空"
+                @click=${this.handleClear}
+              >
+                ✕
+              </button>`
             : ''}
         </div>
         ${this.helperText
@@ -158,3 +191,6 @@ export class SeInput extends LitElement {
     `;
   }
 }
+
+/** @deprecated Use SuInput. */
+export { SuInput as SeInput };

@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { baseControlStyles } from '../../_shared/styles';
+import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
 interface TabItem {
@@ -8,6 +8,8 @@ interface TabItem {
   label: string;
   disabled?: boolean;
 }
+
+let tabsInstanceId = 0;
 
 /**
  * 标签页。面板内容通过 slot 传入，slot 名与 tab 的 key 对应：
@@ -19,8 +21,11 @@ export class SuTabs extends LitElement {
   @property({ type: String }) itemsJson = '';
   @property({ type: String }) activeKey = '';
 
+  private readonly idPrefix = `su-tabs-${++tabsInstanceId}`;
+
   static styles = [
     baseControlStyles,
+    focusRingStyles,
     css`
       :host {
         display: block;
@@ -63,7 +68,7 @@ export class SuTabs extends LitElement {
       .panel {
         padding: 14px 0;
       }
-    `
+    `,
   ];
 
   private get mergedItems() {
@@ -72,7 +77,10 @@ export class SuTabs extends LitElement {
   }
 
   private get currentKey() {
-    return this.activeKey || this.mergedItems[0]?.key || '';
+    const enabledItems = this.mergedItems.filter((item) => !item.disabled);
+    return (
+      enabledItems.find((item) => item.key === this.activeKey)?.key ?? enabledItems[0]?.key ?? ''
+    );
   }
 
   private onSelect(item: TabItem) {
@@ -82,30 +90,71 @@ export class SuTabs extends LitElement {
       new CustomEvent('change', {
         detail: { key: item.key, item },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
 
+  private onKeyDown(event: KeyboardEvent) {
+    const items = this.mergedItems.filter((item) => !item.disabled);
+    if (items.length === 0) return;
+
+    const currentIndex = Math.max(
+      0,
+      items.findIndex((item) => item.key === this.currentKey)
+    );
+    let nextIndex = currentIndex;
+
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % items.length;
+    else if (event.key === 'ArrowLeft')
+      nextIndex = (currentIndex - 1 + items.length) % items.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = items.length - 1;
+    else return;
+
+    event.preventDefault();
+    const nextItem = items[nextIndex];
+    this.onSelect(nextItem);
+    void this.updateComplete.then(() => {
+      const button = Array.from(
+        this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.tab') ?? []
+      ).find((item) => item.dataset.key === nextItem.key);
+      button?.focus();
+    });
+  }
+
   render() {
     const current = this.currentKey;
+    const currentIndex = this.mergedItems.findIndex((item) => item.key === current);
+    const panelId = `${this.idPrefix}-panel`;
+
     return html`
-      <div class="nav" role="tablist">
+      <div class="nav" role="tablist" @keydown=${this.onKeyDown}>
         ${this.mergedItems.map(
-          (item) => html`
+          (item, index) => html`
             <button
+              id=${`${this.idPrefix}-tab-${index}`}
+              data-key=${item.key}
               type="button"
               role="tab"
               aria-selected=${item.key === current ? 'true' : 'false'}
+              aria-controls=${panelId}
+              tabindex=${item.key === current ? 0 : -1}
               class="tab ${item.key === current ? 'active' : ''}"
               ?disabled=${Boolean(item.disabled)}
-              @click=${() => this.onSelect(item)}>
+              @click=${() => this.onSelect(item)}
+            >
               ${item.label}
             </button>
           `
         )}
       </div>
-      <div class="panel" role="tabpanel">
+      <div
+        id=${panelId}
+        class="panel"
+        role="tabpanel"
+        aria-labelledby=${currentIndex >= 0 ? `${this.idPrefix}-tab-${currentIndex}` : ''}
+      >
         <slot name=${current}></slot>
         <slot></slot>
       </div>

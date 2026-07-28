@@ -19,7 +19,7 @@
     "isolatedModules": true,
     "skipLibCheck": false
   },
-  "include": ["index.ts", "global.d.ts", "components/**/*.ts", "utils/theme.ts"],
+  "include": ["index.ts", "types.ts", "global.d.ts", "components/**/*.ts", "utils/theme.ts"],
   "exclude": [
     "components/**/*.test.ts",
     "components/**/*.stories.ts",

@@ -149,6 +149,8 @@ message.error('请求失败', 5000);
 - 数组、对象、函数通过 DOM property 赋值：`table.columns = [...]`
 - 纯 HTML 场景可用 `itemsJson` / `optionsJson` 传 JSON 字符串
 - 自定义事件使用 `CustomEvent`，业务数据放在 `event.detail`
+- 表单控件设置 `name` 后会进入原生 `FormData`，并支持 `form.reset()`
+- 包内置 `HTMLElementTagNameMap`，原生 TypeScript 可推断组件实例类型
 
 ## 主题系统
 
@@ -199,19 +201,27 @@ resetThemeColors(); // 恢复默认
 
 ## 开发
 
+仓库开发工具链固定为 Node.js `22.17.1` 与 pnpm `8.15.9`。首次进入仓库时执行：
+
 ```bash
+nvm use
+corepack enable
 cd packages/webComponents
+pnpm install --frozen-lockfile
+```
+
+```bash
 pnpm dev
 pnpm build
-pnpm test -- --run
+pnpm test:run
+pnpm lint
+pnpm typecheck
+pnpm typecheck:dist
 pnpm docs:dev
 ```
 
 提交前建议执行：
 
 ```bash
-npx tsc -p tsconfig.json --noEmit
-pnpm test -- --run
-pnpm build
-pnpm docs:build
+pnpm check
 ```

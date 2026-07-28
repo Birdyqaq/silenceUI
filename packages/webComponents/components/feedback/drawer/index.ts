@@ -1,5 +1,15 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import {
+  focusFirstElement,
+  getDeepActiveElement,
+  isTopOverlay,
+  lockBodyScroll,
+  registerOverlay,
+  trapFocus,
+  unregisterOverlay,
+  unlockBodyScroll,
+} from '../../_shared/overlay';
 import { baseControlStyles } from '../../_shared/styles';
 
 @customElement('su-drawer')
@@ -10,9 +20,18 @@ export class SuDrawer extends LitElement {
   @property({ type: Boolean }) maskClosable = true;
   @property({ type: String, reflect: true }) placement: 'left' | 'right' = 'right';
 
+  private overlayActive = false;
+  private previouslyFocused: HTMLElement | null = null;
+
   private onKeydown = (event: KeyboardEvent) => {
+    if (!this.open || !isTopOverlay(this)) return;
+
+    const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (panel) trapFocus(event, panel);
+
     if (event.key === 'Escape' && this.open && this.maskClosable) {
-      this.close('close');
+      event.preventDefault();
+      this.close('escape');
     }
   };
 
@@ -24,6 +43,7 @@ export class SuDrawer extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('keydown', this.onKeydown);
+    this.deactivateOverlay(false);
   }
 
   static styles = [
@@ -45,7 +65,7 @@ export class SuDrawer extends LitElement {
         top: 0;
         right: 0;
         bottom: 0;
-        width: var(--drawer-width, 360px);
+        width: min(var(--drawer-width, 360px), 100vw);
         background: var(--su-bg-card);
         box-shadow: -8px 0 24px rgba(15, 23, 42, 0.14);
         display: flex;
@@ -78,21 +98,22 @@ export class SuDrawer extends LitElement {
         background: transparent;
         cursor: pointer;
         color: var(--su-text-3);
+        font: inherit;
       }
-    `
+    `,
   ];
 
   willUpdate() {
     this.style.setProperty('--drawer-width', this.width);
   }
 
-  private close(source: 'mask' | 'close') {
+  private close(source: 'mask' | 'close' | 'escape') {
     this.open = false;
     this.dispatchEvent(
       new CustomEvent('close', {
         detail: { source },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -103,14 +124,51 @@ export class SuDrawer extends LitElement {
     this.close('mask');
   }
 
+  private activateOverlay() {
+    if (this.overlayActive) return;
+    this.overlayActive = true;
+    this.previouslyFocused = getDeepActiveElement();
+    registerOverlay(this);
+    lockBodyScroll();
+
+    const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (panel) focusFirstElement(panel);
+  }
+
+  private deactivateOverlay(restoreFocus = true) {
+    if (!this.overlayActive) return;
+    this.overlayActive = false;
+    unregisterOverlay(this);
+    unlockBodyScroll();
+
+    if (restoreFocus && this.previouslyFocused?.isConnected) {
+      this.previouslyFocused.focus();
+    }
+    this.previouslyFocused = null;
+  }
+
+  protected updated(changedProperties: PropertyValues<this>) {
+    if (!changedProperties.has('open')) return;
+    if (this.open) this.activateOverlay();
+    else this.deactivateOverlay();
+  }
+
   render() {
     if (!this.open) return nothing;
     return html`
       <div class="mask" @click=${this.handleMaskClick}>
-        <aside class="panel" role="dialog" aria-modal="true">
+        <aside
+          class="panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="su-drawer-title"
+          tabindex="-1"
+        >
           <header class="header">
-            <span>${this.title}</span>
-            <button @click=${() => this.close('close')}>关闭</button>
+            <span id="su-drawer-title">${this.title}</span>
+            <button type="button" aria-label="关闭抽屉" @click=${() => this.close('close')}>
+              关闭
+            </button>
           </header>
           <div class="body"><slot></slot></div>
         </aside>

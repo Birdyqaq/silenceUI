@@ -1,4 +1,5 @@
 
+export * from './types';
 export * from './components/button/index';
 export * from './components/input/index';
 export * from './components/table/index';

@@ -1,121 +1,160 @@
-import { css, html, LitElement } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { styleMap } from 'lit/directives/style-map.js';
+import { baseControlStyles, focusRingStyles } from '../_shared/styles';
 import './preview';
 
+export type ImageFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+
 @customElement('se-image')
-export class seImage extends LitElement {
-  @property({ type: String }) src: string = '';
-  @property({ type: String }) alt: string = '';
-  @property({ type: Boolean }) lazy: boolean = false;
-  @property({ type: String }) placeholder: string = '';
-  @property({ type: String }) errorPlaceholder: string = '';
-  @property({ type: Number }) width: number = 100;
-  @property({ type: Number }) height: number = 100;
-  @state() private isError: boolean = false;
-  @state() private isPreviewVisible: boolean = false;
-  @state() private rotation: number = 0;
-  private _isVisible: boolean = false;
-  private _observer?: IntersectionObserver;
+export class SeImage extends LitElement {
+  @property({ type: String }) src = '';
+  @property({ type: String }) alt = '';
+  @property({ type: Boolean }) lazy = false;
+  @property({ type: String }) placeholder = '';
+  @property({ type: String }) errorPlaceholder = '';
+  @property({ type: Number }) width = 100;
+  @property({ type: Number }) height = 100;
+  @property({ type: String }) fit: ImageFit = 'cover';
+  @property({ type: Boolean }) preview = true;
 
-  static styles = css`
-    import 'uno.css';
-    @unocss-placeholder;
+  @state() private isError = false;
+  @state() private isLoaded = false;
+  @state() private isPreviewVisible = false;
 
-    .image-container {
-      @apply flex items-center justify-center w-full h-full relative;
-    }
+  static styles = [
+    baseControlStyles,
+    focusRingStyles,
+    css`
+      :host {
+        display: inline-block;
+      }
 
-    img {
-      @apply w-full h-auto block cursor-pointer;
-    }
+      .frame,
+      .trigger {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: var(--su-radius-sm);
+        background: var(--su-bg-muted);
+      }
 
-    .preview {
-      @apply fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex items-center justify-center z-1000;
-    }
+      .trigger {
+        border: 0;
+        padding: 0;
+        cursor: zoom-in;
+        color: inherit;
+      }
 
-    .preview img {
-      @apply max-w-90 max-h-90;
-      transform: rotate(var(--rotation, 0deg));
-    }
+      img {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
 
-    .close-btn, .rotate-btn {
-      @apply absolute top-2.5 right-2.5 bg-white border-none cursor-pointer p-2.5 text-base;
-    }
+      .placeholder {
+        object-fit: cover;
+      }
 
-    .rotate-btn {
-      @apply right-12.5;
-    }
+      .image {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
 
-    .preview-icon {
-      @apply absolute top-2.5 right-2.5 bg-white border-none cursor-pointer p-2.5 text-base;
-      display: none;
-    }
+      .image.loaded {
+        opacity: 1;
+      }
+    `,
+  ];
 
-    .image-container:hover .preview-icon {
-      display: block;
-    }
-  `;
-
-  firstUpdated() {
-    if (this.lazy) {
-      this._observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          this._isVisible = true;
-          this._observer?.disconnect();
-          this.requestUpdate();
-        }
-      });
-      this._observer.observe(this.shadowRoot?.querySelector('img') as Element);
+  protected willUpdate(changedProperties: Map<PropertyKey, unknown>) {
+    if (changedProperties.has('src')) {
+      this.isError = false;
+      this.isLoaded = false;
+      this.isPreviewVisible = false;
     }
   }
 
-  loadImage() {
-    const img = this.shadowRoot?.querySelector('img') as HTMLImageElement;
-    if (img && this.src) {
-      img.src = this.src;
+  private get displaySrc() {
+    return this.isError && this.errorPlaceholder ? this.errorPlaceholder : this.src;
+  }
+
+  private handleLoad() {
+    this.isLoaded = true;
+  }
+
+  private handleError() {
+    if (!this.isError && this.errorPlaceholder) {
+      this.isError = true;
+      this.isLoaded = false;
+      return;
     }
+    this.isLoaded = true;
   }
 
-  handleError() {
-    this.isError = true;
-  }
-
-  handleImageClick() {
+  private openPreview() {
+    if (!this.preview || !this.displaySrc) return;
     this.isPreviewVisible = true;
   }
 
-  handleClosePreview() {
+  private closePreview() {
     this.isPreviewVisible = false;
   }
 
-  handleRotate() {
-    this.rotation = (this.rotation + 90) % 360;
+  private renderImage() {
+    return html`
+      ${!this.isLoaded && this.placeholder
+        ? html`<img class="placeholder" src=${this.placeholder} alt="" aria-hidden="true" />`
+        : nothing}
+      <img
+        class="image ${this.isLoaded ? 'loaded' : ''}"
+        src=${this.displaySrc}
+        alt=${this.alt}
+        loading=${this.lazy ? 'lazy' : 'eager'}
+        style=${styleMap({ objectFit: this.fit })}
+        @load=${this.handleLoad}
+        @error=${this.handleError}
+      />
+    `;
   }
 
   render() {
+    const size = styleMap({
+      width: `${Math.max(0, this.width)}px`,
+      height: `${Math.max(0, this.height)}px`,
+    });
+
     return html`
-      <div
-        class="image-container"
-        style="width: ${this.width + 'px'}; height: ${this.height + 'px'};"
-      >
-        <img
-          class="w-full h-auto block cursor-pointer"
-          src="${this.isError ? this.errorPlaceholder : this.lazy ? this.placeholder : this.src}"
-          alt="${this.alt}"
-          @error="${this.handleError}"
-          @click="${this.handleImageClick}"
-          loading="${this.lazy ? 'lazy' : 'eager'}"
-        />
-        <button class="preview-icon" @click="${this.handleImageClick}">预览</button>
-        ${this.isPreviewVisible
+      <div style=${size}>
+        ${this.preview
           ? html`
-              <se-image-preview
-                .src="${this.src}"
-                @close="${this.handleClosePreview}"
-              ></se-image-preview>
+              <button
+                class="trigger"
+                type="button"
+                aria-label=${this.alt ? `预览图片：${this.alt}` : '预览图片'}
+                @click=${this.openPreview}
+              >
+                ${this.renderImage()}
+              </button>
             `
-          : ''}
+          : html`<div class="frame">${this.renderImage()}</div>`}
       </div>
+      ${this.isPreviewVisible
+        ? html`
+            <se-image-preview
+              .src=${this.displaySrc}
+              .alt=${this.alt}
+              @close=${this.closePreview}
+            ></se-image-preview>
+          `
+        : nothing}
     `;
   }
 }
+
+/** @deprecated Use SeImage. */
+export { SeImage as seImage };

@@ -62,6 +62,28 @@ Boolean attribute 遵循 HTML 语义：只要属性存在就表示 true。需要
 
 JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时异常。
 
+## 表单提交
+
+表单控件支持 Form Associated Custom Elements。设置 `name` 后，控件值会进入外层原生表单的 `FormData`；`disabled` 控件不会提交，调用 `form.reset()` 会恢复初始值。
+
+```html
+<form id="profile-form">
+  <su-input name="nickname" value="Silence"></su-input>
+  <su-select name="city" optionsJson='[{"label":"上海","value":"sh"}]'></su-select>
+  <su-checkbox name="agreement" value="accepted" label="同意协议"></su-checkbox>
+  <su-button native-type="submit">提交</su-button>
+</form>
+
+<script type="module">
+  document.querySelector('#profile-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    console.log(Object.fromEntries(new FormData(event.currentTarget)));
+  });
+</script>
+```
+
+支持 `name` 的组件：`su-input`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
+
 ## 事件监听
 
 组件自定义事件使用 `CustomEvent`，业务数据放在 `event.detail` 中。事件会设置 `bubbles: true` 与 `composed: true`，便于外层容器和宿主框架监听。
@@ -112,6 +134,8 @@ useEffect(() => {
   table.data = rows;
 }, [columns, rows]);
 ```
+
+包内置 `HTMLElementTagNameMap` 声明。在原生 TypeScript 中，`document.querySelector('su-input')` 与 `document.createElement('su-tabs')` 可以直接推断为对应组件类型。
 
 ## 样式与主题
 

@@ -2,8 +2,22 @@
 
 ## 环境要求
 
-- Node.js 16 或更高版本。
 - 支持 Custom Elements 与 Shadow DOM 的现代浏览器。
+- 使用 npm 包需要支持 ESM 的现代前端构建工具。
+
+仓库开发环境固定为：
+
+- Node.js `22.17.1`
+- pnpm `8.15.9`
+
+版本声明位于仓库根目录 `.nvmrc` 与 `package.json`。开发前执行：
+
+```bash
+nvm use
+corepack enable
+cd packages/webComponents
+pnpm install --frozen-lockfile
+```
 
 ## 包管理器
 
@@ -92,9 +106,17 @@ toggleThemeMode();
 在本仓库调试组件库：
 
 ```bash
-cd packages/webComponents
 pnpm dev
-pnpm test -- --run
+pnpm test:run
+pnpm typecheck
+pnpm typecheck:dist
+pnpm lint
 pnpm build
 pnpm docs:dev
+```
+
+提交前可以运行完整检查：
+
+```bash
+pnpm check
 ```

@@ -1,4 +1,4 @@
-import { LitElement, nothing } from 'lit';
+import { LitElement, nothing, PropertyValues } from 'lit';
 
 export declare class SuModal extends LitElement {
     open: boolean;
@@ -7,6 +7,8 @@ export declare class SuModal extends LitElement {
     hideFooter: boolean;
     confirmText: string;
     cancelText: string;
+    private overlayActive;
+    private previouslyFocused;
     private onKeydown;
     connectedCallback(): void;
     disconnectedCallback(): void;
@@ -14,5 +16,8 @@ export declare class SuModal extends LitElement {
     private closeByMask;
     private close;
     private confirm;
+    private activateOverlay;
+    private deactivateOverlay;
+    protected updated(changedProperties: PropertyValues<this>): void;
     render(): import('lit').TemplateResult<1> | typeof nothing;
 }

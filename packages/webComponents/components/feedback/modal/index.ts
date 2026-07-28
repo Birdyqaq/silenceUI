@@ -1,5 +1,15 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import {
+  focusFirstElement,
+  getDeepActiveElement,
+  isTopOverlay,
+  lockBodyScroll,
+  registerOverlay,
+  trapFocus,
+  unregisterOverlay,
+  unlockBodyScroll,
+} from '../../_shared/overlay';
 import { baseControlStyles } from '../../_shared/styles';
 
 @customElement('su-modal')
@@ -11,9 +21,18 @@ export class SuModal extends LitElement {
   @property({ type: String }) confirmText = '确定';
   @property({ type: String }) cancelText = '取消';
 
+  private overlayActive = false;
+  private previouslyFocused: HTMLElement | null = null;
+
   private onKeydown = (event: KeyboardEvent) => {
+    if (!this.open || !isTopOverlay(this)) return;
+
+    const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (panel) trapFocus(event, panel);
+
     if (event.key === 'Escape' && this.open && this.maskClosable) {
-      this.close('mask');
+      event.preventDefault();
+      this.close('escape');
     }
   };
 
@@ -25,6 +44,7 @@ export class SuModal extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('keydown', this.onKeydown);
+    this.deactivateOverlay(false);
   }
 
   static styles = [
@@ -46,10 +66,13 @@ export class SuModal extends LitElement {
 
       .panel {
         width: min(560px, 100%);
+        max-height: calc(100vh - 40px);
         background: var(--su-bg-card);
         border-radius: var(--su-radius-lg);
         box-shadow: var(--su-shadow-md);
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .header,
@@ -66,6 +89,7 @@ export class SuModal extends LitElement {
       .body {
         padding: 16px;
         color: var(--su-text-2);
+        overflow: auto;
       }
 
       .footer {
@@ -90,7 +114,7 @@ export class SuModal extends LitElement {
         background: var(--su-color-primary);
         color: var(--su-color-primary-contrast, #fff);
       }
-    `
+    `,
   ];
 
   private closeByMask(event: Event) {
@@ -99,36 +123,77 @@ export class SuModal extends LitElement {
     this.close('mask');
   }
 
-  private close(source: 'mask' | 'cancel' | 'confirm') {
+  private close(source: 'mask' | 'cancel' | 'confirm' | 'escape') {
     this.open = false;
     this.dispatchEvent(
       new CustomEvent('close', {
         detail: { source },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
 
   private confirm() {
-    this.dispatchEvent(new CustomEvent('confirm', { bubbles: true, composed: true }));
-    this.close('confirm');
+    const shouldClose = this.dispatchEvent(
+      new CustomEvent('confirm', { bubbles: true, composed: true, cancelable: true })
+    );
+    if (shouldClose) this.close('confirm');
+  }
+
+  private activateOverlay() {
+    if (this.overlayActive) return;
+    this.overlayActive = true;
+    this.previouslyFocused = getDeepActiveElement();
+    registerOverlay(this);
+    lockBodyScroll();
+
+    const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (panel) focusFirstElement(panel);
+  }
+
+  private deactivateOverlay(restoreFocus = true) {
+    if (!this.overlayActive) return;
+    this.overlayActive = false;
+    unregisterOverlay(this);
+    unlockBodyScroll();
+
+    if (restoreFocus && this.previouslyFocused?.isConnected) {
+      this.previouslyFocused.focus();
+    }
+    this.previouslyFocused = null;
+  }
+
+  protected updated(changedProperties: PropertyValues<this>) {
+    if (!changedProperties.has('open')) return;
+    if (this.open) this.activateOverlay();
+    else this.deactivateOverlay();
   }
 
   render() {
     if (!this.open) return nothing;
     return html`
       <div class="mask" @click=${this.closeByMask}>
-        <section class="panel" role="dialog" aria-modal="true" aria-label=${this.title}>
-          <header class="header">${this.title}</header>
+        <section
+          class="panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="su-modal-title"
+          tabindex="-1"
+        >
+          <header id="su-modal-title" class="header">${this.title}</header>
           <div class="body"><slot></slot></div>
           ${this.hideFooter
             ? nothing
             : html`
                 <footer class="footer">
                   <slot name="footer">
-                    <button type="button" @click=${() => this.close('cancel')}>${this.cancelText}</button>
-                    <button class="confirm" type="button" @click=${this.confirm}>${this.confirmText}</button>
+                    <button type="button" @click=${() => this.close('cancel')}>
+                      ${this.cancelText}
+                    </button>
+                    <button class="confirm" type="button" @click=${this.confirm}>
+                      ${this.confirmText}
+                    </button>
                   </slot>
                 </footer>
               `}

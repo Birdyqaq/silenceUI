@@ -15,7 +15,9 @@
 </script>
 ```
 
-支持 `slot="footer"` 自定义底部。点击确认按钮时会先触发 `confirm`，再触发 `close`，且 `close.detail.source` 为 `confirm`。
+支持 `slot="footer"` 自定义底部。打开后焦点会进入弹层，Tab 焦点不会跑出弹层，关闭后焦点会回到打开前的元素，页面滚动也会恢复。
+
+点击确认按钮时会先触发可取消的 `confirm`，再触发 `close`。监听器调用 `event.preventDefault()` 可以阻止本次关闭，适合在提交校验失败时保留弹层。
 
 | 属性           | 说明                              | 类型      | 默认值  |
 | -------------- | --------------------------------- | --------- | ------- |
@@ -26,10 +28,10 @@
 | `confirmText`  | 确认按钮文案                      | `string`  | `确定`  |
 | `cancelText`   | 取消按钮文案                      | `string`  | `取消`  |
 
-| 事件      | detail                                        |
-| --------- | --------------------------------------------- |
-| `confirm` | 无                                            |
-| `close`   | `{ source: 'mask' \| 'cancel' \| 'confirm' }` |
+| 事件      | detail                                                    |
+| --------- | --------------------------------------------------------- |
+| `confirm` | 无                                                        |
+| `close`   | `{ source: 'mask' \| 'cancel' \| 'confirm' \| 'escape' }` |
 
 ## Drawer 抽屉 `su-drawer`
 
@@ -39,7 +41,7 @@
 </su-drawer>
 ```
 
-支持 Escape 与遮罩点击关闭。
+支持 Escape 与遮罩点击关闭，并具备与 Modal 一致的焦点循环、焦点恢复及页面滚动锁定。
 
 | 属性           | 说明                              | 类型                | 默认值     |
 | -------------- | --------------------------------- | ------------------- | ---------- |
@@ -49,7 +51,7 @@
 | `maskClosable` | 点击遮罩或按 Escape 是否关闭      | `boolean`           | `true`     |
 | `placement`    | 出现位置                          | `'left' \| 'right'` | `right`    |
 
-事件：`close`，detail 为 `{ source: 'mask' | 'close' }`。
+事件：`close`，detail 为 `{ source: 'mask' | 'close' | 'escape' }`。
 
 ## Alert 警告提示 `su-alert`
 
