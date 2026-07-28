@@ -45,13 +45,14 @@
   lazy
   placeholder="占位图片地址"
   errorPlaceholder="加载失败占位"
-  src="真正的图片地址">
+  src="真正的图片地址"
+>
 </se-image>
 ```
 
 ## 预览与旋转
 
-点击图片会自动打开内置预览层，并支持旋转。
+点击图片会自动打开内置预览层，并支持旋转。预览层支持 Escape、遮罩点击、焦点循环和关闭后焦点恢复。
 
 <ClientOnly>
   <se-image
@@ -65,18 +66,18 @@
 
 ### 属性
 
-| 属性 | 说明 | 类型 | 默认值 |
-| --- | --- | --- | --- |
-| src | 图片地址 | `string` | `''` |
-| alt | 替代文本 | `string` | `''` |
-| lazy | 是否懒加载 | `boolean` | `false` |
-| placeholder | 懒加载占位图 | `string` | `''` |
-| errorPlaceholder | 加载失败占位图 | `string` | `''` |
-| width | 宽度（像素） | `number` | `100` |
-| height | 高度（像素） | `number` | `100` |
+| 属性               | 说明                             | 类型                                             | 默认值  |
+| ------------------ | -------------------------------- | ------------------------------------------------ | ------- |
+| `src`              | 图片地址                         | `string`                                         | `''`    |
+| `alt`              | 替代文本及预览按钮无障碍名称     | `string`                                         | `''`    |
+| `lazy`             | 使用浏览器原生懒加载             | `boolean`                                        | `false` |
+| `placeholder`      | 真实图片加载完成前显示的占位图   | `string`                                         | `''`    |
+| `errorPlaceholder` | 真实图片加载失败后使用的回退图片 | `string`                                         | `''`    |
+| `width`            | 宽度（像素）                     | `number`                                         | `100`   |
+| `height`           | 高度（像素）                     | `number`                                         | `100`   |
+| `fit`              | 图片填充方式                     | `contain \| cover \| fill \| none \| scale-down` | `cover` |
+| `preview`          | 点击时是否打开预览               | `boolean`                                        | `true`  |
 
 ### 事件
 
-| 事件名 | 说明 |
-| --- | --- |
-| close | 关闭预览层时触发（由内部预览组件发出） |
+`placeholder` 只承担视觉占位；浏览器会同时请求 `src`，真实图片加载完成后以淡入方式替换占位图。

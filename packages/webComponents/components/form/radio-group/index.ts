@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { FormValueController } from '../../_shared/form';
 import { baseControlStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -11,10 +12,18 @@ interface RadioOption {
 
 @customElement('su-radio-group')
 export class SuRadioGroup extends LitElement {
+  static formAssociated = true;
+
   @property({ type: Array, attribute: false }) options: RadioOption[] = [];
   @property({ type: String }) optionsJson = '';
   @property({ type: String }) value = '';
   @property({ type: String }) name = `su-radio-${Math.random().toString(36).slice(2)}`;
+  @property({ type: Boolean, reflect: true }) disabled = false;
+
+  private defaultValue = '';
+  private readonly formValue = new FormValueController(this, () =>
+    this.disabled || !this.value ? null : this.value
+  );
 
   static styles = [
     baseControlStyles,
@@ -40,7 +49,7 @@ export class SuRadioGroup extends LitElement {
       input[type='radio'] {
         accent-color: var(--su-color-primary);
       }
-    `
+    `,
   ];
 
   private get mergedOptions() {
@@ -54,9 +63,27 @@ export class SuRadioGroup extends LitElement {
       new CustomEvent('change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
+  }
+
+  firstUpdated() {
+    this.defaultValue = this.value;
+  }
+
+  formResetCallback() {
+    this.value = this.defaultValue;
+  }
+
+  formStateRestoreCallback(state: string | File | FormData | null) {
+    if (typeof state === 'string') this.value = state;
+  }
+
+  focus(options?: FocusOptions) {
+    this.shadowRoot
+      ?.querySelector<HTMLInputElement>('input:checked, input:not(:disabled)')
+      ?.focus(options);
   }
 
   render() {
@@ -70,8 +97,9 @@ export class SuRadioGroup extends LitElement {
                 name=${this.name}
                 value=${option.value}
                 .checked=${this.value === option.value}
-                ?disabled=${Boolean(option.disabled)}
-                @change=${this.onChange} />
+                ?disabled=${this.disabled || Boolean(option.disabled)}
+                @change=${this.onChange}
+              />
               <span>${option.label}</span>
             </label>
           `

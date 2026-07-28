@@ -13,10 +13,12 @@ export declare class SuTabs extends LitElement {
     items: TabItem[];
     itemsJson: string;
     activeKey: string;
+    private readonly idPrefix;
     static styles: import('lit').CSSResult[];
     private get mergedItems();
     private get currentKey();
     private onSelect;
+    private onKeyDown;
     render(): import('lit').TemplateResult<1>;
 }
 export type { TabItem };

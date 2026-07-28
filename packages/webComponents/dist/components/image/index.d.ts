@@ -1,24 +1,28 @@
 import { LitElement } from 'lit';
 
-export declare class seImage extends LitElement {
+export type ImageFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+export declare class SeImage extends LitElement {
     src: string;
     alt: string;
     lazy: boolean;
     placeholder: string;
     errorPlaceholder: string;
-    width: Number;
-    height: Number;
+    width: number;
+    height: number;
+    fit: ImageFit;
+    preview: boolean;
     private isError;
+    private isLoaded;
     private isPreviewVisible;
-    private rotation;
-    private _isVisible;
-    private _observer?;
-    static styles: import('lit').CSSResult;
-    firstUpdated(): void;
-    loadImage(): void;
-    handleError(): void;
-    handleImageClick(): void;
-    handleClosePreview(): void;
-    handleRotate(): void;
+    static styles: import('lit').CSSResult[];
+    protected willUpdate(changedProperties: Map<PropertyKey, unknown>): void;
+    private get displaySrc();
+    private handleLoad;
+    private handleError;
+    private openPreview;
+    private closePreview;
+    private renderImage;
     render(): import('lit').TemplateResult<1>;
 }
+/** @deprecated Use SeImage. */
+export { SeImage as seImage };

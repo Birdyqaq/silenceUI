@@ -275,7 +275,7 @@ export class seTable extends LitElement {
         padding: 0 !important;
         height: 0;
       }
-    `
+    `,
   ];
 
   constructor() {
@@ -292,7 +292,7 @@ export class seTable extends LitElement {
       // reset directions
       this.sortedColumns = this.sortedColumns.map((c, i) => ({
         ...c,
-        sortDirection: i === index ? nextDirection : ''
+        sortDirection: i === index ? nextDirection : '',
       }));
 
       if (nextDirection === '') {
@@ -310,7 +310,9 @@ export class seTable extends LitElement {
 
       this.dispatchEvent(
         new CustomEvent('sort-change', {
-          detail: { column: col.key, direction: nextDirection }
+          detail: { column: col.key, direction: nextDirection },
+          bubbles: true,
+          composed: true,
         })
       );
     };
@@ -434,7 +436,7 @@ export class seTable extends LitElement {
       new CustomEvent('selection-change', {
         detail: { keys, rows },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -450,7 +452,8 @@ export class seTable extends LitElement {
   /** 全选/取消全选当前可见数据（当前页或已加载数据） */
   private toggleAllSelection() {
     const visibleKeys = this.sourceData.map((row, index) => this.getRowKey(row, index));
-    const allSelected = visibleKeys.length > 0 && visibleKeys.every((key) => this.selectedKeys.includes(key));
+    const allSelected =
+      visibleKeys.length > 0 && visibleKeys.every((key) => this.selectedKeys.includes(key));
     const keys = allSelected
       ? this.selectedKeys.filter((key) => !visibleKeys.includes(key))
       : [...new Set([...this.selectedKeys, ...visibleKeys])];
@@ -464,18 +467,21 @@ export class seTable extends LitElement {
         start: 0,
         rows,
         topPadding: 0,
-        bottomPadding: 0
+        bottomPadding: 0,
       };
     }
     const viewportHeight = this.viewportHeight || 420;
     const visible = Math.ceil(viewportHeight / this.virtualRowHeight) + this.virtualBuffer * 2;
-    const start = Math.max(0, Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer);
+    const start = Math.max(
+      0,
+      Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer
+    );
     const end = Math.min(rows.length, start + visible);
     return {
       start,
       rows: rows.slice(start, end),
       topPadding: start * this.virtualRowHeight,
-      bottomPadding: (rows.length - end) * this.virtualRowHeight
+      bottomPadding: (rows.length - end) * this.virtualRowHeight,
     };
   }
 
@@ -530,11 +536,20 @@ export class seTable extends LitElement {
   }
 
   private setCurrentPage(nextPage: number) {
-    const bounded = Math.min(this.totalPages, Math.max(1, Number.isFinite(nextPage) ? nextPage : 1));
+    const bounded = Math.min(
+      this.totalPages,
+      Math.max(1, Number.isFinite(nextPage) ? nextPage : 1)
+    );
     this.currentPage = bounded;
     this.scrollTop = 0;
     this.resetViewportScroll();
-    this.dispatchEvent(new CustomEvent('page-change', { detail: { currentPage: bounded } }));
+    this.dispatchEvent(
+      new CustomEvent('page-change', {
+        detail: { currentPage: bounded },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private handlePaginationChange(event: Event) {
@@ -550,8 +565,10 @@ export class seTable extends LitElement {
     this.dispatchEvent(
       new CustomEvent('load-more', {
         detail: {
-          loadedCount: this.sortedData.length
-        }
+          loadedCount: this.sortedData.length,
+        },
+        bubbles: true,
+        composed: true,
       })
     );
   }
@@ -570,8 +587,10 @@ export class seTable extends LitElement {
       new CustomEvent('row-click', {
         detail: {
           row,
-          rowIndex
-        }
+          rowIndex,
+        },
+        bubbles: true,
+        composed: true,
       })
     );
   }
@@ -600,7 +619,10 @@ export class seTable extends LitElement {
       virtual.bottomPadding > 0
         ? html`
             <tr class="virtual-spacer" aria-hidden="true">
-              <td colspan="${this.totalColumnCount}" style="height: ${virtual.bottomPadding}px;"></td>
+              <td
+                colspan="${this.totalColumnCount}"
+                style="height: ${virtual.bottomPadding}px;"
+              ></td>
             </tr>
           `
         : nothing;
@@ -616,14 +638,16 @@ export class seTable extends LitElement {
         return html`
           <tr
             class="${this.striped ? 'striped' : ''} ${this.hoverable ? 'hoverable' : ''}"
-            @click="${() => this.handleRowClick(row, rowIndex)}">
+            @click="${() => this.handleRowClick(row, rowIndex)}"
+          >
             ${this.selectable
               ? html`
                   <td class="selection-cell" @click="${(e: Event) => e.stopPropagation()}">
                     <input
                       type="checkbox"
                       .checked="${this.isRowSelected(row, rowIndex)}"
-                      @change="${() => this.toggleRowSelection(row, rowIndex)}" />
+                      @change="${() => this.toggleRowSelection(row, rowIndex)}"
+                    />
                   </td>
                 `
               : nothing}
@@ -636,7 +660,7 @@ export class seTable extends LitElement {
                 column: col,
                 columnIndex,
                 data: this.sourceData,
-                columns: this.sortedColumns
+                columns: this.sortedColumns,
               });
               if (span.rowspan <= 0 || span.colspan <= 0) return nothing;
               for (let r = 0; r < span.rowspan; r += 1) {
@@ -652,7 +676,8 @@ export class seTable extends LitElement {
                   class="${col.ellipsis ? 'ellipsis' : ''}"
                   rowspan="${span.rowspan}"
                   colspan="${span.colspan}"
-                  style="text-align: ${align}; max-width: ${col.width || 'auto'};">
+                  style="text-align: ${align}; max-width: ${col.width || 'auto'};"
+                >
                   ${value}
                 </td>
               `;
@@ -673,7 +698,8 @@ export class seTable extends LitElement {
         .currentPage="${this.currentPage}"
         .total="${this.sortedData.length}"
         .pageSize="${this.pageSize}"
-        @page-change="${this.handlePaginationChange}"></se-pagination>
+        @page-change="${this.handlePaginationChange}"
+      ></se-pagination>
     `;
   }
 
@@ -697,7 +723,8 @@ export class seTable extends LitElement {
           aria-label="全选"
           .checked="${allSelected}"
           .indeterminate="${indeterminate}"
-          @change="${() => this.toggleAllSelection()}" />
+          @change="${() => this.toggleAllSelection()}"
+        />
       </th>
     `;
   }
@@ -709,7 +736,8 @@ export class seTable extends LitElement {
         <div
           class="table-viewport ${scrollable ? 'scrollable' : ''}"
           style="${scrollable ? `height: ${this.effectiveHeight};` : ''}"
-          @scroll="${this.handleBodyScroll}">
+          @scroll="${this.handleBodyScroll}"
+        >
           <table>
             <thead class="${this.stickyHeader && scrollable ? 'sticky' : ''}">
               <tr>
@@ -722,9 +750,10 @@ export class seTable extends LitElement {
                       data-sort="${col.sortDirection === 'asc'
                         ? '↑'
                         : col.sortDirection === 'desc'
-                          ? '↓'
-                          : '⇅'}"
-                      @click="${() => this.sortColumn(index)}">
+                        ? '↓'
+                        : '⇅'}"
+                      @click="${() => this.sortColumn(index)}"
+                    >
                       ${col.label}
                     </th>
                   `
@@ -736,9 +765,10 @@ export class seTable extends LitElement {
             </tbody>
           </table>
         </div>
-        ${this.loading ? html`<div class="loading-overlay"><span class="loading-spinner"></span></div>` : nothing}
-        ${this.renderLoadMoreStatus()}
-        ${this.renderPagination()}
+        ${this.loading
+          ? html`<div class="loading-overlay"><span class="loading-spinner"></span></div>`
+          : nothing}
+        ${this.renderLoadMoreStatus()} ${this.renderPagination()}
       </div>
     `;
   }

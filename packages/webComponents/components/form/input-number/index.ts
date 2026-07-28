@@ -1,14 +1,23 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 @customElement('su-input-number')
 export class SuInputNumber extends LitElement {
+  static formAssociated = true;
+
   @property({ type: Number }) value = 0;
+  @property({ type: String }) name = '';
   @property({ type: Number }) min = Number.MIN_SAFE_INTEGER;
   @property({ type: Number }) max = Number.MAX_SAFE_INTEGER;
   @property({ type: Number }) step = 1;
-  @property({ type: Boolean }) disabled = false;
+  @property({ type: Boolean, reflect: true }) disabled = false;
+
+  private defaultValue = 0;
+  private readonly formValue = new FormValueController(this, () =>
+    this.disabled ? null : String(this.value)
+  );
 
   static styles = [
     baseControlStyles,
@@ -77,11 +86,15 @@ export class SuInputNumber extends LitElement {
         color: var(--su-text-3);
         cursor: not-allowed;
       }
-    `
+    `,
   ];
 
   private clamp(value: number) {
     return Math.min(this.max, Math.max(this.min, value));
+  }
+
+  private get safeStep() {
+    return Number.isFinite(this.step) && this.step > 0 ? this.step : 1;
   }
 
   private emitChange(next: number) {
@@ -95,7 +108,7 @@ export class SuInputNumber extends LitElement {
       new CustomEvent('change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -112,6 +125,24 @@ export class SuInputNumber extends LitElement {
     input.value = String(this.value);
   }
 
+  firstUpdated() {
+    this.defaultValue = this.value;
+  }
+
+  formResetCallback() {
+    this.value = this.defaultValue;
+  }
+
+  formStateRestoreCallback(state: string | File | FormData | null) {
+    if (typeof state !== 'string') return;
+    const restored = Number(state);
+    if (!Number.isNaN(restored)) this.value = this.clamp(restored);
+  }
+
+  focus(options?: FocusOptions) {
+    this.shadowRoot?.querySelector('input')?.focus(options);
+  }
+
   render() {
     return html`
       <div class="wrapper">
@@ -119,20 +150,26 @@ export class SuInputNumber extends LitElement {
           type="button"
           aria-label="减少"
           ?disabled=${this.disabled || this.value <= this.min}
-          @click=${() => this.emitChange(this.value - this.step)}>
+          @click=${() => this.emitChange(this.value - this.safeStep)}
+        >
           −
         </button>
         <input
           type="number"
           .value=${String(this.value)}
+          .min=${String(this.min)}
+          .max=${String(this.max)}
+          .step=${String(this.safeStep)}
           ?disabled=${this.disabled}
           @change=${this.onInput}
-          @blur=${this.onBlur} />
+          @blur=${this.onBlur}
+        />
         <button
           type="button"
           aria-label="增加"
           ?disabled=${this.disabled || this.value >= this.max}
-          @click=${() => this.emitChange(this.value + this.step)}>
+          @click=${() => this.emitChange(this.value + this.safeStep)}
+        >
           +
         </button>
       </div>

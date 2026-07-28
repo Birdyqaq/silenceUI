@@ -1,6 +1,7 @@
-import { html, LitElement } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { rippleEffect } from '../../utils/ripple';
+import { findClosestForm } from '../_shared/utils';
 import { styleMap } from './styles';
 import type { ButtonIconPosition, ButtonSize, ButtonType } from './type';
 
@@ -18,73 +19,88 @@ export class SuButton extends LitElement {
   @property({ type: Boolean }) ripple = true;
   @property({ type: Boolean, reflect: true }) block = false;
   @property({ type: Boolean, reflect: true }) round = false;
+  /** 原生 button 的 type，表单场景可设为 submit / reset */
+  @property({ type: String, attribute: 'native-type' }) nativeType: 'button' | 'submit' | 'reset' =
+    'button';
+
+  static get observedAttributes() {
+    return [...super.observedAttributes, 'nativetype'];
+  }
+
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    if (name === 'nativetype') {
+      if (!this.hasAttribute('native-type')) {
+        this.nativeType =
+          newValue === 'submit' || newValue === 'reset' || newValue === 'button'
+            ? newValue
+            : 'button';
+      }
+      return;
+    }
+    super.attributeChangedCallback(name, oldValue, newValue);
+  }
+
+  private get isInactive() {
+    return this.disabled || this.loading;
+  }
+
+  private get resolvedNativeType(): 'button' | 'submit' | 'reset' {
+    const attribute = this.getAttribute('native-type') ?? this.getAttribute('nativetype');
+    if (attribute === 'submit' || attribute === 'reset' || attribute === 'button') return attribute;
+    return this.nativeType ?? 'button';
+  }
 
   private handleClick(e: MouseEvent) {
-    if (this.disabled || this.loading) {
+    if (this.isInactive) {
       e.stopImmediatePropagation();
       e.preventDefault();
       return;
     }
 
-    // 只有在启用水波纹效果时才执行
     if (this.ripple) {
-      // 使用自定义颜色或根据按钮类型设置默认颜色
-      let color = this.rippleColor;
-      if (!color) {
-        // 根据按钮类型设置默认水波纹颜色
-        switch (this.type) {
-          case 'primary':
-          case 'secondary':
-          case 'success':
-          case 'warning':
-          case 'danger':
-            color = 'rgba(255, 255, 255, 0.3)';
-            break;
-          default:
-            color = 'rgba(0, 0, 0, 0.1)';
-        }
-      }
-      
       try {
         const target = e.currentTarget as HTMLElement | null;
-        rippleEffect(e, { color }, target ?? this);
+        rippleEffect(e, this.rippleColor ? { color: this.rippleColor } : {}, target ?? undefined);
       } catch (error) {
         console.error('Error creating ripple effect:', error);
       }
     }
+
+    const form = findClosestForm(this);
+    if (!form) return;
+
+    if (this.resolvedNativeType === 'submit') {
+      e.preventDefault();
+      form.requestSubmit();
+    } else if (this.resolvedNativeType === 'reset') {
+      e.preventDefault();
+      form.reset();
+    }
+  }
+
+  private renderIcon(position: ButtonIconPosition) {
+    if (!this.iconClass || this.iconPosition !== position) return nothing;
+    return html`<i class="icon ${position} ${this.iconClass}" aria-hidden="true"></i>`;
   }
 
   render() {
     return html`
       <button
-        class=${this.getButtonClasses()}
+        type=${this.resolvedNativeType}
+        ?disabled=${this.isInactive}
+        aria-busy=${this.loading ? 'true' : 'false'}
+        aria-disabled=${this.isInactive ? 'true' : 'false'}
         @click=${this.handleClick}
-        ?disabled=${this.disabled}
-        type="button"
       >
-        ${this.renderIcon('left')}
-        ${this.loading ? this.renderSpinner() : html`<slot></slot>`}
-        ${this.renderIcon('right')}
+        ${this.loading ? html`<span class="spinner" aria-hidden="true"></span>` : nothing}
+        <span class="label">
+          ${this.renderIcon('left')}
+          <slot></slot>
+          ${this.renderIcon('right')}
+        </span>
       </button>
     `;
-  }
-
-  private getButtonClasses() {
-    return [
-      this.disabled ? 'disabled' : '',
-      this.loading ? 'loading' : ''
-    ].filter(Boolean).join(' ');
-  }
-
-  private renderSpinner() {
-    return html`<span class="spinner"></span>`;
-  }
-
-  private renderIcon(position: 'left' | 'right') {
-    if (!this.iconClass || this.iconPosition !== position) return;
-    return html`<i class="icon ${position} ${this.iconClass}"></i>`;
   }
 }
 
 export type { ButtonIconPosition, ButtonSize, ButtonType } from './type';
-

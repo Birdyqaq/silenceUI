@@ -2,6 +2,17 @@
 
 面向 `packages/webComponents` 的后续开发约定，结合当前项目实践与 Lit 3 推荐写法。
 
+## 开发环境
+
+仓库固定使用 Node.js `22.17.1` 与 pnpm `8.15.9`，避免不同 pnpm 主版本重写锁文件。
+
+```bash
+nvm use
+corepack enable
+cd packages/webComponents
+pnpm install --frozen-lockfile
+```
+
 ## 组件骨架
 
 ```ts
@@ -14,14 +25,20 @@ export class SuExample extends LitElement {
   @property({ type: String }) value = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
 
-  static styles = [baseControlStyles, focusRingStyles, css`/* ... */`];
+  static styles = [
+    baseControlStyles,
+    focusRingStyles,
+    css`
+      /* ... */
+    `,
+  ];
 
   private emitChange() {
     this.dispatchEvent(
       new CustomEvent('change', {
         detail: { value: this.value },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -41,11 +58,15 @@ export class SuExample extends LitElement {
 5. **生命周期清理**：在 `connectedCallback` 注册的全局监听，必须在 `disconnectedCallback` 移除。
 6. **共享能力**：基础字体/盒模型用 `baseControlStyles`，可聚焦控件叠加 `focusRingStyles`。
 7. **目录**：按 `form` / `data` / `navigation` / `feedback` / `layout` 归类，并在 `index.ts` 同步 import + export。
+8. **布尔属性**：文档示例不能写 `disabled="false"` 这类用法；需要 false 时用 JS property。
+9. **类型入口**：新导出的公共 API 要能从 `index.ts` 追踪到 `dist/index.d.ts`。
+10. **标签类型**：新增组件时同步更新 `types.ts` 的 `HTMLElementTagNameMap`。
+11. **表单控件**：需要参与外层表单时使用 `_shared/form.ts` 的 `FormValueController`，并实现 `formResetCallback`。
 
 ## 建议遵守
 
-- 布尔属性默认 `false`，并用 `reflect: true` 映射到 attribute（如 `disabled`、`open`）。
-- 弹层组件提供 Escape 关闭与 `role="dialog"` / `aria-modal`。
+- `disabled`、`open` 等外观状态可使用 `reflect: true`；`checked` 这类需要保留初始值用于 reset 的状态不要反射。
+- 弹层组件复用 `_shared/overlay.ts`，提供 Escape、焦点循环、焦点恢复和滚动锁定。
 - 类型定义放在同目录 `type.ts`，供组件与文档复用。
 - 每个新组件至少覆盖：默认渲染、属性响应、事件触发三类测试。
 
@@ -58,7 +79,5 @@ export class SuExample extends LitElement {
 ## 提交前检查
 
 ```bash
-pnpm build
-pnpm test -- --run
-pnpm docs:build
+pnpm check
 ```

@@ -8,7 +8,7 @@ export declare class SeAssetViewer extends LitElement {
     downloadable: boolean;
     type: AssetType;
     private previewVisible;
-    static styles: import('lit').CSSResult;
+    static styles: import('lit').CSSResult[];
     private resolveType;
     private openPreview;
     private closePreview;

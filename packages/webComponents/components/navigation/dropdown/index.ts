@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { baseControlStyles } from '../../_shared/styles';
+import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
 interface DropdownItem {
@@ -10,15 +10,23 @@ interface DropdownItem {
   danger?: boolean;
 }
 
+let dropdownInstanceId = 0;
+
 @customElement('su-dropdown')
 export class SuDropdown extends LitElement {
   @property({ type: Array, attribute: false }) items: DropdownItem[] = [];
   @property({ type: String }) itemsJson = '';
+  @property({ type: Boolean, reflect: true }) open = false;
+  @property({ type: Boolean, reflect: true }) disabled = false;
 
-  @state() private open = false;
+  @state() private triggerNeedsTabStop = true;
+
+  private readonly menuId = `su-dropdown-${++dropdownInstanceId}-menu`;
+  private triggerElement: HTMLElement | null = null;
 
   static styles = [
     baseControlStyles,
+    focusRingStyles,
     css`
       :host {
         display: inline-block;
@@ -27,6 +35,11 @@ export class SuDropdown extends LitElement {
 
       .trigger {
         cursor: pointer;
+      }
+
+      :host([disabled]) .trigger {
+        cursor: not-allowed;
+        opacity: 0.6;
       }
 
       .menu {
@@ -73,7 +86,7 @@ export class SuDropdown extends LitElement {
         cursor: not-allowed;
         opacity: 0.6;
       }
-    `
+    `,
   ];
 
   private onDocumentClick = (event: MouseEvent) => {
@@ -97,8 +110,100 @@ export class SuDropdown extends LitElement {
     return parseJsonArray<DropdownItem>(this.itemsJson, []);
   }
 
+  private updateTriggerAria() {
+    const target =
+      this.triggerElement?.shadowRoot?.querySelector<HTMLElement>(
+        'button, a[href], input, select, textarea, [tabindex]'
+      ) ?? this.triggerElement;
+
+    target?.setAttribute('aria-haspopup', 'menu');
+    target?.setAttribute('aria-expanded', String(this.open));
+    target?.setAttribute('aria-controls', this.menuId);
+  }
+
+  private onSlotChange(event: Event) {
+    const slot = event.target as HTMLSlotElement;
+    const assigned = slot.assignedElements({ flatten: true })[0];
+    this.triggerElement = assigned instanceof HTMLElement ? assigned : null;
+
+    const focusable =
+      this.triggerElement?.matches('button, a[href], input, select, textarea, [tabindex]') ||
+      Boolean(
+        this.triggerElement?.shadowRoot?.querySelector(
+          'button, a[href], input, select, textarea, [tabindex]'
+        )
+      );
+    this.triggerNeedsTabStop = !focusable;
+    this.updateTriggerAria();
+  }
+
+  private async openMenu() {
+    if (this.disabled || this.open) return;
+    this.open = true;
+    await this.updateComplete;
+    this.shadowRoot?.querySelector<HTMLButtonElement>('.item:not(:disabled)')?.focus();
+  }
+
   private toggle() {
-    this.open = !this.open;
+    if (this.disabled) return;
+    if (this.open) {
+      this.open = false;
+    } else {
+      void this.openMenu();
+    }
+  }
+
+  private focusTrigger() {
+    const target =
+      this.triggerElement?.shadowRoot?.querySelector<HTMLElement>(
+        'button, a[href], input, select, textarea, [tabindex]'
+      ) ??
+      this.triggerElement ??
+      this.shadowRoot?.querySelector<HTMLElement>('.trigger');
+    target?.focus();
+  }
+
+  private onTriggerKeyDown(event: KeyboardEvent) {
+    const usesWrapper = event.currentTarget === event.target;
+    if (
+      event.key === 'ArrowDown' ||
+      (usesWrapper && (event.key === 'Enter' || event.key === ' '))
+    ) {
+      event.preventDefault();
+      void this.openMenu();
+    } else if (event.key === 'Escape' && this.open) {
+      event.preventDefault();
+      this.open = false;
+    }
+  }
+
+  private onMenuKeyDown(event: KeyboardEvent) {
+    const items = Array.from(
+      this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.item:not(:disabled)') ?? []
+    );
+    if (items.length === 0) return;
+
+    const currentIndex = Math.max(0, items.indexOf(event.target as HTMLButtonElement));
+    let nextIndex = currentIndex;
+
+    if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % items.length;
+    else if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + items.length) % items.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = items.length - 1;
+    else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.open = false;
+      this.focusTrigger();
+      return;
+    } else if (event.key === 'Tab') {
+      this.open = false;
+      return;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    items[nextIndex].focus();
   }
 
   private onSelect(item: DropdownItem) {
@@ -108,19 +213,33 @@ export class SuDropdown extends LitElement {
       new CustomEvent('select', {
         detail: { key: item.key, item },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
+    this.focusTrigger();
+  }
+
+  updated(changedProperties: Map<PropertyKey, unknown>) {
+    if (changedProperties.has('open')) this.updateTriggerAria();
   }
 
   render() {
     return html`
-      <div class="trigger" @click=${this.toggle}>
-        <slot></slot>
+      <div
+        class="trigger"
+        role=${this.triggerNeedsTabStop ? 'button' : nothing}
+        tabindex=${this.triggerNeedsTabStop && !this.disabled ? 0 : -1}
+        aria-haspopup=${this.triggerNeedsTabStop ? 'menu' : nothing}
+        aria-expanded=${this.triggerNeedsTabStop ? String(this.open) : nothing}
+        aria-controls=${this.triggerNeedsTabStop ? this.menuId : nothing}
+        @click=${this.toggle}
+        @keydown=${this.onTriggerKeyDown}
+      >
+        <slot @slotchange=${this.onSlotChange}></slot>
       </div>
       ${this.open
         ? html`
-            <div class="menu" role="menu">
+            <div id=${this.menuId} class="menu" role="menu" @keydown=${this.onMenuKeyDown}>
               ${this.mergedItems.map(
                 (item) => html`
                   <button
@@ -128,7 +247,8 @@ export class SuDropdown extends LitElement {
                     role="menuitem"
                     class="item ${item.danger ? 'danger' : ''}"
                     ?disabled=${Boolean(item.disabled)}
-                    @click=${() => this.onSelect(item)}>
+                    @click=${() => this.onSelect(item)}
+                  >
                     ${item.label}
                   </button>
                 `

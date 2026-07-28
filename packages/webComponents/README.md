@@ -13,8 +13,11 @@ pnpm add webcomponents
 ## 使用
 
 ```ts
+import 'webcomponents/style.css';
 import 'webcomponents';
 ```
+
+当前包入口会注册全部组件，并自动恢复持久化的主题配置。组件级按需入口尚未发布，请不要使用 `webcomponents/lib/*` 这类路径。
 
 ```html
 <su-container>
@@ -39,16 +42,17 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-')
-        }
-      }
-    })
-  ]
+          isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+        },
+      },
+    }),
+  ],
 });
 ```
 
 ```vue
 <script setup lang="ts">
+import 'webcomponents/style.css';
 import 'webcomponents';
 import { toggleThemeMode, setThemeColors } from 'webcomponents';
 </script>
@@ -65,6 +69,7 @@ import { toggleThemeMode, setThemeColors } from 'webcomponents';
 ## 在 React 中使用
 
 ```tsx
+import 'webcomponents/style.css';
 import 'webcomponents';
 import { toggleThemeMode, setThemeColors, getThemeMode } from 'webcomponents';
 import { useEffect, useState } from 'react';
@@ -137,6 +142,16 @@ message.success('保存成功');
 message.error('请求失败', 5000);
 ```
 
+## API 约定
+
+- 简单属性用 HTML attribute：`<su-button type="primary" loading>保存</su-button>`
+- 布尔属性只要存在就表示 true；需要 false 时移除 attribute 或通过 JS property 设置
+- 数组、对象、函数通过 DOM property 赋值：`table.columns = [...]`
+- 纯 HTML 场景可用 `itemsJson` / `optionsJson` 传 JSON 字符串
+- 自定义事件使用 `CustomEvent`，业务数据放在 `event.detail`
+- 表单控件设置 `name` 后会进入原生 `FormData`，并支持 `form.reset()`
+- 包内置 `HTMLElementTagNameMap`，原生 TypeScript 可推断组件实例类型
+
 ## 主题系统
 
 - 组件主题 token 在 `styles/theme.css`，全部基于 CSS 变量
@@ -152,9 +167,9 @@ message.error('请求失败', 5000);
 ```ts
 import { setThemeMode, toggleThemeMode, getThemeMode } from 'webcomponents';
 
-toggleThemeMode();      // 明暗互切
-setThemeMode('dark');   // 指定模式
-getThemeMode();         // 'light' | 'dark'
+toggleThemeMode(); // 明暗互切
+setThemeMode('dark'); // 指定模式
+getThemeMode(); // 'light' | 'dark'
 
 // 主题变化时收到通知
 window.addEventListener('su-theme-change', (e) => {
@@ -186,8 +201,27 @@ resetThemeColors(); // 恢复默认
 
 ## 开发
 
+仓库开发工具链固定为 Node.js `22.17.1` 与 pnpm `8.15.9`。首次进入仓库时执行：
+
+```bash
+nvm use
+corepack enable
+cd packages/webComponents
+pnpm install --frozen-lockfile
+```
+
 ```bash
 pnpm dev
 pnpm build
-pnpm test -- --run
+pnpm test:run
+pnpm lint
+pnpm typecheck
+pnpm typecheck:dist
+pnpm docs:dev
+```
+
+提交前建议执行：
+
+```bash
+pnpm check
 ```

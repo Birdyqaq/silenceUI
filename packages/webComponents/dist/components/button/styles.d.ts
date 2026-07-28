@@ -1,1 +1,1 @@
-export declare const styleMap: import('lit').CSSResult;
+export declare const styleMap: import('lit').CSSResult[];

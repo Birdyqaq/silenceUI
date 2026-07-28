@@ -1,2 +1,10 @@
+.DS_Store
+.idea/
+.vscode/
 node_modules/
+
+# Generated docs caches
+packages/webComponents/docs/.vitepress/cache/
+
+*.log
 *storybook.log

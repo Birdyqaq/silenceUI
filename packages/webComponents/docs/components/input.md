@@ -42,14 +42,11 @@
   label="邮箱"
   type="email"
   placeholder="name@example.com"
-  helperText="我们只会用来通知重要信息">
+  helperText="我们只会用来通知重要信息"
+>
 </su-input>
 
-<su-input
-  label="验证码"
-  placeholder="请输入验证码"
-  helperText="验证码有误，请重新输入"
-  error>
+<su-input label="验证码" placeholder="请输入验证码" helperText="验证码有误，请重新输入" error>
 </su-input>
 ```
 
@@ -61,10 +58,10 @@ Input 组件会在输入时触发 `input-change` 事件，返回当前值。
 <su-input id="demo" placeholder="实时监听"></su-input>
 
 <script type="module">
-  const input = document.querySelector('#demo')
+  const input = document.querySelector('#demo');
   input.addEventListener('input-change', (e) => {
-    console.log('当前值', e.detail.value)
-  })
+    console.log('当前值', e.detail.value);
+  });
 </script>
 ```
 
@@ -84,20 +81,23 @@ Input 组件会在输入时触发 `input-change` 事件，返回当前值。
 
 ### 属性
 
-| 属性 | 说明 | 类型 | 默认值 |
-| --- | --- | --- | --- |
-| value | 输入框的值 | `string` | `''` |
-| placeholder | 占位符 | `string` | `Enter text` |
-| type | 输入类型 | `string` | `text` |
-| disabled | 是否禁用 | `boolean` | `false` |
-| readonly | 只读 | `boolean` | `false` |
-| error | 是否展示错误态 | `boolean` | `false` |
-| label | 标签文本 | `string` | `''` |
-| helperText | 辅助说明文本 | `string` | `''` |
-| clearable | 是否显示清空按钮 | `boolean` | `false` |
+| 属性        | 说明             | 类型      | 默认值   |
+| ----------- | ---------------- | --------- | -------- |
+| value       | 输入框的值       | `string`  | `''`     |
+| name        | 表单字段名       | `string`  | `''`     |
+| placeholder | 占位符           | `string`  | `请输入` |
+| type        | 输入类型         | `string`  | `text`   |
+| disabled    | 是否禁用         | `boolean` | `false`  |
+| readonly    | 只读             | `boolean` | `false`  |
+| error       | 是否展示错误态   | `boolean` | `false`  |
+| label       | 标签文本         | `string`  | `''`     |
+| helperText  | 辅助说明文本     | `string`  | `''`     |
+| clearable   | 是否显示清空按钮 | `boolean` | `false`  |
 
 ### 事件
 
-| 事件名 | 说明 | 回调参数 |
-| --- | --- | --- |
+| 事件名       | 说明               | 回调参数            |
+| ------------ | ------------------ | ------------------- |
 | input-change | 输入内容变化时触发 | `{ value: string }` |
+
+设置 `name` 后，组件会参与外层原生表单提交，并在 `form.reset()` 时恢复初始值。

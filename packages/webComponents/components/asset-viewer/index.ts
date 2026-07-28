@@ -1,5 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { baseControlStyles } from '../_shared/styles';
 
 type AssetType = 'image' | 'video' | 'audio' | 'pdf' | 'unknown';
 
@@ -12,126 +13,132 @@ export class SeAssetViewer extends LitElement {
   @property({ type: String }) type: AssetType = 'unknown';
   @state() private previewVisible = false;
 
-  static styles = css`
-    :host {
-      display: block;
-      font-family: Arial, sans-serif;
-    }
+  static styles = [
+    baseControlStyles,
+    css`
+      :host {
+        display: block;
+      }
 
-    .card {
-      border: 1px solid var(--asset-border, #e5e7eb);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      background: var(--asset-bg, #fff);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
+      .card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-md);
+        background: var(--su-bg-card);
+        box-shadow: var(--su-shadow-sm);
+      }
 
-    .preview {
-      width: 96px;
-      height: 72px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #f8fafc;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      position: relative;
-    }
+      .preview {
+        position: relative;
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 96px;
+        height: 72px;
+        overflow: hidden;
+        border-radius: var(--su-radius-sm);
+        background: var(--su-bg-muted);
+        color: var(--su-text-3);
+        cursor: pointer;
+      }
 
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+      .preview img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-    .meta {
-      flex: 1;
-      min-width: 0;
-    }
+      .meta {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .title {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0 0 6px 0;
-      color: #111827;
-      line-height: 1.4;
-    }
+      .title {
+        margin: 0 0 6px;
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-sm);
+        font-weight: 600;
+        line-height: 1.4;
+      }
 
-    .meta small {
-      display: block;
-      color: #6b7280;
-      line-height: 1.6;
-    }
+      .meta small {
+        display: block;
+        color: var(--su-text-3);
+        line-height: 1.6;
+      }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-    }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
 
-    button,
-    a.button-link {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-      background: #fff;
-      color: #111827;
-      font-size: 12px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
+      button,
+      a.button-link {
+        padding: 6px 10px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        background: var(--su-bg-card);
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-xs);
+        cursor: pointer;
+        text-decoration: none;
+        transition: border-color 0.2s ease, color 0.2s ease;
+      }
 
-    button:hover,
-    a.button-link:hover {
-      border-color: var(--su-color-primary-hover, #2563eb);
-      color: var(--su-color-primary-hover, #2563eb);
-    }
+      button:hover,
+      a.button-link:hover {
+        border-color: var(--su-color-primary-hover);
+        color: var(--su-color-primary-hover);
+      }
 
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.55);
-      display: grid;
-      place-items: center;
-      z-index: 9999;
-      padding: 24px;
-    }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.55);
+      }
 
-    .overlay-content {
-      background: #fff;
-      padding: 12px;
-      border-radius: 10px;
-      max-width: min(90vw, 960px);
-      max-height: 90vh;
-      display: grid;
-      gap: 10px;
-    }
+      .overlay-content {
+        display: grid;
+        gap: 10px;
+        max-width: min(90vw, 960px);
+        max-height: 90vh;
+        padding: 12px;
+        border-radius: var(--su-radius-md);
+        background: var(--su-bg-card);
+        box-shadow: var(--su-shadow-md);
+      }
 
-    .overlay header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
+      .overlay header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
 
-    .overlay header h3 {
-      margin: 0;
-      font-size: 15px;
-    }
+      .overlay header h3 {
+        margin: 0;
+        color: var(--su-text-1);
+        font-size: var(--su-font-size-md);
+      }
 
-    .overlay img,
-    .overlay iframe,
-    .overlay video,
-    .overlay audio {
-      max-width: 100%;
-      max-height: 72vh;
-      border-radius: 8px;
-    }
-  `;
+      .overlay img,
+      .overlay iframe,
+      .overlay video,
+      .overlay audio {
+        max-width: 100%;
+        max-height: 72vh;
+        border-radius: var(--su-radius-sm);
+      }
+    `,
+  ];
 
   private resolveType(): AssetType {
     if (this.type !== 'unknown') return this.type;
@@ -146,7 +153,13 @@ export class SeAssetViewer extends LitElement {
   private openPreview() {
     if (!this.src) return;
     this.previewVisible = true;
-    this.dispatchEvent(new CustomEvent('asset-open', { detail: { src: this.src, type: this.resolveType() } }));
+    this.dispatchEvent(
+      new CustomEvent('asset-open', {
+        detail: { src: this.src, type: this.resolveType() },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private closePreview() {
@@ -164,7 +177,7 @@ export class SeAssetViewer extends LitElement {
       video: '视频',
       audio: '音频',
       pdf: 'PDF',
-      unknown: '文件'
+      unknown: '文件',
     };
     return html`<span>${labelMap[kind]}</span>`;
   }
@@ -180,14 +193,14 @@ export class SeAssetViewer extends LitElement {
             <button @click=${this.closePreview}>关闭</button>
           </header>
           ${kind === 'image'
-        ? html`<img src=${this.src} alt=${this.title || 'asset'} />`
-        : kind === 'pdf'
-          ? html`<iframe src=${this.src} title="PDF preview"></iframe>`
-          : kind === 'video'
+            ? html`<img src=${this.src} alt=${this.title || 'asset'} />`
+            : kind === 'pdf'
+            ? html`<iframe src=${this.src} title="PDF preview"></iframe>`
+            : kind === 'video'
             ? html`<video src=${this.src} controls></video>`
             : kind === 'audio'
-              ? html`<audio src=${this.src} controls></audio>`
-              : html`<p>暂不支持预览该文件类型</p>`}
+            ? html`<audio src=${this.src} controls></audio>`
+            : html`<p>暂不支持预览该文件类型</p>`}
         </div>
       </div>
     `;
@@ -196,9 +209,7 @@ export class SeAssetViewer extends LitElement {
   render() {
     return html`
       <div class="card">
-        <div class="preview" @click=${this.openPreview}>
-          ${this.renderPreviewThumb()}
-        </div>
+        <div class="preview" @click=${this.openPreview}>${this.renderPreviewThumb()}</div>
         <div class="meta">
           <p class="title">${this.title || this.src}</p>
           <small>${this.resolveType().toUpperCase()} · 点击预览</small>
@@ -206,8 +217,10 @@ export class SeAssetViewer extends LitElement {
         <div class="actions">
           <button @click=${this.openPreview}>预览</button>
           ${this.downloadable && this.src
-        ? html`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer">下载</a>`
-        : null}
+            ? html`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer"
+                >下载</a
+              >`
+            : null}
         </div>
       </div>
       ${this.renderOverlay()}
