@@ -1,0 +1,6 @@
+# Local overrides for the webComponents package.
+# Root .gitignore already covers dist / VitePress outputs; keep this file for package-scoped extras.
+
+# Vite / Vitest temp
+*.local
+.turbo/

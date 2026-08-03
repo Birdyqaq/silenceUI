@@ -225,3 +225,5 @@ pnpm docs:dev
 ```bash
 pnpm check
 ```
+
+`dist/`、`docs/.vitepress/dist/`、`docs/.vitepress/cache/` 均为生成物，已由 `.gitignore` 排除，不要提交进 Git。本地或 CI 需要时再执行 `pnpm build` / `pnpm docs:build`。

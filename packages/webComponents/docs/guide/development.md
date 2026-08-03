@@ -76,8 +76,26 @@ export class SuExample extends LitElement {
 - 把构建产物、IDE 配置（`.idea` / `.vscode`）当作组件源码提交。
 - 在组件内硬编码与主题无关的绝对色值（中性色也应走 token）。
 
+## 生成物策略
+
+以下目录由本地/CI 构建产生，**不进入 Git**：
+
+| 路径                                            | 说明                              | 如何生成                 |
+| ----------------------------------------------- | --------------------------------- | ------------------------ |
+| `packages/webComponents/dist/`                  | 库构建产物（JS/CJS/UMD/类型/CSS） | `pnpm build`             |
+| `packages/webComponents/docs/.vitepress/dist/`  | 文档站点静态产物                  | `pnpm docs:build`        |
+| `packages/webComponents/docs/.vitepress/cache/` | VitePress 依赖预构建缓存          | `pnpm docs:dev` 自动产生 |
+
+发布到 npm 时仍通过 `package.json` 的 `files: ["dist", ...]` 带上 `dist`，`prepack` 会在打包前自动执行构建。文档站点应在 CI 中 `docs:build` 后再部署，不要把 `docs/.vitepress/dist` 提交进仓库。
+
 ## 提交前检查
 
 ```bash
 pnpm check
+```
+
+组件的标签、properties、事件、slots 与直接测试覆盖清单由脚本维护。新增或调整公开 API 后同步执行：
+
+```bash
+pnpm docs:inventory
 ```

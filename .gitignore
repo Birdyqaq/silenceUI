@@ -3,8 +3,16 @@
 .vscode/
 node_modules/
 
-# Generated docs caches
+# Package build outputs
+packages/*/dist/
+packages/*/lib/
+**/coverage/
+**/storybook-static/
+*.tsbuildinfo
+
+# VitePress generated artifacts
 packages/webComponents/docs/.vitepress/cache/
+packages/webComponents/docs/.vitepress/dist/
 
 *.log
 *storybook.log

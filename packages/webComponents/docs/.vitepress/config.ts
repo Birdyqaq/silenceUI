@@ -42,6 +42,7 @@ export default defineConfig({
             { text: '快速开始', link: '/guide/getting-started' },
             { text: '安装', link: '/guide/installation' },
             { text: 'API 约定', link: '/guide/api-conventions' },
+            { text: '组件 API 基线', link: '/guide/component-inventory' },
           ],
         },
         {
