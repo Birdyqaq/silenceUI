@@ -100,14 +100,16 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 常见事件包括：
 
-| 事件           | 组件                                                                                                       | detail                   |
-| -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `input-change` | `su-input`、`su-textarea`                                                                                  | `{ value }`              |
-| `change`       | `su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档           |
-| `select`       | `su-menu`、`su-dropdown`                                                                                   | 菜单项或 `{ key, item }` |
-| `close`        | `su-modal`、`su-drawer`、`su-alert`、`su-message`                                                          | 关闭来源或空 detail      |
-| `page-change`  | `se-table`、`se-pagination`                                                                                | `{ currentPage }`        |
-| `sort-change`  | `se-table`                                                                                                 | `{ column, direction }`  |
+| 事件           | 组件                                                                                                       | detail                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `input-change` | `su-input`、`su-textarea`                                                                                  | `{ value }`               |
+| `change`       | `su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档            |
+| `select`       | `su-menu`、`su-dropdown`                                                                                   | 菜单项或 `{ key, item }`  |
+| `close`        | `su-modal`、`su-drawer`、`su-alert`、`su-message`、`su-notification`、`su-popconfirm`                      | 关闭来源或空 detail       |
+| `confirm`      | `su-modal`、`su-popconfirm`                                                                                | 无，可调用 preventDefault |
+| `cancel`       | `su-popconfirm`                                                                                            | 无                        |
+| `page-change`  | `se-table`、`se-pagination`                                                                                | `{ currentPage }`         |
+| `sort-change`  | `se-table`                                                                                                 | `{ column, direction }`   |
 
 ## 框架接入
 

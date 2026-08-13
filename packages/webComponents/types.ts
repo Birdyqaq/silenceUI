@@ -12,6 +12,8 @@ import type { SuAlert } from './components/feedback/alert';
 import type { SuDrawer } from './components/feedback/drawer';
 import type { SuMessage } from './components/feedback/message';
 import type { SuModal } from './components/feedback/modal';
+import type { SuNotification } from './components/feedback/notification';
+import type { SuPopconfirm } from './components/feedback/popconfirm';
 import type { SuProgress } from './components/feedback/progress';
 import type { SuSpin } from './components/feedback/spin';
 import type { SuTooltip } from './components/feedback/tooltip';
@@ -64,6 +66,8 @@ declare global {
     'su-menu': SuMenu;
     'su-message': SuMessage;
     'su-modal': SuModal;
+    'su-notification': SuNotification;
+    'su-popconfirm': SuPopconfirm;
     'su-progress': SuProgress;
     'su-radio-group': SuRadioGroup;
     'su-select': SuSelect;

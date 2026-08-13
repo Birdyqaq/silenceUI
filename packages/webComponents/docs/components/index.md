@@ -51,15 +51,17 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 
 ## 反馈
 
-| 组件     | 标签 / API               | 说明                                         | 主要事件           |
-| -------- | ------------------------ | -------------------------------------------- | ------------------ |
-| Modal    | `su-modal`               | 模态框，支持确认、取消、遮罩关闭和自定义底部 | `confirm`、`close` |
-| Drawer   | `su-drawer`              | 抽屉，支持左右方向                           | `close`            |
-| Alert    | `su-alert`               | 页面内警告提示                               | `close`            |
-| Message  | `message` / `su-message` | 命令式全局消息                               | `close`            |
-| Tooltip  | `su-tooltip`             | 悬停或聚焦提示                               | -                  |
-| Spin     | `su-spin`                | 独立加载或区域遮罩                           | -                  |
-| Progress | `su-progress`            | 线性进度条                                   | -                  |
+| 组件         | 标签 / API                         | 说明                                         | 主要事件                     |
+| ------------ | ---------------------------------- | -------------------------------------------- | ---------------------------- |
+| Modal        | `su-modal`                         | 模态框，支持确认、取消、遮罩关闭和自定义底部 | `confirm`、`close`           |
+| Drawer       | `su-drawer`                        | 抽屉，支持左右方向                           | `close`                      |
+| Alert        | `su-alert`                         | 页面内警告提示                               | `close`                      |
+| Message      | `message` / `su-message`           | 命令式全局消息                               | `close`                      |
+| Notification | `notification` / `su-notification` | 右上角堆叠通知                               | `close`                      |
+| Popconfirm   | `su-popconfirm`                    | 危险操作二次确认                             | `confirm`、`cancel`、`close` |
+| Tooltip      | `su-tooltip`                       | 悬停或聚焦提示                               | -                            |
+| Spin         | `su-spin`                          | 独立加载或区域遮罩                           | -                            |
+| Progress     | `su-progress`                      | 线性进度条                                   | -                            |
 
 ## 布局
 
@@ -75,6 +77,7 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 import {
   getThemeMode,
   message,
+  notification,
   resetThemeColors,
   setThemeColors,
   setThemeMode,
@@ -84,6 +87,7 @@ import {
 toggleThemeMode();
 setThemeColors({ primary: '#2563eb' });
 message.success('保存成功');
+notification.success('发布成功', '版本已上线');
 ```
 
 属性、事件和复杂数据传参规则见 [API 约定](/guide/api-conventions)。

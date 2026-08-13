@@ -98,6 +98,62 @@ message('普通提示', { type: 'info', duration: 3000 });
 
 `su-message` 元素关闭时触发 `close`。
 
+## Notification 通知 `notification`
+
+通知显示在页面右上角，适合展示比 Message 更完整的标题与说明。命令式 API 会自动创建堆叠容器：
+
+```ts
+import { notification } from 'webcomponents';
+
+notification.success('发布成功', '版本 1.2.0 已上线');
+notification.error('同步失败', '请检查网络后重试', 0);
+notification({
+  title: '审批提醒',
+  description: '你有 3 条申请待处理',
+  type: 'info',
+  duration: 6000,
+});
+```
+
+| API / 字段                              | 说明                                             |
+| --------------------------------------- | ------------------------------------------------ |
+| `notification(options)`                 | 创建通知并返回 `SuNotification` 元素             |
+| `notification.success(title, desc, ms)` | 创建成功通知；另有 `info/warning/error` 快捷方法 |
+| `title`                                 | 通知标题                                         |
+| `description`                           | 通知说明                                         |
+| `type`                                  | `info/success/warning/error`                     |
+| `duration`                              | 自动关闭时间；小于等于 0 时不自动关闭            |
+| `closable`                              | 是否显示手动关闭按钮，默认 `true`                |
+
+也可直接使用 `<su-notification>`。关闭时触发 `close`，detail 为 `{ source: 'manual' | 'timeout' }`。
+
+## Popconfirm 气泡确认框 `su-popconfirm`
+
+用于危险操作的轻量二次确认。默认插槽放触发元素：
+
+```html
+<su-popconfirm title="确定删除这条记录吗？" placement="top">
+  <su-button type="danger">删除</su-button>
+</su-popconfirm>
+
+<script type="module">
+  document.querySelector('su-popconfirm').addEventListener('confirm', () => {
+    console.log('执行删除');
+  });
+</script>
+```
+
+| 属性          | 说明                              | 默认值               |
+| ------------- | --------------------------------- | -------------------- |
+| `open`        | 是否显示，会 reflect 到 attribute | `false`              |
+| `disabled`    | 是否禁用触发                      | `false`              |
+| `title`       | 确认提示                          | `确定执行此操作吗？` |
+| `confirmText` | 确认按钮文案                      | `确定`               |
+| `cancelText`  | 取消按钮文案                      | `取消`               |
+| `placement`   | `top/bottom/left/right`           | `top`                |
+
+`confirm` 事件可取消；监听器调用 `event.preventDefault()` 可保持气泡打开。取消时触发 `cancel`，任意关闭都会触发 `close`，detail 中的 source 为 `confirm/cancel/escape/outside`。组件支持 Escape 关闭、外部点击关闭和焦点恢复。
+
 ## Tooltip 文字提示 `su-tooltip`
 
 ```html

@@ -2,11 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import './alert';
 import './drawer';
 import './message';
+import { notification } from './notification';
+import './popconfirm';
 import './progress';
 import './spin';
 import './tooltip';
 
 afterEach(() => {
+  vi.useRealTimers();
   document.body.replaceChildren();
   document.body.style.overflow = '';
 });
@@ -124,5 +127,150 @@ describe('feedback components', () => {
 
     expect(tooltip.getAttribute('placement')).toBe('right');
     expect(tooltip.shadowRoot?.querySelector('[role="tooltip"]')?.textContent).toBe('更多信息');
+  });
+
+  it('creates and manually closes a stacked notification', async () => {
+    const element = notification.success('保存成功', '新配置已经生效', 0);
+    const onClose = vi.fn();
+    element.addEventListener('close', onClose);
+    await element.updateComplete;
+
+    expect(element.parentElement?.getAttribute('aria-label')).toBe('通知');
+    expect(element.shadowRoot?.querySelector('[role="status"]')).toBeTruthy();
+    expect(element.shadowRoot?.querySelector('.title')?.textContent).toBe('保存成功');
+    expect(element.textContent).toBe('新配置已经生效');
+
+    element.shadowRoot?.querySelector<HTMLButtonElement>('.close')?.click();
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'manual' });
+    expect(element.isConnected).toBe(false);
+  });
+
+  it('automatically closes a notification after its duration', async () => {
+    vi.useFakeTimers();
+    const element = notification({ title: '同步完成', duration: 100 });
+    const onClose = vi.fn();
+    element.addEventListener('close', onClose);
+    await element.updateComplete;
+
+    vi.advanceTimersByTime(100);
+
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'timeout' });
+    expect(element.isConnected).toBe(false);
+  });
+
+  it('clears a notification timer when it is disconnected', async () => {
+    vi.useFakeTimers();
+    const element = notification({ title: '后台同步', duration: 100 });
+    const onClose = vi.fn();
+    element.addEventListener('close', onClose);
+    await element.updateComplete;
+
+    element.remove();
+    vi.advanceTimersByTime(100);
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('confirms a popconfirm and restores focus to its trigger', async () => {
+    const popconfirm = document.createElement('su-popconfirm');
+    popconfirm.title = '确定删除这条记录吗？';
+    const trigger = document.createElement('button');
+    trigger.textContent = '删除';
+    popconfirm.append(trigger);
+    const onConfirm = vi.fn();
+    const onClose = vi.fn();
+    popconfirm.addEventListener('confirm', onConfirm);
+    popconfirm.addEventListener('close', onClose);
+    document.body.append(popconfirm);
+    await popconfirm.updateComplete;
+
+    trigger.focus();
+    trigger.click();
+    await popconfirm.updateComplete;
+
+    expect(popconfirm.open).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(popconfirm.shadowRoot?.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(popconfirm.shadowRoot?.activeElement?.classList.contains('confirm')).toBe(true);
+
+    popconfirm.shadowRoot?.querySelector<HTMLButtonElement>('.confirm')?.click();
+    await popconfirm.updateComplete;
+
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'confirm' });
+    expect(popconfirm.open).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('keeps a popconfirm open when confirmation is prevented', async () => {
+    const popconfirm = document.createElement('su-popconfirm');
+    popconfirm.textContent = '危险操作';
+    popconfirm.addEventListener('confirm', (event) => event.preventDefault());
+    document.body.append(popconfirm);
+    await popconfirm.updateComplete;
+
+    popconfirm.shadowRoot?.querySelector<HTMLElement>('.trigger')?.click();
+    await popconfirm.updateComplete;
+    popconfirm.shadowRoot?.querySelector<HTMLButtonElement>('.confirm')?.click();
+    await popconfirm.updateComplete;
+
+    expect(popconfirm.open).toBe(true);
+  });
+
+  it('emits cancel before closing a popconfirm', async () => {
+    const popconfirm = document.createElement('su-popconfirm');
+    popconfirm.textContent = '危险操作';
+    const onCancel = vi.fn();
+    const onClose = vi.fn();
+    popconfirm.addEventListener('cancel', onCancel);
+    popconfirm.addEventListener('close', onClose);
+    document.body.append(popconfirm);
+    await popconfirm.updateComplete;
+
+    popconfirm.shadowRoot?.querySelector<HTMLElement>('.trigger')?.click();
+    await popconfirm.updateComplete;
+    popconfirm.shadowRoot?.querySelector<HTMLButtonElement>('.actions button')?.click();
+    await popconfirm.updateComplete;
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'cancel' });
+  });
+
+  it('closes a popconfirm with Escape and reports the source', async () => {
+    const popconfirm = document.createElement('su-popconfirm');
+    popconfirm.textContent = '危险操作';
+    const onClose = vi.fn();
+    popconfirm.addEventListener('close', onClose);
+    document.body.append(popconfirm);
+    await popconfirm.updateComplete;
+
+    popconfirm.shadowRoot?.querySelector<HTMLElement>('.trigger')?.click();
+    await popconfirm.updateComplete;
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await popconfirm.updateComplete;
+
+    expect(popconfirm.open).toBe(false);
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'escape' });
+  });
+
+  it('closes a popconfirm on outside click without stealing focus', async () => {
+    const popconfirm = document.createElement('su-popconfirm');
+    popconfirm.textContent = '危险操作';
+    const outside = document.createElement('button');
+    outside.textContent = '其他操作';
+    const onClose = vi.fn();
+    popconfirm.addEventListener('close', onClose);
+    document.body.append(popconfirm, outside);
+    await popconfirm.updateComplete;
+
+    popconfirm.shadowRoot?.querySelector<HTMLElement>('.trigger')?.click();
+    await popconfirm.updateComplete;
+    outside.focus();
+    outside.click();
+    await popconfirm.updateComplete;
+
+    expect(popconfirm.open).toBe(false);
+    expect(onClose.mock.calls[0][0].detail).toEqual({ source: 'outside' });
+    expect(document.activeElement).toBe(outside);
   });
 });

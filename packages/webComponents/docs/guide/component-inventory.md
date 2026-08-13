@@ -8,13 +8,13 @@
 
 | 指标                    |  当前值 |
 | ----------------------- | ------: |
-| 自定义元素              |      38 |
-| `su-*` 标签             |      32 |
+| 自定义元素              |      40 |
+| `su-*` 标签             |      34 |
 | 历史/非标准标签         |       6 |
-| Lit reactive properties |     178 |
-| 组件主动派发事件        |      26 |
+| Lit reactive properties |     188 |
+| 组件主动派发事件        |      30 |
 | 暴露 CSS Parts          |       0 |
-| 有直接测试的组件        | 38 / 38 |
+| 有直接测试的组件        | 40 / 40 |
 
 “直接测试”表示测试文件直接 import 该组件源码，不包含通过整包入口产生的间接注册。属性后的“仅 property”表示该值不能通过 HTML attribute 设置。
 
@@ -41,6 +41,8 @@
 | 反馈     | `su-drawer`        | `SuDrawer`       | open<br>title<br>width<br>maskClosable<br>placement                                                                                                                                                                                                                                                                                                                                                                                                                       | `close`                                                                            | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
 | 反馈     | `su-message`       | `SuMessage`      | type<br>duration                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `close`                                                                            | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
 | 反馈     | `su-modal`         | `SuModal`        | open<br>title<br>maskClosable<br>hideFooter<br>confirmText<br>cancelText                                                                                                                                                                                                                                                                                                                                                                                                  | `close`<br>`confirm`                                                               | `default`<br>`footer`             | -         | 有（`components/feedback/overlay.test.ts`）                              |
+| 反馈     | `su-notification`  | `SuNotification` | type<br>title<br>duration<br>closable                                                                                                                                                                                                                                                                                                                                                                                                                                     | `close`                                                                            | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
+| 反馈     | `su-popconfirm`    | `SuPopconfirm`   | open<br>disabled<br>title<br>confirmText<br>cancelText<br>placement                                                                                                                                                                                                                                                                                                                                                                                                       | `cancel`<br>`close`<br>`confirm`                                                   | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
 | 反馈     | `su-progress`      | `SuProgress`     | percent<br>status<br>showText<br>strokeHeight                                                                                                                                                                                                                                                                                                                                                                                                                             | -                                                                                  | -                                 | -         | 有（`components/feedback/feedback.test.ts`）                             |
 | 反馈     | `su-spin`          | `SuSpin`         | spinning<br>size<br>tip                                                                                                                                                                                                                                                                                                                                                                                                                                                   | -                                                                                  | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
 | 反馈     | `su-tooltip`       | `SuTooltip`      | content<br>placement                                                                                                                                                                                                                                                                                                                                                                                                                                                      | -                                                                                  | `default`                         | -         | 有（`components/feedback/feedback.test.ts`）                             |
@@ -64,6 +66,6 @@
 ## 当前缺口
 
 - 标签前缀未统一：`line-component`、`se-asset-viewer`、`se-image`、`se-image-preview`、`se-pagination`、`se-table` 仍需兼容迁移方案。
-- 直接测试覆盖为 38/38；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
+- 直接测试覆盖为 40/40；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
 - 当前公开 CSS Parts 数量为 0；主题主要依赖全局 CSS variables，组件内部结构尚不能通过 `::part()` 精细定制。
 - 这份清单是 Day 3 的 API 基线；后续以 Custom Elements Manifest 替代自维护格式。
