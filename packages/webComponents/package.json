@@ -47,10 +47,11 @@
     "docs:preview": "vitepress preview docs",
     "docs:inventory": "node scripts/generate-component-inventory.mjs",
     "docs:inventory:check": "node scripts/generate-component-inventory.mjs --check",
+    "package:verify": "node scripts/verify-package.mjs",
     "lint": "eslint . --ext .ts,.js,.mjs,.vue",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:dist": "vite build && tsc -p type-tests/tsconfig.json --noEmit",
-    "check": "tsc -p tsconfig.json --noEmit && eslint . --ext .ts,.js,.mjs,.vue && vitest --run && vite build && tsc -p type-tests/tsconfig.json --noEmit && node scripts/generate-component-inventory.mjs --check && vitepress build docs",
+    "check": "tsc -p tsconfig.json --noEmit && eslint . --ext .ts,.js,.mjs,.vue && vitest --run && vite build && tsc -p type-tests/tsconfig.json --noEmit && node scripts/generate-component-inventory.mjs --check && node scripts/verify-package.mjs && vitepress build docs",
     "prepack": "vite build",
     "format": "prettier --write \"**/*.{js,ts,vue,json,md}\""
   },
