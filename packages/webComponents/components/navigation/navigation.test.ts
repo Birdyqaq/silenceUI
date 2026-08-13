@@ -80,6 +80,32 @@ describe('navigation keyboard interactions', () => {
     expect(onSelect.mock.calls[0][0].detail).toEqual({ key: 'settings', label: '设置' });
   });
 
+  it('supports menu keyboard navigation and exposes the active item', async () => {
+    const menu = document.createElement('su-menu');
+    menu.items = [
+      { key: 'overview', label: '概览' },
+      { key: 'settings', label: '设置' },
+      { key: 'logs', label: '日志' },
+    ];
+    menu.activeKey = 'overview';
+    document.body.append(menu);
+    await menu.updateComplete;
+
+    const first = menu.shadowRoot?.querySelector<HTMLButtonElement>('.item');
+    first?.focus();
+    first?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+    expect(menu.shadowRoot?.querySelector('[role="menu"]')?.getAttribute('aria-label')).toBe(
+      '主导航'
+    );
+    expect(first?.getAttribute('tabindex')).toBe('0');
+    expect(menu.shadowRoot?.querySelectorAll('[role="menuitem"]')).toHaveLength(3);
+    expect(menu.shadowRoot?.activeElement?.textContent).toContain('设置');
+    expect(menu.shadowRoot?.querySelector('.item[aria-current="page"]')?.textContent).toContain(
+      '概览'
+    );
+  });
+
   it('renders breadcrumb separators and emits navigation details', async () => {
     const breadcrumb = document.createElement('su-breadcrumb') as HTMLElement & {
       itemsJson: string;
@@ -96,6 +122,10 @@ describe('navigation keyboard interactions', () => {
     document.body.append(breadcrumb);
     await breadcrumb.updateComplete;
 
+    expect(breadcrumb.shadowRoot?.querySelector('nav')?.getAttribute('aria-label')).toBe('面包屑');
+    expect(
+      breadcrumb.shadowRoot?.querySelector('button[aria-current="page"]')?.textContent?.trim()
+    ).toBe('用户');
     expect(breadcrumb.shadowRoot?.querySelector('.sep')?.textContent).toBe('>');
     breadcrumb.shadowRoot?.querySelectorAll<HTMLButtonElement>('button')[0]?.click();
 
@@ -124,5 +154,11 @@ describe('navigation keyboard interactions', () => {
     expect(steps.shadowRoot?.querySelectorAll('.step.finished')).toHaveLength(1);
     expect(steps.shadowRoot?.querySelectorAll('.step.active')).toHaveLength(1);
     expect(steps.shadowRoot?.querySelector('.description')?.textContent).toBe('填写信息');
+    expect(steps.shadowRoot?.querySelector('[role="list"]')?.getAttribute('aria-label')).toBe(
+      '流程步骤'
+    );
+    expect(
+      steps.shadowRoot?.querySelector('[aria-current="step"]')?.getAttribute('aria-label')
+    ).toBe('审核中，当前步骤');
   });
 });

@@ -91,7 +91,7 @@ export class SuSteps extends LitElement {
       .step.finished .connector {
         background: var(--su-color-primary);
       }
-    `
+    `,
   ];
 
   private get mergedItems() {
@@ -102,15 +102,24 @@ export class SuSteps extends LitElement {
   render() {
     const list = this.mergedItems;
     return html`
-      <div class="steps">
+      <div class="steps" role="list" aria-label="流程步骤">
         ${list.map((item, index) => {
           const state = index < this.current ? 'finished' : index === this.current ? 'active' : '';
           return html`
-            <div class="step ${state}">
-              <span class="indicator">${index < this.current ? '✓' : index + 1}</span>
+            <div
+              class="step ${state}"
+              role="listitem"
+              aria-current=${index === this.current ? 'step' : 'false'}
+              aria-label=${`${item.title}${index < this.current ? '，已完成' : index === this.current ? '，当前步骤' : '，未开始'}`}
+            >
+              <span class="indicator" aria-hidden="true"
+                >${index < this.current ? '✓' : index + 1}</span
+              >
               <div class="content">
                 <div class="title">${item.title}</div>
-                ${item.description ? html`<div class="description">${item.description}</div>` : nothing}
+                ${item.description
+                  ? html`<div class="description">${item.description}</div>`
+                  : nothing}
               </div>
               ${index < list.length - 1 ? html`<span class="connector"></span>` : nothing}
             </div>
