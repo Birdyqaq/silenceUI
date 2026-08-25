@@ -96,7 +96,8 @@ utils/theme.ts       # 主题管理器（模式切换、自定义色、持久化
 
 ## 路线图
 
-- [ ] date-picker / upload（后台表单高频，复杂度高，优先级最高）
+- [x] date-picker（原生日期能力、边界与表单关联）
+- [ ] upload（后台表单高频，复杂度高，优先级最高）
 - [x] notification（右上角通知，支持堆叠与自动关闭）
 - [x] popconfirm（危险操作二次确认）
 - [ ] tree / cascader（组织架构、分类选择）

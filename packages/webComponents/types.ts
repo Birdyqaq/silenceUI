@@ -18,6 +18,7 @@ import type { SuProgress } from './components/feedback/progress';
 import type { SuSpin } from './components/feedback/spin';
 import type { SuTooltip } from './components/feedback/tooltip';
 import type { SuCheckbox } from './components/form/checkbox';
+import type { SuDatePicker } from './components/form/date-picker';
 import type { SuFormItem } from './components/form/form-item';
 import type { SuInputNumber } from './components/form/input-number';
 import type { SuRadioGroup } from './components/form/radio-group';
@@ -54,6 +55,7 @@ declare global {
     'su-button': SuButton;
     'su-card': SuCard;
     'su-checkbox': SuCheckbox;
+    'su-date-picker': SuDatePicker;
     'su-container': SuContainer;
     'su-descriptions': SuDescriptions;
     'su-divider': SuDivider;

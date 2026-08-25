@@ -8,13 +8,13 @@
 
 | 指标                    |  当前值 |
 | ----------------------- | ------: |
-| 自定义元素              |      40 |
-| `su-*` 标签             |      34 |
+| 自定义元素              |      41 |
+| `su-*` 标签             |      35 |
 | 历史/非标准标签         |       6 |
-| Lit reactive properties |     188 |
-| 组件主动派发事件        |      30 |
+| Lit reactive properties |     195 |
+| 组件主动派发事件        |      31 |
 | 暴露 CSS Parts          |       0 |
-| 有直接测试的组件        | 40 / 40 |
+| 有直接测试的组件        | 41 / 41 |
 
 “直接测试”表示测试文件直接 import 该组件源码，不包含通过整包入口产生的间接注册。属性后的“仅 property”表示该值不能通过 HTML attribute 设置。
 
@@ -23,6 +23,7 @@
 | 分类     | 标签               | 类名             | Reactive properties                                                                                                                                                                                                                                                                                                                                                                                                                                                       | 主动派发事件                                                                       | Slots                             | CSS Parts | 直接测试                                                                 |
 | -------- | ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------- | --------- | ------------------------------------------------------------------------ |
 | 表单     | `su-checkbox`      | `SuCheckbox`     | checked<br>disabled<br>name<br>value<br>label                                                                                                                                                                                                                                                                                                                                                                                                                             | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
+| 表单     | `su-date-picker`   | `SuDatePicker`   | value<br>name<br>min<br>max<br>label<br>disabled<br>readonly                                                                                                                                                                                                                                                                                                                                                                                                              | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
 | 表单     | `su-form-item`     | `SuFormItem`     | label<br>message<br>status<br>required                                                                                                                                                                                                                                                                                                                                                                                                                                    | -                                                                                  | `default`                         | -         | 有（`components/form/form.test.ts`）                                     |
 | 表单     | `su-input-number`  | `SuInputNumber`  | value<br>name<br>min<br>max<br>step<br>disabled                                                                                                                                                                                                                                                                                                                                                                                                                           | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
 | 表单     | `su-radio-group`   | `SuRadioGroup`   | options（仅 property）<br>optionsJson<br>value<br>name<br>disabled                                                                                                                                                                                                                                                                                                                                                                                                        | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
@@ -66,6 +67,6 @@
 ## 当前缺口
 
 - 标签前缀未统一：`line-component`、`se-asset-viewer`、`se-image`、`se-image-preview`、`se-pagination`、`se-table` 仍需兼容迁移方案。
-- 直接测试覆盖为 40/40；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
+- 直接测试覆盖为 41/41；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
 - 当前公开 CSS Parts 数量为 0；主题主要依赖全局 CSS variables，组件内部结构尚不能通过 `::part()` 精细定制。
 - 这份清单是 Day 3 的 API 基线；后续以 Custom Elements Manifest 替代自维护格式。

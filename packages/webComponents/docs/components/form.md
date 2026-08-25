@@ -58,6 +58,34 @@
 
 事件：`change`，detail 为 `{ value: string }`。
 
+## DatePicker 日期选择器 `su-date-picker`
+
+基于原生日期输入，值统一使用 `YYYY-MM-DD`，并支持外层原生表单提交与 reset：
+
+```html
+<su-date-picker
+  name="startDate"
+  label="开始日期"
+  value="2026-08-12"
+  min="2026-08-01"
+  max="2026-08-31"
+></su-date-picker>
+```
+
+用户选择超出 `min` / `max` 的日期时，组件会将值裁剪到最近边界。可通过 `focus()` 聚焦，也可调用 `showPicker()` 打开浏览器原生日期面板。
+
+| 属性       | 说明                          | 类型      | 默认值  |
+| ---------- | ----------------------------- | --------- | ------- |
+| `value`    | 当前日期，格式为 `YYYY-MM-DD` | `string`  | `''`    |
+| `name`     | 表单字段名                    | `string`  | `''`    |
+| `min`      | 最小日期                      | `string`  | `''`    |
+| `max`      | 最大日期                      | `string`  | `''`    |
+| `label`    | 可见标签，同时作为无障碍名称  | `string`  | `''`    |
+| `disabled` | 是否禁用                      | `boolean` | `false` |
+| `readonly` | 是否只读                      | `boolean` | `false` |
+
+事件：`change`，detail 为 `{ value: string }`。
+
 ## InputNumber 数字输入框 `su-input-number`
 
 ```html
@@ -171,6 +199,7 @@
 | 组件              | 事件           | detail                 |
 | ----------------- | -------------- | ---------------------- |
 | `su-select`       | `change`       | `{ value: string }`    |
+| `su-date-picker`  | `change`       | `{ value: string }`    |
 | `su-input-number` | `change`       | `{ value: number }`    |
 | `su-checkbox`     | `change`       | `{ checked: boolean }` |
 | `su-radio-group`  | `change`       | `{ value: string }`    |

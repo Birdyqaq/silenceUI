@@ -15,6 +15,7 @@ import './components/line/index.js';
 import './components/asset-viewer/index.js';
 
 import './components/form/select/index.js';
+import './components/form/date-picker/index.js';
 import './components/form/switch/index.js';
 import './components/form/textarea/index.js';
 import './components/form/form-item/index.js';
@@ -60,6 +61,7 @@ export * from './components/line/index';
 export * from './components/asset-viewer/index';
 
 export * from './components/form/select/index';
+export * from './components/form/date-picker/index';
 export * from './components/form/switch/index';
 export * from './components/form/textarea/index';
 export * from './components/form/form-item/index';

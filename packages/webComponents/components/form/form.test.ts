@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FormValueController } from '../_shared/form';
 import '../input';
 import './checkbox';
+import './date-picker';
 import './form-item';
 import './input-number';
 import './radio-group';
@@ -182,5 +183,42 @@ describe('form controls', () => {
     expect(formItem.shadowRoot?.querySelector('.required')?.textContent).toBe('*');
     expect(formItem.shadowRoot?.querySelector('.message.error')?.textContent).toBe('请输入用户名');
     expect(formItem.shadowRoot?.querySelector('slot:not([name])')).toBeTruthy();
+  });
+
+  it('emits bounded date-picker changes and exposes its label', async () => {
+    const picker = document.createElement('su-date-picker');
+    picker.label = '开始日期';
+    picker.min = '2026-08-01';
+    picker.max = '2026-08-31';
+    const onChange = vi.fn();
+    picker.addEventListener('change', onChange);
+    document.body.append(picker);
+    await picker.updateComplete;
+
+    const input = picker.shadowRoot?.querySelector<HTMLInputElement>('input');
+    input!.value = '2026-09-10';
+    input!.dispatchEvent(new Event('change', { bubbles: true }));
+    await picker.updateComplete;
+
+    expect(picker.value).toBe('2026-08-31');
+    expect(input?.value).toBe('2026-08-31');
+    expect(input?.getAttribute('aria-label')).toBe('开始日期');
+    expect(onChange.mock.calls[0][0].detail).toEqual({ value: '2026-08-31' });
+  });
+
+  it('restores the initial date-picker value on reset and state restore', async () => {
+    const picker = document.createElement('su-date-picker');
+    picker.value = '2026-08-12';
+    picker.min = '2026-08-01';
+    picker.max = '2026-08-31';
+    document.body.append(picker);
+    await picker.updateComplete;
+
+    picker.value = '2026-08-20';
+    picker.formResetCallback();
+    expect(picker.value).toBe('2026-08-12');
+
+    picker.formStateRestoreCallback('2026-07-01');
+    expect(picker.value).toBe('2026-08-01');
   });
 });
