@@ -8,13 +8,13 @@
 
 | 指标                    |  当前值 |
 | ----------------------- | ------: |
-| 自定义元素              |      41 |
-| `su-*` 标签             |      35 |
+| 自定义元素              |      42 |
+| `su-*` 标签             |      36 |
 | 历史/非标准标签         |       6 |
-| Lit reactive properties |     195 |
-| 组件主动派发事件        |      31 |
+| Lit reactive properties |     204 |
+| 组件主动派发事件        |      33 |
 | 暴露 CSS Parts          |       0 |
-| 有直接测试的组件        | 41 / 41 |
+| 有直接测试的组件        | 42 / 42 |
 
 “直接测试”表示测试文件直接 import 该组件源码，不包含通过整包入口产生的间接注册。属性后的“仅 property”表示该值不能通过 HTML attribute 设置。
 
@@ -30,6 +30,7 @@
 | 表单     | `su-select`        | `SuSelect`       | options（仅 property）<br>optionsJson<br>value<br>name<br>placeholder<br>disabled                                                                                                                                                                                                                                                                                                                                                                                         | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
 | 表单     | `su-switch`        | `SuSwitch`       | checked<br>disabled<br>name<br>value                                                                                                                                                                                                                                                                                                                                                                                                                                      | `change`                                                                           | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
 | 表单     | `su-textarea`      | `SuTextarea`     | value<br>name<br>placeholder<br>rows<br>disabled<br>readonly                                                                                                                                                                                                                                                                                                                                                                                                              | `input-change`                                                                     | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
+| 表单     | `su-upload`        | `SuUpload`       | files（仅 property）<br>name<br>accept<br>multiple<br>maxSize（attribute: max-size）<br>maxCount（attribute: max-count）<br>label<br>hint<br>disabled                                                                                                                                                                                                                                                                                                                     | `change`<br>`reject`                                                               | -                                 | -         | 有（`components/form/form.test.ts`）                                     |
 | 布局     | `su-container`     | `SuContainer`    | siderWidth<br>headerHeight                                                                                                                                                                                                                                                                                                                                                                                                                                                | -                                                                                  | `default`<br>`header`<br>`sider`  | -         | 有（`components/layout/layout.test.ts`）                                 |
 | 布局     | `su-divider`       | `SuDivider`      | direction<br>dashed                                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                                                                                  | `default`                         | -         | 有（`components/layout/layout.test.ts`）                                 |
 | 布局     | `su-theme-toggle`  | `SuThemeToggle`  | -                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `change`                                                                           | -                                 | -         | 有（`components/layout/layout.test.ts`）                                 |
@@ -67,6 +68,6 @@
 ## 当前缺口
 
 - 标签前缀未统一：`line-component`、`se-asset-viewer`、`se-image`、`se-image-preview`、`se-pagination`、`se-table` 仍需兼容迁移方案。
-- 直接测试覆盖为 41/41；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
+- 直接测试覆盖为 42/42；“无”不等于组件不可用，但意味着修改时缺少组件级回归保护。
 - 当前公开 CSS Parts 数量为 0；主题主要依赖全局 CSS variables，组件内部结构尚不能通过 `::part()` 精细定制。
 - 这份清单是 Day 3 的 API 基线；后续以 Custom Elements Manifest 替代自维护格式。

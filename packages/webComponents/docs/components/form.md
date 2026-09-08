@@ -86,6 +86,39 @@
 
 事件：`change`，detail 为 `{ value: string }`。
 
+## Upload 文件选择 `su-upload`
+
+支持点击和拖拽选择文件，并在提交原生表单时写入 `File`。组件只负责选择与校验，不会自动发送网络请求：
+
+```html
+<su-upload
+  name="attachments"
+  label="选择附件"
+  hint="支持 PNG、JPEG 和 PDF，单个文件不超过 5 MB"
+  accept="image/*,.pdf"
+  max-size="5242880"
+  max-count="3"
+  multiple
+></su-upload>
+```
+
+| 属性        | 说明                                | 类型      | 默认值     |
+| ----------- | ----------------------------------- | --------- | ---------- |
+| `files`     | 已选择文件，需通过 JS property 设置 | `File[]`  | `[]`       |
+| `name`      | 表单字段名                          | `string`  | `''`       |
+| `accept`    | MIME 类型或扩展名规则               | `string`  | `''`       |
+| `multiple`  | 是否允许多选                        | `boolean` | `false`    |
+| `max-size`  | 单文件字节上限，0 表示不限制        | `number`  | `0`        |
+| `max-count` | 多选数量上限，0 表示不限制          | `number`  | `0`        |
+| `label`     | 选择区域文案及无障碍名称            | `string`  | `选择文件` |
+| `hint`      | 辅助说明                            | `string`  | `''`       |
+| `disabled`  | 是否禁用                            | `boolean` | `false`    |
+
+- `change`：选择、移除或调用 `clear()` 后触发，detail 为 `{ files: File[] }`。
+- `reject`：文件校验失败时触发，detail 为 `{ rejected: UploadRejection[] }`；原因是 `type`、`size` 或 `count`。
+
+可调用 `focus()` 聚焦文件输入，调用 `clear()` 清空文件。多文件表单提交时会使用相同 `name` 写入多条文件记录。
+
 ## InputNumber 数字输入框 `su-input-number`
 
 ```html
@@ -200,6 +233,8 @@
 | ----------------- | -------------- | ---------------------- |
 | `su-select`       | `change`       | `{ value: string }`    |
 | `su-date-picker`  | `change`       | `{ value: string }`    |
+| `su-upload`       | `change`       | `{ files: File[] }`    |
+| `su-upload`       | `reject`       | `{ rejected }`         |
 | `su-input-number` | `change`       | `{ value: number }`    |
 | `su-checkbox`     | `change`       | `{ checked: boolean }` |
 | `su-radio-group`  | `change`       | `{ value: string }`    |

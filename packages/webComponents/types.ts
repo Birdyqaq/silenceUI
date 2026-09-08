@@ -25,6 +25,7 @@ import type { SuRadioGroup } from './components/form/radio-group';
 import type { SuSelect } from './components/form/select';
 import type { SuSwitch } from './components/form/switch';
 import type { SuTextarea } from './components/form/textarea';
+import type { SuUpload } from './components/form/upload';
 import type { SeImage } from './components/image';
 import type { SeImagePreview } from './components/image/preview';
 import type { SuInput } from './components/input';
@@ -83,6 +84,7 @@ declare global {
     'su-textarea': SuTextarea;
     'su-theme-toggle': SuThemeToggle;
     'su-tooltip': SuTooltip;
+    'su-upload': SuUpload;
   }
 }
 

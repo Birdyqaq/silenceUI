@@ -22,6 +22,7 @@ import './components/form/form-item/index.js';
 import './components/form/checkbox/index.js';
 import './components/form/radio-group/index.js';
 import './components/form/input-number/index.js';
+import './components/form/upload/index.js';
 
 import './components/data/card/index.js';
 import './components/data/tag/index.js';
@@ -68,6 +69,7 @@ export * from './components/form/form-item/index';
 export * from './components/form/checkbox/index';
 export * from './components/form/radio-group/index';
 export * from './components/form/input-number/index';
+export * from './components/form/upload/index';
 
 export * from './components/data/card/index';
 export * from './components/data/tag/index';

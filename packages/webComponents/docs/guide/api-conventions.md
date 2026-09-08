@@ -70,6 +70,7 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 <form id="profile-form">
   <su-input name="nickname" value="Silence"></su-input>
   <su-date-picker name="birthday" label="出生日期"></su-date-picker>
+  <su-upload name="avatar" accept="image/*" label="上传头像"></su-upload>
   <su-select name="city" optionsJson='[{"label":"上海","value":"sh"}]'></su-select>
   <su-checkbox name="agreement" value="accepted" label="同意协议"></su-checkbox>
   <su-button native-type="submit">提交</su-button>
@@ -83,7 +84,7 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 </script>
 ```
 
-支持 `name` 的组件：`su-input`、`su-date-picker`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
+支持 `name` 的组件：`su-input`、`su-date-picker`、`su-upload`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
 
 ## 事件监听
 
@@ -101,16 +102,17 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 常见事件包括：
 
-| 事件           | 组件                                                                                                                         | detail                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `input-change` | `su-input`、`su-textarea`                                                                                                    | `{ value }`               |
-| `change`       | `su-date-picker`、`su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档            |
-| `select`       | `su-menu`、`su-dropdown`                                                                                                     | 菜单项或 `{ key, item }`  |
-| `close`        | `su-modal`、`su-drawer`、`su-alert`、`su-message`、`su-notification`、`su-popconfirm`                                        | 关闭来源或空 detail       |
-| `confirm`      | `su-modal`、`su-popconfirm`                                                                                                  | 无，可调用 preventDefault |
-| `cancel`       | `su-popconfirm`                                                                                                              | 无                        |
-| `page-change`  | `se-table`、`se-pagination`                                                                                                  | `{ currentPage }`         |
-| `sort-change`  | `se-table`                                                                                                                   | `{ column, direction }`   |
+| 事件           | 组件                                                                                                                                      | detail                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `input-change` | `su-input`、`su-textarea`                                                                                                                 | `{ value }`               |
+| `change`       | `su-date-picker`、`su-upload`、`su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档            |
+| `reject`       | `su-upload`                                                                                                                               | `{ rejected }`            |
+| `select`       | `su-menu`、`su-dropdown`                                                                                                                  | 菜单项或 `{ key, item }`  |
+| `close`        | `su-modal`、`su-drawer`、`su-alert`、`su-message`、`su-notification`、`su-popconfirm`                                                     | 关闭来源或空 detail       |
+| `confirm`      | `su-modal`、`su-popconfirm`                                                                                                               | 无，可调用 preventDefault |
+| `cancel`       | `su-popconfirm`                                                                                                                           | 无                        |
+| `page-change`  | `se-table`、`se-pagination`                                                                                                               | `{ currentPage }`         |
+| `sort-change`  | `se-table`                                                                                                                                | `{ column, direction }`   |
 
 ## 框架接入
 

@@ -11,17 +11,18 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 
 ## 表单
 
-| 组件        | 标签              | 说明                                       | 主要事件       |
-| ----------- | ----------------- | ------------------------------------------ | -------------- |
-| Input       | `su-input`        | 文本输入，支持标签、辅助文案、错误态和清空 | `input-change` |
-| DatePicker  | `su-date-picker`  | 日期选择，支持边界与原生表单               | `change`       |
-| InputNumber | `su-input-number` | 数字输入，支持 `min/max/step`              | `change`       |
-| Select      | `su-select`       | 原生选择器封装，支持 `options/optionsJson` | `change`       |
-| Textarea    | `su-textarea`     | 多行文本输入                               | `input-change` |
-| Checkbox    | `su-checkbox`     | 单个复选框                                 | `change`       |
-| RadioGroup  | `su-radio-group`  | 单选组，支持 `options/optionsJson`         | `change`       |
-| Switch      | `su-switch`       | 开关                                       | `change`       |
-| FormItem    | `su-form-item`    | 表单项容器、标签和校验信息                 | -              |
+| 组件        | 标签              | 说明                                       | 主要事件           |
+| ----------- | ----------------- | ------------------------------------------ | ------------------ |
+| Input       | `su-input`        | 文本输入，支持标签、辅助文案、错误态和清空 | `input-change`     |
+| DatePicker  | `su-date-picker`  | 日期选择，支持边界与原生表单               | `change`           |
+| Upload      | `su-upload`       | 文件选择，支持类型、大小和数量校验         | `change`、`reject` |
+| InputNumber | `su-input-number` | 数字输入，支持 `min/max/step`              | `change`           |
+| Select      | `su-select`       | 原生选择器封装，支持 `options/optionsJson` | `change`           |
+| Textarea    | `su-textarea`     | 多行文本输入                               | `input-change`     |
+| Checkbox    | `su-checkbox`     | 单个复选框                                 | `change`           |
+| RadioGroup  | `su-radio-group`  | 单选组，支持 `options/optionsJson`         | `change`           |
+| Switch      | `su-switch`       | 开关                                       | `change`           |
+| FormItem    | `su-form-item`    | 表单项容器、标签和校验信息                 | -                  |
 
 ## 数据展示
 

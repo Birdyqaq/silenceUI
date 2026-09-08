@@ -9,6 +9,7 @@ import './radio-group';
 import './select';
 import './switch';
 import './textarea';
+import './upload';
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -220,5 +221,80 @@ describe('form controls', () => {
 
     picker.formStateRestoreCallback('2026-07-01');
     expect(picker.value).toBe('2026-08-01');
+  });
+
+  it('selects accepted upload files and reports rejected files', async () => {
+    const upload = document.createElement('su-upload');
+    upload.accept = 'image/*,.pdf';
+    upload.multiple = true;
+    upload.maxSize = 10;
+    const image = new File(['image'], 'avatar.png', { type: 'image/png' });
+    const largePdf = new File(['this file is too large'], 'report.pdf', {
+      type: 'application/pdf',
+    });
+    const text = new File(['text'], 'notes.txt', { type: 'text/plain' });
+    const onChange = vi.fn();
+    const onReject = vi.fn();
+    upload.addEventListener('change', onChange);
+    upload.addEventListener('reject', onReject);
+    document.body.append(upload);
+    await upload.updateComplete;
+
+    const input = upload.shadowRoot?.querySelector<HTMLInputElement>('input');
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [image, largePdf, text],
+    });
+    input?.dispatchEvent(new Event('change', { bubbles: true }));
+    await upload.updateComplete;
+
+    expect(upload.files).toEqual([image]);
+    expect(onChange.mock.calls[0][0].detail.files).toEqual([image]);
+    expect(onReject.mock.calls[0][0].detail.rejected).toEqual([
+      { file: largePdf, reason: 'size' },
+      { file: text, reason: 'type' },
+    ]);
+    expect(upload.shadowRoot?.querySelector('.name')?.textContent).toBe('avatar.png');
+  });
+
+  it('limits upload count and removes selected files', async () => {
+    const upload = document.createElement('su-upload');
+    upload.multiple = true;
+    upload.maxCount = 2;
+    const files = [new File(['a'], 'a.txt'), new File(['b'], 'b.txt'), new File(['c'], 'c.txt')];
+    const onReject = vi.fn();
+    upload.addEventListener('reject', onReject);
+    document.body.append(upload);
+    await upload.updateComplete;
+
+    const input = upload.shadowRoot?.querySelector<HTMLInputElement>('input');
+    Object.defineProperty(input, 'files', { configurable: true, value: files });
+    input?.dispatchEvent(new Event('change', { bubbles: true }));
+    await upload.updateComplete;
+
+    expect(upload.files).toEqual(files.slice(0, 2));
+    expect(onReject.mock.calls[0][0].detail.rejected).toEqual([
+      { file: files[2], reason: 'count' },
+    ]);
+
+    upload.shadowRoot?.querySelector<HTMLButtonElement>('.remove')?.click();
+    await upload.updateComplete;
+    expect(upload.files).toEqual([files[1]]);
+  });
+
+  it('resets and restores upload files', async () => {
+    const upload = document.createElement('su-upload');
+    const initial = new File(['initial'], 'initial.txt');
+    const restored = new File(['restored'], 'restored.txt');
+    upload.files = [initial];
+    document.body.append(upload);
+    await upload.updateComplete;
+
+    upload.files = [];
+    upload.formResetCallback();
+    expect(upload.files).toEqual([initial]);
+
+    upload.formStateRestoreCallback(restored);
+    expect(upload.files).toEqual([restored]);
   });
 });

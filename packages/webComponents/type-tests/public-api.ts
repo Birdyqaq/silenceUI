@@ -39,6 +39,7 @@ import type {
   SuTextarea,
   SuThemeToggle,
   SuTooltip,
+  SuUpload,
   seTable,
 } from '../dist/index';
 import '../dist/index';
@@ -92,6 +93,7 @@ const publicElements: [
   SuTextarea,
   SuThemeToggle,
   SuTooltip,
+  SuUpload,
 ] = [
   document.createElement('line-component'),
   document.createElement('se-asset-viewer'),
@@ -134,6 +136,7 @@ const publicElements: [
   document.createElement('su-textarea'),
   document.createElement('su-theme-toggle'),
   document.createElement('su-tooltip'),
+  document.createElement('su-upload'),
 ];
 
 publicElements[2].fit = 'contain';
