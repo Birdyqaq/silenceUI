@@ -10,6 +10,7 @@ import type {
   SuBreadcrumb,
   SuButton,
   SuCard,
+  SuCascader,
   SuCheckbox,
   SuContainer,
   SuDatePicker,
@@ -39,6 +40,7 @@ import type {
   SuTextarea,
   SuThemeToggle,
   SuTooltip,
+  SuTree,
   SuUpload,
   seTable,
 } from '../dist/index';
@@ -64,6 +66,7 @@ const publicElements: [
   SuBreadcrumb,
   SuButton,
   SuCard,
+  SuCascader,
   SuCheckbox,
   SuContainer,
   SuDatePicker,
@@ -93,6 +96,7 @@ const publicElements: [
   SuTextarea,
   SuThemeToggle,
   SuTooltip,
+  SuTree,
   SuUpload,
 ] = [
   document.createElement('line-component'),
@@ -107,6 +111,7 @@ const publicElements: [
   document.createElement('su-breadcrumb'),
   document.createElement('su-button'),
   document.createElement('su-card'),
+  document.createElement('su-cascader'),
   document.createElement('su-checkbox'),
   document.createElement('su-container'),
   document.createElement('su-date-picker'),
@@ -136,6 +141,7 @@ const publicElements: [
   document.createElement('su-textarea'),
   document.createElement('su-theme-toggle'),
   document.createElement('su-tooltip'),
+  document.createElement('su-tree'),
   document.createElement('su-upload'),
 ];
 

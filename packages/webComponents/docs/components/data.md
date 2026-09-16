@@ -158,3 +158,40 @@
 | ------- | ------ | -------- |
 | `label` | 字段名 | `string` |
 | `value` | 字段值 | `string` |
+
+## Tree 树形控件 `su-tree`
+
+用于组织架构、目录等层级数据展示，支持鼠标展开/选择以及方向键导航：
+
+```html
+<su-tree id="organization"></su-tree>
+
+<script type="module">
+  const tree = document.querySelector('#organization');
+  tree.nodes = [
+    {
+      key: 'engineering',
+      label: '研发中心',
+      children: [
+        { key: 'frontend', label: '前端组' },
+        { key: 'backend', label: '后端组' },
+      ],
+    },
+  ];
+  tree.expandedKeys = ['engineering'];
+</script>
+```
+
+纯 HTML 可使用 `nodesJson`。节点支持 `key`、`label`、`disabled` 和递归 `children`。
+
+| 属性           | 说明                               | 类型         | 默认值 |
+| -------------- | ---------------------------------- | ------------ | ------ |
+| `nodes`        | 节点数据，需通过 JS property 设置  | `TreeNode[]` | `[]`   |
+| `nodesJson`    | 节点 JSON 字符串                   | `string`     | `''`   |
+| `selectedKey`  | 当前选中节点 key                   | `string`     | `''`   |
+| `expandedKeys` | 展开节点 key，需通过 property 设置 | `string[]`   | `[]`   |
+
+- `select`：选择节点时触发，detail 为 `{ key, node }`。
+- `expand`：展开或收起时触发，detail 为 `{ key, expanded, node }`。
+
+键盘支持 `ArrowUp/ArrowDown` 移动、`ArrowRight` 展开或进入子节点、`ArrowLeft` 收起或返回父节点，以及 `Home/End/Enter/Space`。

@@ -86,6 +86,44 @@
 
 事件：`change`，detail 为 `{ value: string }`。
 
+## Cascader 级联选择 `su-cascader`
+
+用于地区、组织架构等层级选项。选中的完整路径是字符串数组，表单提交值为该数组的 JSON 字符串：
+
+```html
+<su-cascader id="region" name="region" placeholder="请选择地区"></su-cascader>
+
+<script type="module">
+  const cascader = document.querySelector('#region');
+  cascader.options = [
+    {
+      value: 'cn',
+      label: '中国',
+      children: [
+        { value: 'sh', label: '上海' },
+        { value: 'bj', label: '北京' },
+      ],
+    },
+  ];
+</script>
+```
+
+纯 HTML 可使用 `optionsJson` 和 `valueJson`。选项支持 `value`、`label`、`disabled` 和递归 `children`。
+
+| 属性          | 说明                              | 类型               | 默认值   |
+| ------------- | --------------------------------- | ------------------ | -------- |
+| `options`     | 选项树，需通过 JS property 设置   | `CascaderOption[]` | `[]`     |
+| `optionsJson` | 选项 JSON 字符串                  | `string`           | `''`     |
+| `value`       | 选中路径，需通过 JS property 设置 | `string[]`         | `[]`     |
+| `valueJson`   | 选中路径 JSON 字符串              | `string`           | `''`     |
+| `name`        | 表单字段名                        | `string`           | `''`     |
+| `placeholder` | 未选择时的提示                    | `string`           | `请选择` |
+| `separator`   | 路径展示分隔符                    | `string`           | `/`      |
+| `disabled`    | 是否禁用                          | `boolean`          | `false`  |
+| `open`        | 是否展开，会 reflect 到 attribute | `boolean`          | `false`  |
+
+事件：`change`，detail 为 `{ value: string[], option }`。支持方向键、Home/End、Enter/Space、Escape、外部点击关闭和焦点恢复。
+
 ## Upload 文件选择 `su-upload`
 
 支持点击和拖拽选择文件，并在提交原生表单时写入 `File`。组件只负责选择与校验，不会自动发送网络请求：
@@ -233,6 +271,7 @@
 | ----------------- | -------------- | ---------------------- |
 | `su-select`       | `change`       | `{ value: string }`    |
 | `su-date-picker`  | `change`       | `{ value: string }`    |
+| `su-cascader`     | `change`       | `{ value, option }`    |
 | `su-upload`       | `change`       | `{ files: File[] }`    |
 | `su-upload`       | `reject`       | `{ rejected }`         |
 | `su-input-number` | `change`       | `{ value: number }`    |

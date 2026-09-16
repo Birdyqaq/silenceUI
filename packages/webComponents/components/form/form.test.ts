@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FormValueController } from '../_shared/form';
 import '../input';
 import './checkbox';
+import './cascader';
 import './date-picker';
 import './form-item';
 import './input-number';
@@ -296,5 +297,64 @@ describe('form controls', () => {
 
     upload.formStateRestoreCallback(restored);
     expect(upload.files).toEqual([restored]);
+  });
+
+  it('selects a cascader leaf and emits its full path', async () => {
+    const cascader = document.createElement('su-cascader');
+    cascader.optionsJson = JSON.stringify([
+      {
+        value: 'cn',
+        label: '中国',
+        children: [
+          { value: 'sh', label: '上海' },
+          { value: 'bj', label: '北京' },
+        ],
+      },
+    ]);
+    const onChange = vi.fn();
+    cascader.addEventListener('change', onChange);
+    document.body.append(cascader);
+    await cascader.updateComplete;
+
+    cascader.shadowRoot?.querySelector<HTMLButtonElement>('.trigger')?.click();
+    await cascader.updateComplete;
+    cascader.shadowRoot?.querySelector<HTMLButtonElement>('.option')?.click();
+    await cascader.updateComplete;
+    const secondPanel = cascader.shadowRoot?.querySelectorAll<HTMLElement>('.panel')[1];
+    secondPanel?.querySelector<HTMLButtonElement>('.option')?.click();
+    await cascader.updateComplete;
+
+    expect(cascader.value).toEqual(['cn', 'sh']);
+    expect(cascader.open).toBe(false);
+    expect(onChange.mock.calls[0][0].detail).toMatchObject({ value: ['cn', 'sh'] });
+    expect(cascader.shadowRoot?.querySelector('.trigger')?.textContent).toContain('中国 / 上海');
+  });
+
+  it('restores a cascader value and closes on Escape', async () => {
+    const cascader = document.createElement('su-cascader');
+    cascader.options = [
+      {
+        value: 'product',
+        label: '产品部',
+        children: [{ value: 'design', label: '设计组' }],
+      },
+    ];
+    cascader.valueJson = JSON.stringify(['product', 'design']);
+    document.body.append(cascader);
+    await cascader.updateComplete;
+
+    expect(cascader.value).toEqual(['product', 'design']);
+
+    cascader.value = [];
+    cascader.formResetCallback();
+    expect(cascader.value).toEqual(['product', 'design']);
+
+    cascader.shadowRoot?.querySelector<HTMLButtonElement>('.trigger')?.click();
+    await cascader.updateComplete;
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await cascader.updateComplete;
+
+    expect(cascader.open).toBe(false);
+    expect(cascader.shadowRoot?.activeElement?.classList.contains('trigger')).toBe(true);
   });
 });

@@ -15,6 +15,7 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 | ----------- | ----------------- | ------------------------------------------ | ------------------ |
 | Input       | `su-input`        | 文本输入，支持标签、辅助文案、错误态和清空 | `input-change`     |
 | DatePicker  | `su-date-picker`  | 日期选择，支持边界与原生表单               | `change`           |
+| Cascader    | `su-cascader`     | 层级选项级联选择                           | `change`           |
 | Upload      | `su-upload`       | 文件选择，支持类型、大小和数量校验         | `change`、`reject` |
 | InputNumber | `su-input-number` | 数字输入，支持 `min/max/step`              | `change`           |
 | Select      | `su-select`       | 原生选择器封装，支持 `options/optionsJson` | `change`           |
@@ -38,6 +39,7 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 | Empty        | `su-empty`        | 空状态                                         | -                                                                          |
 | Skeleton     | `su-skeleton`     | 骨架屏，可包裹真实内容                         | -                                                                          |
 | Descriptions | `su-descriptions` | 详情页描述列表，支持 `items/itemsJson`         | -                                                                          |
+| Tree         | `su-tree`         | 树形层级数据，支持展开与键盘导航               | `select`、`expand`                                                         |
 | Image        | `se-image`        | 图片懒加载、错误占位和预览                     | `close`                                                                    |
 | AssetViewer  | `se-asset-viewer` | 图片、视频、音频、PDF 资源预览                 | `asset-open`                                                               |
 

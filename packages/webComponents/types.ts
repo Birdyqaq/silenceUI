@@ -8,6 +8,7 @@ import type { SuEmpty } from './components/data/empty';
 import type { SuSkeleton } from './components/data/skeleton';
 import type { SuStatCard } from './components/data/stat-card';
 import type { SuTag } from './components/data/tag';
+import type { SuTree } from './components/data/tree';
 import type { SuAlert } from './components/feedback/alert';
 import type { SuDrawer } from './components/feedback/drawer';
 import type { SuMessage } from './components/feedback/message';
@@ -18,6 +19,7 @@ import type { SuProgress } from './components/feedback/progress';
 import type { SuSpin } from './components/feedback/spin';
 import type { SuTooltip } from './components/feedback/tooltip';
 import type { SuCheckbox } from './components/form/checkbox';
+import type { SuCascader } from './components/form/cascader';
 import type { SuDatePicker } from './components/form/date-picker';
 import type { SuFormItem } from './components/form/form-item';
 import type { SuInputNumber } from './components/form/input-number';
@@ -55,6 +57,7 @@ declare global {
     'su-breadcrumb': SuBreadcrumb;
     'su-button': SuButton;
     'su-card': SuCard;
+    'su-cascader': SuCascader;
     'su-checkbox': SuCheckbox;
     'su-date-picker': SuDatePicker;
     'su-container': SuContainer;
@@ -84,6 +87,7 @@ declare global {
     'su-textarea': SuTextarea;
     'su-theme-toggle': SuThemeToggle;
     'su-tooltip': SuTooltip;
+    'su-tree': SuTree;
     'su-upload': SuUpload;
   }
 }

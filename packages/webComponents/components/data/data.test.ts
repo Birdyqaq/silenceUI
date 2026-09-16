@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import './badge';
 import './avatar';
 import './card';
@@ -7,6 +7,7 @@ import './empty';
 import './skeleton';
 import './stat-card';
 import './tag';
+import './tree';
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -160,5 +161,49 @@ describe('data display components', () => {
     await skeleton.updateComplete;
     expect(skeleton.shadowRoot?.querySelector('.skeleton')).toBeNull();
     expect(skeleton.shadowRoot?.querySelector('slot')).toBeTruthy();
+  });
+
+  it('expands, selects, and navigates tree nodes with the keyboard', async () => {
+    const tree = document.createElement('su-tree');
+    tree.nodes = [
+      {
+        key: 'engineering',
+        label: '研发中心',
+        children: [
+          { key: 'frontend', label: '前端组' },
+          { key: 'backend', label: '后端组' },
+        ],
+      },
+      { key: 'finance', label: '财务部', disabled: true },
+    ];
+    const onExpand = vi.fn();
+    const onSelect = vi.fn();
+    tree.addEventListener('expand', onExpand);
+    tree.addEventListener('select', onSelect);
+    document.body.append(tree);
+    await tree.updateComplete;
+
+    const root = tree.shadowRoot?.querySelector<HTMLButtonElement>('.label');
+    root?.focus();
+    root?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await tree.updateComplete;
+
+    expect(tree.expandedKeys).toEqual(['engineering']);
+    expect(tree.shadowRoot?.querySelectorAll('[role="treeitem"]')).toHaveLength(4);
+    expect(onExpand.mock.calls[0][0].detail).toMatchObject({
+      key: 'engineering',
+      expanded: true,
+    });
+
+    tree.shadowRoot
+      ?.querySelectorAll<HTMLButtonElement>('.label')[1]
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await tree.updateComplete;
+
+    expect(tree.selectedKey).toBe('frontend');
+    expect(onSelect.mock.calls[0][0].detail.key).toBe('frontend');
+    expect(tree.shadowRoot?.querySelector('[aria-selected="true"]')?.textContent?.trim()).toBe(
+      '前端组'
+    );
   });
 });
