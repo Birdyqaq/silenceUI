@@ -12,6 +12,10 @@ interface Column {
   width?: string;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
+  fixed?: 'left' | 'right';
+  resizable?: boolean;
+  minWidth?: number;
+  maxWidth?: number;
   formatter?: (value: unknown, row: TableRow, rowIndex: number) => unknown;
 }
 
@@ -164,6 +168,11 @@ export class seTable extends LitElement {
   @state()
   private loadMorePending: boolean = false;
 
+  @state()
+  private columnWidths: Record<string, number> = {};
+
+  private resizeCleanup?: () => void;
+
   // 排序函数 sort function starts here
   sortColumn: (index: number) => void;
 
@@ -275,6 +284,46 @@ export class seTable extends LitElement {
         padding: 0 !important;
         height: 0;
       }
+
+      th.fixed-column,
+      td.fixed-column {
+        position: sticky;
+        z-index: 2;
+        background: var(--su-bg-container, #fff);
+      }
+
+      thead th.fixed-column {
+        z-index: 3;
+        background: var(--thead-bg-color, var(--su-bg-hover));
+      }
+
+      .fixed-left-edge {
+        box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.24);
+      }
+
+      .fixed-right-edge {
+        box-shadow: -4px 0 6px -4px rgba(0, 0, 0, 0.24);
+      }
+
+      .column-header {
+        position: relative;
+      }
+
+      .resize-handle {
+        position: absolute;
+        top: 0;
+        right: -4px;
+        width: 8px;
+        height: 100%;
+        cursor: col-resize;
+        touch-action: none;
+        z-index: 4;
+      }
+
+      .resize-handle:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: -2px;
+      }
     `,
   ];
 
@@ -381,6 +430,110 @@ export class seTable extends LitElement {
 
   updated() {
     this.measureViewportHeight();
+  }
+
+  disconnectedCallback() {
+    this.resizeCleanup?.();
+    super.disconnectedCallback();
+  }
+
+  /** 返回列的当前像素宽度；未拖拽时优先使用列配置。 */
+  private getColumnWidth(column: ColumnState) {
+    const resized = this.columnWidths[column.key];
+    if (resized != null) return `${resized}px`;
+    return column.width || 'auto';
+  }
+
+  /** 将 CSS 宽度转换为固定列偏移使用的像素值。 */
+  private getColumnPixelWidth(column: ColumnState) {
+    const resized = this.columnWidths[column.key];
+    if (resized != null) return resized;
+    const parsed = Number.parseFloat(column.width || '');
+    return Number.isFinite(parsed) ? parsed : 120;
+  }
+
+  /** 计算固定列相对表格左右边缘的偏移量。 */
+  private getFixedOffset(index: number, side: 'left' | 'right') {
+    if (side === 'left') {
+      const selectionOffset = this.selectable ? 40 : 0;
+      return (
+        selectionOffset +
+        this.sortedColumns
+          .slice(0, index)
+          .filter((column) => column.fixed === 'left')
+          .reduce((sum, column) => sum + this.getColumnPixelWidth(column), 0)
+      );
+    }
+    return this.sortedColumns
+      .slice(index + 1)
+      .filter((column) => column.fixed === 'right')
+      .reduce((sum, column) => sum + this.getColumnPixelWidth(column), 0);
+  }
+
+  /** 返回固定列的样式与边界阴影类名。 */
+  private getColumnPresentation(column: ColumnState, index: number) {
+    const width = this.getColumnWidth(column);
+    const widthStyle = width === 'auto' ? 'width: auto;' : `width: ${width}; min-width: ${width};`;
+    if (!column.fixed) return { className: '', style: widthStyle };
+    const sameSide = this.sortedColumns.filter((item) => item.fixed === column.fixed);
+    const edge = column.fixed === 'left' ? sameSide[sameSide.length - 1] : sameSide[0];
+    return {
+      className: `fixed-column ${edge?.key === column.key ? `fixed-${column.fixed}-edge` : ''}`,
+      style: `${widthStyle} ${column.fixed}: ${this.getFixedOffset(index, column.fixed)}px;`,
+    };
+  }
+
+  /** 开始拖拽列宽，并在结束时发送 column-resize 事件。 */
+  private startColumnResize(event: PointerEvent, column: ColumnState) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.resizeCleanup?.();
+    const startX = event.clientX;
+    const header = (event.currentTarget as HTMLElement).closest('th');
+    const startWidth = header?.getBoundingClientRect().width || this.getColumnPixelWidth(column);
+    const min = Math.max(40, column.minWidth ?? 64);
+    const max = Math.max(min, column.maxWidth ?? Number.POSITIVE_INFINITY);
+    let currentWidth = startWidth;
+    const move = (moveEvent: PointerEvent) => {
+      currentWidth = Math.min(max, Math.max(min, startWidth + moveEvent.clientX - startX));
+      this.columnWidths = { ...this.columnWidths, [column.key]: Math.round(currentWidth) };
+    };
+    const stop = () => {
+      this.resizeCleanup?.();
+      this.dispatchEvent(
+        new CustomEvent('column-resize', {
+          detail: { column: column.key, width: Math.round(currentWidth) },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop, { once: true });
+    this.resizeCleanup = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+      this.resizeCleanup = undefined;
+    };
+  }
+
+  /** 支持使用方向键以 10px 步长调整列宽。 */
+  private handleResizeKeydown(event: KeyboardEvent, column: ColumnState) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    event.stopPropagation();
+    const min = Math.max(40, column.minWidth ?? 64);
+    const max = Math.max(min, column.maxWidth ?? Number.POSITIVE_INFINITY);
+    const delta = event.key === 'ArrowRight' ? 10 : -10;
+    const width = Math.min(max, Math.max(min, this.getColumnPixelWidth(column) + delta));
+    this.columnWidths = { ...this.columnWidths, [column.key]: width };
+    this.dispatchEvent(
+      new CustomEvent('column-resize', {
+        detail: { column: column.key, width },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private compareValues(a: unknown, b: unknown) {
@@ -642,7 +795,17 @@ export class seTable extends LitElement {
           >
             ${this.selectable
               ? html`
-                  <td class="selection-cell" @click="${(e: Event) => e.stopPropagation()}">
+                  <td
+                    class="selection-cell ${this.sortedColumns.some(
+                      (column) => column.fixed === 'left'
+                    )
+                      ? 'fixed-column'
+                      : ''}"
+                    style="${this.sortedColumns.some((column) => column.fixed === 'left')
+                      ? 'left: 0;'
+                      : ''}"
+                    @click="${(e: Event) => e.stopPropagation()}"
+                  >
                     <input
                       type="checkbox"
                       .checked="${this.isRowSelected(row, rowIndex)}"
@@ -671,12 +834,15 @@ export class seTable extends LitElement {
               }
               const align = col.align ?? 'center';
               const value = this.getCellDisplayValue(row, col, rowIndex);
+              const presentation = this.getColumnPresentation(col, columnIndex);
               return html`
                 <td
-                  class="${col.ellipsis ? 'ellipsis' : ''}"
+                  class="${col.ellipsis ? 'ellipsis' : ''} ${presentation.className}"
                   rowspan="${span.rowspan}"
                   colspan="${span.colspan}"
-                  style="text-align: ${align}; max-width: ${col.width || 'auto'};"
+                  style="text-align: ${align}; max-width: ${this.getColumnWidth(
+                    col
+                  )}; ${presentation.style}"
                 >
                   ${value}
                 </td>
@@ -717,7 +883,12 @@ export class seTable extends LitElement {
     const allSelected = visibleKeys.length > 0 && selectedVisible.length === visibleKeys.length;
     const indeterminate = selectedVisible.length > 0 && !allSelected;
     return html`
-      <th class="selection-cell">
+      <th
+        class="selection-cell ${this.sortedColumns.some((column) => column.fixed === 'left')
+          ? 'fixed-column'
+          : ''}"
+        style="${this.sortedColumns.some((column) => column.fixed === 'left') ? 'left: 0;' : ''}"
+      >
         <input
           type="checkbox"
           aria-label="全选"
@@ -742,22 +913,38 @@ export class seTable extends LitElement {
             <thead class="${this.stickyHeader && scrollable ? 'sticky' : ''}">
               <tr>
                 ${this.renderSelectionHeader()}
-                ${this.sortedColumns.map(
-                  (col, index) => html`
+                ${this.sortedColumns.map((col, index) => {
+                  const presentation = this.getColumnPresentation(col, index);
+                  return html`
                     <th
-                      class="${col.sortable ? 'sortable' : ''}"
-                      style="width: ${col.width || 'auto'}; text-align: ${col.align || 'center'};"
+                      class="column-header ${col.sortable
+                        ? 'sortable'
+                        : ''} ${presentation.className}"
+                      style="${presentation.style} text-align: ${col.align || 'center'};"
                       data-sort="${col.sortDirection === 'asc'
                         ? '↑'
                         : col.sortDirection === 'desc'
-                        ? '↓'
-                        : '⇅'}"
+                          ? '↓'
+                          : '⇅'}"
                       @click="${() => this.sortColumn(index)}"
                     >
                       ${col.label}
+                      ${col.resizable
+                        ? html`<span
+                            class="resize-handle"
+                            role="separator"
+                            aria-label="调整${col.label}列宽"
+                            aria-orientation="vertical"
+                            tabindex="0"
+                            @pointerdown="${(event: PointerEvent) =>
+                              this.startColumnResize(event, col)}"
+                            @keydown="${(event: KeyboardEvent) =>
+                              this.handleResizeKeydown(event, col)}"
+                          ></span>`
+                        : nothing}
                     </th>
-                  `
-                )}
+                  `;
+                })}
               </tr>
             </thead>
             <tbody>
