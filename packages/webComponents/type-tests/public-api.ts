@@ -44,11 +44,20 @@ import type {
   SuUpload,
   seTable,
 } from '../dist/index';
+import type { SuButton as DirectSuButton } from '../dist/components/button/index';
+import type { SuSelect as DirectSuSelect } from '../dist/components/form/select/index';
 import '../dist/index';
+import '../dist/components/button/index';
+import '../dist/components/form/select/index';
 
 const input: SuInput = document.createElement('su-input');
 input.name = 'query';
 input.value = 'Lit';
+
+const directButton: DirectSuButton = document.createElement('su-button');
+const directSelect: DirectSuSelect = document.createElement('su-select');
+void directButton;
+void directSelect;
 
 const tabs: SuTabs = document.createElement('su-tabs');
 tabs.items = [{ key: 'api', label: 'API' }];

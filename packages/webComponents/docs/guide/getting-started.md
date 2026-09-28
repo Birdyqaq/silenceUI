@@ -23,7 +23,24 @@ import 'webcomponents';
 <su-button type="primary">保存</su-button> <su-input placeholder="请输入关键词"></su-input>
 ```
 
-当前包入口是整包注册模式，会自动恢复本地持久化的主题配置。组件级按需入口尚未发布，不要使用 `webcomponents/lib/button` 这类路径。
+根入口会注册全部组件，并自动恢复本地持久化的主题配置。
+
+只使用部分组件时，推荐按需引入：
+
+```ts
+import 'webcomponents/style.css';
+import 'webcomponents/components/button';
+import 'webcomponents/components/input';
+import 'webcomponents/components/data/card';
+```
+
+按需入口不会自动初始化主题持久化。如需主题 API，请显式调用：
+
+```ts
+import { initTheme } from 'webcomponents/theme';
+
+initTheme();
+```
 
 ## 基础页面
 

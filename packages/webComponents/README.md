@@ -17,7 +17,18 @@ import 'webcomponents/style.css';
 import 'webcomponents';
 ```
 
-当前包入口会注册全部组件，并自动恢复持久化的主题配置。组件级按需入口尚未发布，请不要使用 `webcomponents/lib/*` 这类路径。
+当前包根入口会注册全部组件，并自动恢复持久化的主题配置。只使用少量组件时可按需注册：
+
+```ts
+import 'webcomponents/style.css';
+import 'webcomponents/components/button';
+import 'webcomponents/components/form/select';
+import { initTheme } from 'webcomponents/theme';
+
+initTheme();
+```
+
+独立入口与组件目录对应，并保留完整 TypeScript 类型。不要同时引入根入口和按需入口，否则根入口仍会注册全部组件。
 
 ```html
 <su-container>
