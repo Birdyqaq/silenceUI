@@ -4,6 +4,21 @@ import './index';
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('SeTable', () => {
+  it('cleans resize listeners when detached', async () => {
+    const element = document.createElement('se-table');
+    element.columns = [{ key: 'name', label: '姓名', width: '100px', resizable: true }];
+    document.body.append(element);
+    await element.updateComplete;
+    const listener = vi.fn();
+    element.addEventListener('column-resize', listener);
+    element
+      .shadowRoot!.querySelector('.resize-handle')!
+      .dispatchEvent(new MouseEvent('pointerdown', { clientX: 10, bubbles: true }));
+    element.remove();
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 50 }));
+    window.dispatchEvent(new Event('pointerup'));
+    expect(listener).not.toHaveBeenCalled();
+  });
   it('keeps server rows and page when remote data changes', async () => {
     const element = document.createElement('se-table');
     element.remote = true;

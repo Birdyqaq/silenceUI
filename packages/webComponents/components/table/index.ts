@@ -563,9 +563,11 @@ export class seTable extends LitElement {
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop, { once: true });
+    window.addEventListener('pointercancel', stop, { once: true });
     this.resizeCleanup = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
       this.resizeCleanup = undefined;
     };
   }

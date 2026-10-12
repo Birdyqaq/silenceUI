@@ -7,6 +7,18 @@ afterEach(() => {
 });
 
 describe('modal focus management', () => {
+  it('unlocks scrolling and removes keyboard behavior on detach', async () => {
+    const modal = document.createElement('su-modal');
+    modal.open = true;
+    const close = vi.fn();
+    modal.addEventListener('close', close);
+    document.body.append(modal);
+    await modal.updateComplete;
+    modal.remove();
+    expect(document.body.style.overflow).toBe('');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(close).not.toHaveBeenCalled();
+  });
   it('locks scrolling and restores focus after Escape', async () => {
     const opener = document.createElement('button');
     opener.textContent = 'Open';
