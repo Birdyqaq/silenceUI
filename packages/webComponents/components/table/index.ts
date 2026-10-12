@@ -76,6 +76,12 @@ export class seTable extends LitElement {
   @property({ type: Boolean })
   pagination: boolean = true;
 
+  @property({ type: Boolean })
+  remote = false;
+
+  @property({ type: Number })
+  total = 0;
+
   // 斑马纹
   @property({ type: Boolean })
   striped: boolean = false;
@@ -160,7 +166,7 @@ export class seTable extends LitElement {
   virtualBuffer: number = 8;
 
   // 当前页 current page starts here
-  @state()
+  @property({ type: Number })
   currentPage: number = 1;
 
   // 排序的列 sorted columns starts here
@@ -383,7 +389,7 @@ export class seTable extends LitElement {
         sortDirection: i === index ? nextDirection : '',
       }));
 
-      if (nextDirection === '') {
+      if (this.remote || nextDirection === '') {
         this.sortedData = [...this.data];
       } else {
         this.sortedData = [...this.data].sort((a, b) => {
@@ -443,9 +449,17 @@ export class seTable extends LitElement {
 
     // Update sorted columns and data when columns or data change
     if (changedProperties.has('columns') || changedProperties.has('data')) {
+      const directions = new Map(
+        this.sortedColumns.map((column) => [column.key, column.sortDirection])
+      );
       this.sortedColumns = this.columns.map((c) => ({ ...c, sortDirection: '' }));
+      if (this.remote)
+        this.sortedColumns = this.sortedColumns.map((column) => ({
+          ...column,
+          sortDirection: directions.get(column.key) ?? '',
+        }));
       this.sortedData = [...this.data];
-      this.currentPage = 1;
+      if (!this.remote) this.currentPage = 1;
     }
 
     if (
@@ -586,7 +600,10 @@ export class seTable extends LitElement {
   }
 
   private get totalPages() {
-    return Math.max(1, Math.ceil(this.sortedData.length / this.pageSize));
+    return Math.max(
+      1,
+      Math.ceil((this.remote ? this.total : this.sortedData.length) / Math.max(1, this.pageSize))
+    );
   }
 
   private get shouldUsePagination() {
@@ -600,7 +617,7 @@ export class seTable extends LitElement {
   }
 
   private get sourceData() {
-    return this.shouldUsePagination ? this.paginatedData : this.sortedData;
+    return this.shouldUsePagination && !this.remote ? this.paginatedData : this.sortedData;
   }
 
   private get shouldUseVirtualScroll() {
@@ -946,7 +963,7 @@ export class seTable extends LitElement {
       <se-pagination
         class="pagination"
         .currentPage="${this.currentPage}"
-        .total="${this.sortedData.length}"
+        .total="${this.remote ? this.total : this.sortedData.length}"
         .pageSize="${this.pageSize}"
         @page-change="${this.handlePaginationChange}"
       ></se-pagination>

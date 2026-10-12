@@ -4,6 +4,30 @@ import './index';
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('SeTable', () => {
+  it('keeps server rows and page when remote data changes', async () => {
+    const element = document.createElement('se-table');
+    element.remote = true;
+    element.total = 100;
+    element.columns = [{ key: 'name', label: '姓名', sortable: true }];
+    element.data = [
+      { id: 2, name: 'Bob' },
+      { id: 1, name: 'Alice' },
+    ];
+    document.body.append(element);
+    await element.updateComplete;
+    element.currentPage = 3;
+    await element.updateComplete;
+    expect(element.shadowRoot!.querySelectorAll('tbody tr')).toHaveLength(2);
+    element.sortColumn(0);
+    await element.updateComplete;
+    expect(element.sortedData[0].name).toBe('Bob');
+    element.currentPage = 3;
+    element.data = [{ id: 3, name: 'Cindy' }];
+    await element.updateComplete;
+    expect(element.currentPage).toBe(3);
+    expect(element.sortedColumns[0].sortDirection).toBe('asc');
+    element.remove();
+  });
   it('expands and collapses rows without emitting row-click and accepts external keys', async () => {
     const element = document.createElement('se-table');
     element.columns = [{ key: 'name', label: '姓名' }];
