@@ -47,6 +47,12 @@ import type {
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
 import type { SuSelect as DirectSuSelect } from '../dist/components/form/select/index';
 import '../dist/index';
+import { setThemeColors, initTheme } from 'webcomponents/theme';
+import type { SuButton as PackageButton } from 'webcomponents/components/button';
+const packageButton: PackageButton = document.createElement('su-button');
+void packageButton;
+void initTheme;
+setThemeColors({ primary: '#7c3aed' });
 import '../dist/components/button/index';
 import '../dist/components/form/select/index';
 
