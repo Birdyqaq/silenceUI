@@ -104,6 +104,18 @@ export class seTable extends LitElement {
   @property({ attribute: false })
   selectedKeys: string[] = [];
 
+  @property({ type: Boolean })
+  expandable = false;
+
+  @property({ attribute: false })
+  expandedKeys: string[] = [];
+
+  @property({ attribute: false })
+  rowExpandable?: (row: TableRow, rowIndex: number) => boolean;
+
+  @property({ attribute: false })
+  expandedRowRender?: (row: TableRow, rowIndex: number) => unknown;
+
   // 加载中遮罩
   @property({ type: Boolean })
   loading: boolean = false;
@@ -244,6 +256,33 @@ export class seTable extends LitElement {
         cursor: pointer;
       }
 
+      .expansion-cell {
+        width: 40px;
+        text-align: center;
+      }
+
+      .expansion-cell button {
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        cursor: pointer;
+      }
+
+      .expansion-cell button:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+      }
+
+      .expansion-cell button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      .expanded-row td {
+        background: var(--su-bg-page);
+        text-align: left;
+      }
+
       .table-wrapper {
         position: relative;
       }
@@ -289,7 +328,7 @@ export class seTable extends LitElement {
       td.fixed-column {
         position: sticky;
         z-index: 2;
-        background: var(--su-bg-container, #fff);
+        background: var(--su-bg-card);
       }
 
       thead th.fixed-column {
@@ -565,7 +604,7 @@ export class seTable extends LitElement {
   }
 
   private get shouldUseVirtualScroll() {
-    if (this.spanMethod) return false;
+    if (this.spanMethod || this.expandable) return false;
     return this.virtualScroll || this.sourceData.length >= this.virtualThreshold;
   }
 
@@ -574,7 +613,26 @@ export class seTable extends LitElement {
   }
 
   private get totalColumnCount() {
-    return Math.max(1, this.sortedColumns.length + (this.selectable ? 1 : 0));
+    return Math.max(
+      1,
+      this.sortedColumns.length + (this.selectable ? 1 : 0) + (this.expandable ? 1 : 0)
+    );
+  }
+
+  /** 展开状态以稳定 rowKey 保存，分页或排序后仍对应同一条记录。 */
+  private toggleRowExpansion(row: TableRow, rowIndex: number) {
+    const key = this.getRowKey(row, rowIndex);
+    const expanded = !this.expandedKeys.includes(key);
+    this.expandedKeys = expanded
+      ? [...this.expandedKeys, key]
+      : this.expandedKeys.filter((item) => item !== key);
+    this.dispatchEvent(
+      new CustomEvent('expand-change', {
+        detail: { key, row, expanded, keys: [...this.expandedKeys] },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private isRowSelected(row: TableRow, rowIndex: number) {
@@ -788,6 +846,9 @@ export class seTable extends LitElement {
       (row, localIndex) => {
         const rowIndex = virtual.start + localIndex;
         const globalRowIndex = sourceOffset + rowIndex;
+        const expanded =
+          this.expandable && this.expandedKeys.includes(this.getRowKey(row, rowIndex));
+        const canExpand = this.rowExpandable?.(row, globalRowIndex) ?? true;
         return html`
           <tr
             class="${this.striped ? 'striped' : ''} ${this.hoverable ? 'hoverable' : ''}"
@@ -813,6 +874,22 @@ export class seTable extends LitElement {
                     />
                   </td>
                 `
+              : nothing}
+            ${this.expandable
+              ? html`<td class="expansion-cell">
+                  <button
+                    type="button"
+                    aria-label="${expanded ? '收起行' : '展开行'}"
+                    aria-expanded="${expanded}"
+                    ?disabled="${!canExpand}"
+                    @click="${(event: Event) => {
+                      event.stopPropagation();
+                      this.toggleRowExpansion(row, rowIndex);
+                    }}"
+                  >
+                    ${expanded ? '−' : '+'}
+                  </button>
+                </td>`
               : nothing}
             ${this.sortedColumns.map((col, columnIndex) => {
               const cellKey = `${rowIndex}-${columnIndex}`;
@@ -849,6 +926,13 @@ export class seTable extends LitElement {
               `;
             })}
           </tr>
+          ${expanded && canExpand
+            ? html`<tr class="expanded-row">
+                <td colspan="${this.totalColumnCount}">
+                  ${this.expandedRowRender?.(row, globalRowIndex) ?? nothing}
+                </td>
+              </tr>`
+            : nothing}
         `;
       }
     );
@@ -913,6 +997,9 @@ export class seTable extends LitElement {
             <thead class="${this.stickyHeader && scrollable ? 'sticky' : ''}">
               <tr>
                 ${this.renderSelectionHeader()}
+                ${this.expandable
+                  ? html`<th class="expansion-cell" aria-label="行展开"></th>`
+                  : nothing}
                 ${this.sortedColumns.map((col, index) => {
                   const presentation = this.getColumnPresentation(col, index);
                   return html`

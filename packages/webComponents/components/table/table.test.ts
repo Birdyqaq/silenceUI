@@ -4,6 +4,45 @@ import './index';
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('SeTable', () => {
+  it('expands and collapses rows without emitting row-click and accepts external keys', async () => {
+    const element = document.createElement('se-table');
+    element.columns = [{ key: 'name', label: '姓名' }];
+    element.data = [
+      { id: 1, name: 'Alice' },
+      { id: 2, name: 'Bob' },
+    ];
+    element.expandable = true;
+    element.virtualScroll = true;
+    element.expandedRowRender = (row) => `详情：${row.name}`;
+    const expand = vi.fn();
+    const click = vi.fn();
+    element.addEventListener('expand-change', expand);
+    element.addEventListener('row-click', click);
+    document.body.append(element);
+    await element.updateComplete;
+    const button = element.shadowRoot!.querySelector<HTMLButtonElement>('.expansion-cell button')!;
+    button.click();
+    await element.updateComplete;
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(element.shadowRoot!.querySelector('.expanded-row')!.textContent).toContain(
+      '详情：Alice'
+    );
+    expect(expand.mock.calls[0][0].detail).toMatchObject({ key: '1', expanded: true, keys: ['1'] });
+    expect(click).not.toHaveBeenCalled();
+    button.click();
+    await element.updateComplete;
+    expect(element.shadowRoot!.querySelector('.expanded-row')).toBeNull();
+    element.expandedKeys = ['2'];
+    await element.updateComplete;
+    expect(element.shadowRoot!.querySelector('.expanded-row')!.textContent).toContain('详情：Bob');
+    element.rowExpandable = (row) => row.id !== 2;
+    await element.updateComplete;
+    expect(element.shadowRoot!.querySelector('.expanded-row')).toBeNull();
+    expect(
+      element.shadowRoot!.querySelectorAll<HTMLButtonElement>('.expansion-cell button')[1].disabled
+    ).toBe(true);
+    element.remove();
+  });
   it('registers the custom element', () => {
     expect(customElements.get('se-table')).toBeDefined();
   });

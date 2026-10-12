@@ -89,6 +89,30 @@ table.addEventListener('load-more', async () => {
 
 ## 行选择
 
+## 可展开行
+
+```js
+table.expandable = true;
+table.rowKey = 'id'; // 稳定且唯一的主键
+table.expandedKeys = ['1'];
+table.rowExpandable = (row) => row.hasDetails !== false;
+table.expandedRowRender = (row) => `详细信息：${row.name}`;
+table.addEventListener('expand-change', (event) => console.log(event.detail));
+```
+
+展开按钮支持原生键盘操作，点击不会触发 `row-click`。`expandedKeys` 可由外部更新；`expandedRowRender` 可返回文本或 Lit 模板。展开内容会改变行高，因此开启 `expandable` 后关闭虚拟渲染。合并单元格的 rowspan 不应跨越展开详情行。
+
+| 属性              | 说明                                      | 默认值      |
+| ----------------- | ----------------------------------------- | ----------- |
+| expandable        | 启用行展开                                | `false`     |
+| expandedKeys      | 展开行主键数组，仅 property               | `[]`        |
+| rowExpandable     | `(row, rowIndex) => boolean`，仅 property | `undefined` |
+| expandedRowRender | `(row, rowIndex) => unknown`，仅 property | `undefined` |
+
+`expand-change` 事件内容：`{ key, row, expanded, keys }`。
+
+## 行选择示例
+
 ```js
 const table = document.querySelector('#table-select');
 table.selectable = true;

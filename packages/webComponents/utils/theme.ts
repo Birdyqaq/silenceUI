@@ -28,7 +28,7 @@ const COLOR_VAR_MAP: Record<keyof ThemeColors, string> = {
   success: '--su-color-success',
   warning: '--su-color-warning',
   error: '--su-color-error',
-  info: '--su-color-info'
+  info: '--su-color-info',
 };
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -64,7 +64,7 @@ function contrastColor(hex: string): string {
 function emitChange() {
   window.dispatchEvent(
     new CustomEvent('su-theme-change', {
-      detail: { mode: getThemeMode(), colors: getStoredColors() }
+      detail: { mode: getThemeMode(), colors: getStoredColors() },
     })
   );
 }
@@ -123,6 +123,8 @@ function applyColors(colors: ThemeColors) {
 /** 自定义主题色（合并到已有的自定义色上）。primary 会自动派生 hover 色与 rgb 变量 */
 export function setThemeColors(colors: ThemeColors) {
   const merged = { ...getStoredColors(), ...colors };
+  // 换主色时重新派生 hover，除非本次同时明确提供 hover 色。
+  if (colors.primary && !colors.primaryHover) delete merged.primaryHover;
   applyColors(merged);
   try {
     localStorage.setItem(COLORS_STORAGE_KEY, JSON.stringify(merged));

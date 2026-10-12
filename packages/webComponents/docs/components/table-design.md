@@ -13,11 +13,13 @@
 `se-table` 组件采用“数据处理层 + 渲染层”分离：
 
 1. 数据处理层：
+
 - 接收 `data / columns`。
 - 维护 `sortedColumns / sortedData`。
 - 根据模式组合出 `sourceData`（分页模式下为页切片，非分页下为全量已加载数据）。
 
 2. 渲染层：
+
 - 普通模式：渲染全部 `sourceData`。
 - 虚拟模式：仅渲染窗口内行，并插入上下占位行（spacer）。
 - 合并模式：根据 `spanMethod` 计算 `rowspan/colspan`，并自动跳过被覆盖单元格。
@@ -26,16 +28,19 @@
 ## 核心数据流
 
 1. `data/columns` 变化：
+
 - 重建 `sortedColumns`（清空 sortDirection）。
 - 重建 `sortedData`。
 - 重置分页到第 1 页。
 
 2. 点击表头排序：
+
 - 方向在 `asc -> desc -> ''` 之间循环。
 - `''` 回退到原始 `data` 顺序。
 - 派发 `sort-change` 事件。
 
 3. 分页变化：
+
 - 更新 `currentPage`。
 - 重置滚动位置。
 - 派发 `page-change`。
@@ -91,6 +96,7 @@
 3. `end = start + visibleCount`
 4. 真实渲染行为 `sourceData[start, end)`
 5. 上下占位高度：
+
 - `topPadding = start * rowHeight`
 - `bottomPadding = (total - end) * rowHeight`
 
@@ -101,19 +107,23 @@
 ## 常规能力增强
 
 1. 列能力：
+
 - `align`：左/中/右对齐。
 - `ellipsis`：单行省略。
 - `formatter`：格式化渲染。
 
 2. 交互能力：
+
 - `row-click` 事件。
 - `stickyHeader` 吸顶表头（滚动模式下）。
 
 3. 分页能力：
+
 - `pagination` 开关。
 - 输入页码 + 上一页/下一页按钮。
 
 4. 合并单元格能力：
+
 - `spanMethod(args)` 支持返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。
 - 返回 `[0, 0]` / `{ rowspan: 0, colspan: 0 }` 表示该单元格被覆盖，不渲染。
 
@@ -121,7 +131,7 @@
 
 1. 增加 `rowSelection`（多选、全选、受控 keys）。
 2. 增加 `column.fixed`（左右固定列）。
-3. 增加 `expandable`（可展开行）。
+3. 已支持 `expandable`、`expandedKeys`、`rowExpandable` 和 `expandedRowRender`（可展开行）。
 4. 增加 `remote` 模式（排序/分页/筛选由服务端驱动）。
 5. 增加 `summary` 与 `empty` slot。
 
