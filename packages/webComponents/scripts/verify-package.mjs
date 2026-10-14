@@ -3,20 +3,29 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'silenceui-package-'));
 
 /** 统计源码中的组件入口，避免“一个入口注册多个标签”导致硬编码数量失真。 */
-function countComponentEntries(directory) {
-  return fs.readdirSync(directory, { withFileTypes: true }).reduce((count, item) => {
+function collectComponentEntries(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((item) => {
     const absolutePath = path.join(directory, item.name);
-    if (item.isDirectory()) return count + countComponentEntries(absolutePath);
-    return count + (item.isFile() && item.name === 'index.ts' ? 1 : 0);
-  }, 0);
+    if (item.isDirectory()) return collectComponentEntries(absolutePath);
+    return item.isFile() && item.name === 'index.ts'
+      ? [
+          path
+            .relative(path.join(packageRoot, 'components'), path.dirname(absolutePath))
+            .split(path.sep)
+            .join('/'),
+        ]
+      : [];
+  });
 }
 
-const expectedComponentEntries = countComponentEntries(path.join(packageRoot, 'components'));
+const sourceEntries = collectComponentEntries(path.join(packageRoot, 'components'));
+const expectedComponentEntries = sourceEntries.length;
 
 const requiredFiles = [
   'package/dist/index.js',
@@ -31,6 +40,11 @@ const requiredFiles = [
   'package/dist/components/layout/container/index.js',
   'package/dist/components/theme/index.js',
   'package/README.md',
+  'package/CHANGELOG.md',
+  ...sourceEntries.flatMap((entry) => [
+    `package/dist/components/${entry}/index.js`,
+    `package/dist/components/${entry}/index.d.ts`,
+  ]),
 ];
 
 const forbiddenFragments = ['/docs/', '/node_modules/', '.test.', '.stories.'];
@@ -67,11 +81,18 @@ try {
     return fs.statSync(path.join(packageRoot, archivePath)).size > 80 * 1024;
   });
 
+  // 从真实发布归档读取内容，验证压缩体积，而非只检查工作区文件。
+  const oversizedCompressed = componentEntries.filter((entry) => {
+    const content = execFileSync('tar', ['-xOzf', path.join(tempDirectory, tarball), entry]);
+    return gzipSync(content).length > 20 * 1024;
+  });
+
   if (
     missing.length > 0 ||
     forbidden.length > 0 ||
     componentEntries.length !== expectedComponentEntries ||
-    oversizedEntries.length > 0
+    oversizedEntries.length > 0 ||
+    oversizedCompressed.length > 0
   ) {
     if (missing.length > 0) console.error(`Missing package files: ${missing.join(', ')}`);
     if (forbidden.length > 0) console.error(`Unexpected package files: ${forbidden.join(', ')}`);
@@ -82,6 +103,9 @@ try {
     }
     if (oversizedEntries.length > 0) {
       console.error(`Component entries exceed 80 KiB: ${oversizedEntries.join(', ')}`);
+    }
+    if (oversizedCompressed.length > 0) {
+      console.error(`Component entries exceed 20 KiB gzip: ${oversizedCompressed.join(', ')}`);
     }
     process.exitCode = 1;
   } else {
