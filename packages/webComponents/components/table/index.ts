@@ -221,9 +221,24 @@ export class seTable extends LitElement {
         user-select: none;
       }
 
-      thead th.sortable::after {
-        content: attr(data-sort);
-        margin-left: 6px;
+      .sort-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .sort-button:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: 2px;
+      }
+
+      .sort-indicator {
         font-size: 12px;
         color: var(--su-text-3);
       }
@@ -378,7 +393,7 @@ export class seTable extends LitElement {
     this.sortedData = [...this.data];
     this.sortColumn = (index: number) => {
       const col = this.sortedColumns[index];
-      if (!col.sortable) return;
+      if (!col?.sortable) return;
 
       const nextDirection: SortDirection =
         col.sortDirection === 'asc' ? 'desc' : col.sortDirection === 'desc' ? '' : 'asc';
@@ -467,7 +482,8 @@ export class seTable extends LitElement {
       changedProperties.has('pagination') ||
       changedProperties.has('infiniteScroll')
     ) {
-      this.currentPage = 1;
+      // 首次远程加载或显式同步页码时保留业务层传入的当前页。
+      if (this.hasUpdated && !changedProperties.has('currentPage')) this.currentPage = 1;
       this.scrollTop = 0;
       this.resetViewportScroll();
     }
@@ -783,6 +799,8 @@ export class seTable extends LitElement {
   }
 
   private handlePaginationChange(event: Event) {
+    // 内部分页器的事件由表格转发一次，避免外部重复发起请求。
+    event.stopPropagation();
     const customEvent = event as CustomEvent<{ currentPage: number }>;
     this.setCurrentPage(customEvent.detail?.currentPage ?? 1);
   }
@@ -1027,14 +1045,34 @@ export class seTable extends LitElement {
                         ? 'sortable'
                         : ''} ${presentation.className}"
                       style="${presentation.style} text-align: ${col.align || 'center'};"
-                      data-sort="${col.sortDirection === 'asc'
-                        ? '↑'
-                        : col.sortDirection === 'desc'
-                          ? '↓'
-                          : '⇅'}"
+                      scope="col"
+                      aria-sort="${col.sortable
+                        ? col.sortDirection === 'asc'
+                          ? 'ascending'
+                          : col.sortDirection === 'desc'
+                            ? 'descending'
+                            : 'none'
+                        : nothing}"
                       @click="${() => this.sortColumn(index)}"
                     >
-                      ${col.label}
+                      ${col.sortable
+                        ? html`<button
+                            type="button"
+                            class="sort-button"
+                            @click="${(event: Event) => {
+                              event.stopPropagation();
+                              this.sortColumn(index);
+                            }}"
+                          >
+                            ${col.label}<span class="sort-indicator" aria-hidden="true"
+                              >${col.sortDirection === 'asc'
+                                ? '↑'
+                                : col.sortDirection === 'desc'
+                                  ? '↓'
+                                  : '⇅'}</span
+                            >
+                          </button>`
+                        : col.label}
                       ${col.resizable
                         ? html`<span
                             class="resize-handle"
@@ -1042,6 +1080,7 @@ export class seTable extends LitElement {
                             aria-label="调整${col.label}列宽"
                             aria-orientation="vertical"
                             tabindex="0"
+                            @click="${(event: Event) => event.stopPropagation()}"
                             @pointerdown="${(event: PointerEvent) =>
                               this.startColumnResize(event, col)}"
                             @keydown="${(event: KeyboardEvent) =>

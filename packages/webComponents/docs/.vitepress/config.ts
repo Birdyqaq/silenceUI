@@ -51,6 +51,7 @@ export default defineConfig({
             { text: '设计方案', link: '/guide/design' },
             { text: '主题定制', link: '/guide/theme' },
             { text: '开发规范', link: '/guide/development' },
+            { text: '执行计划', link: '/guide/execution-plan' },
           ],
         },
       ],
@@ -77,6 +78,7 @@ export default defineConfig({
           text: '数据展示',
           items: [
             { text: 'Table 表格', link: '/components/table' },
+            { text: 'Typewriter 打字机', link: '/components/typewriter' },
             { text: 'Data 数据组件', link: '/components/data' },
           ],
         },

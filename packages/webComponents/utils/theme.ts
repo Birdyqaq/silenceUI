@@ -71,10 +71,21 @@ function emitChange() {
 
 function getStoredColors(): ThemeColors {
   try {
-    return JSON.parse(localStorage.getItem(COLORS_STORAGE_KEY) ?? '{}') as ThemeColors;
+    return normalizeColors(JSON.parse(localStorage.getItem(COLORS_STORAGE_KEY) ?? '{}'));
   } catch {
     return {};
   }
+}
+
+/** 只接受已知字段中的非空颜色字符串，隔离过期或损坏的存储数据。 */
+function normalizeColors(value: unknown): ThemeColors {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const colors: ThemeColors = {};
+  for (const key of Object.keys(COLOR_VAR_MAP) as (keyof ThemeColors)[]) {
+    const color = (value as Record<string, unknown>)[key];
+    if (typeof color === 'string' && color.trim()) colors[key] = color.trim();
+  }
+  return colors;
 }
 
 export function getThemeMode(): ThemeMode {
@@ -122,6 +133,7 @@ function applyColors(colors: ThemeColors) {
 
 /** 自定义主题色（合并到已有的自定义色上）。primary 会自动派生 hover 色与 rgb 变量 */
 export function setThemeColors(colors: ThemeColors) {
+  colors = normalizeColors(colors);
   const merged = { ...getStoredColors(), ...colors };
   // 换主色时重新派生 hover，除非本次同时明确提供 hover 色。
   if (colors.primary && !colors.primaryHover) delete merged.primaryHover;

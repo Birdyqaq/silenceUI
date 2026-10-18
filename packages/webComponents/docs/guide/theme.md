@@ -31,30 +31,36 @@ setThemeColors({ primary: '#7c3aed' }); // 切换品牌色，并派生 hover、R
 或使用 API：
 
 ```ts
-import { setThemeMode, toggleThemeMode, getThemeMode } from 'webcomponents';
+import { setThemeMode, toggleThemeMode, getThemeMode } from 'webcomponents/theme';
 
 toggleThemeMode(); // 明暗互切
 setThemeMode('dark'); // 指定模式
 getThemeMode(); // 'light' | 'dark'
 ```
 
-模式会持久化到 localStorage，刷新页面后自动恢复。主题变化时 `window` 上会派发 `su-theme-change` 事件：
+模式会持久化到 localStorage。根入口自动恢复主题；按需引入时在应用入口调用一次 `initTheme()`。主题 API 修改配置时，`window` 上会派发 `su-theme-change` 事件：
 
 ```ts
-window.addEventListener('su-theme-change', (e) => {
-  console.log(e.detail.mode, e.detail.colors);
-});
+const onThemeChange = (event: Event) => {
+  const detail = (event as CustomEvent).detail;
+  console.log(detail.mode, detail.colors);
+};
+window.addEventListener('su-theme-change', onThemeChange);
+// 页面或框架组件卸载时清理：
+// window.removeEventListener('su-theme-change', onThemeChange);
 ```
 
 ## 自定义主题色
 
 ```ts
-import { setThemeColors, resetThemeColors } from 'webcomponents';
+import { setThemeColors, resetThemeColors } from 'webcomponents/theme';
 
 setThemeColors({ primary: '#7c3aed' }); // 换品牌色
 setThemeColors({ success: '#22c55e', error: '#dc2626' }); // 换状态色
 resetThemeColors(); // 恢复默认
 ```
+
+`resetThemeColors()` 仅清除自定义颜色，不改变明暗模式。存储中的无效 JSON、`null`、数组、未知字段及非字符串值会被忽略；可用字段仍可恢复。浏览器禁止访问 localStorage 时，主题 API 仍可切换当前页面，配置不会持久化。
 
 传入 hex 颜色后会自动派生：
 

@@ -52,7 +52,7 @@ export class SuProgress extends LitElement {
         font-size: var(--su-font-size-xs);
         color: var(--su-text-2);
       }
-    `
+    `,
   ];
 
   willUpdate() {
@@ -60,13 +60,19 @@ export class SuProgress extends LitElement {
   }
 
   private get clampedPercent() {
-    return Math.min(100, Math.max(0, this.percent));
+    return Number.isFinite(this.percent) ? Math.min(100, Math.max(0, this.percent)) : 0;
   }
 
   render() {
     const percent = this.clampedPercent;
     return html`
-      <div class="progress" role="progressbar" aria-valuenow=${percent} aria-valuemin="0" aria-valuemax="100">
+      <div
+        class="progress"
+        role="progressbar"
+        aria-valuenow=${percent}
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
         <div class="track">
           <div class="bar ${this.status}" style="width: ${percent}%"></div>
         </div>

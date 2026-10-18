@@ -1,6 +1,6 @@
 # 组件总览
 
-SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 `webcomponents/style.css` 与 `webcomponents`。新组件使用 `su-` 前缀，历史兼容组件保留 `se-` 前缀。
+SilenceUI 组件围绕后台管理系统组织。应用入口加载 `webcomponents/style.css`，再选择根入口全量注册或 `webcomponents/components/*` 按需注册；两种方式见[安装指南](/guide/installation)。新组件使用 `su-` 前缀，历史兼容组件保留 `se-` 前缀。
 
 ## 命名
 
@@ -27,21 +27,23 @@ SilenceUI 组件围绕后台管理系统组织，应用入口建议同时引入 
 
 ## 数据展示
 
-| 组件         | 标签              | 说明                                                             | 主要事件                                                                                    |
-| ------------ | ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Table        | `se-table`        | 表格，支持排序、分页、选择、固定列、列宽调整、无限滚动和虚拟滚动 | `sort-change`、`page-change`、`row-click`、`selection-change`、`column-resize`、`load-more` |
-| Pagination   | `se-pagination`   | 独立分页控件                                                     | `page-change`                                                                               |
-| Card         | `su-card`         | 卡片容器，支持 header/footer 插槽                                | -                                                                                           |
-| StatCard     | `su-stat-card`    | 指标卡片                                                         | -                                                                                           |
-| Tag          | `su-tag`          | 语义状态标签                                                     | -                                                                                           |
-| Badge        | `su-badge`        | 数字徽标或红点                                                   | -                                                                                           |
-| Avatar       | `su-avatar`       | 头像，图片失败时显示首字母                                       | -                                                                                           |
-| Empty        | `su-empty`        | 空状态                                                           | -                                                                                           |
-| Skeleton     | `su-skeleton`     | 骨架屏，可包裹真实内容                                           | -                                                                                           |
-| Descriptions | `su-descriptions` | 详情页描述列表，支持 `items/itemsJson`                           | -                                                                                           |
-| Tree         | `su-tree`         | 树形层级数据，支持展开与键盘导航                                 | `select`、`expand`                                                                          |
-| Image        | `se-image`        | 图片懒加载、错误占位和预览                                       | `close`                                                                                     |
-| AssetViewer  | `se-asset-viewer` | 图片、视频、音频、PDF 资源预览                                   | `asset-open`                                                                                |
+[Typewriter 打字机](./typewriter)：`su-typewriter` 提供五种文字效果、删除轮播、暂停重播和主题色适配；支持 `text-complete`、`complete` 事件。
+
+| 组件         | 标签              | 说明                                                                   | 主要事件                                                                                                     |
+| ------------ | ----------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Table        | `se-table`        | 表格，支持排序、服务端分页、选择、固定列、列宽调整、可展开行和虚拟滚动 | `sort-change`、`page-change`、`row-click`、`selection-change`、`column-resize`、`expand-change`、`load-more` |
+| Pagination   | `se-pagination`   | 独立分页控件                                                           | `page-change`                                                                                                |
+| Card         | `su-card`         | 卡片容器，支持 header/footer 插槽                                      | -                                                                                                            |
+| StatCard     | `su-stat-card`    | 指标卡片                                                               | -                                                                                                            |
+| Tag          | `su-tag`          | 语义状态标签                                                           | -                                                                                                            |
+| Badge        | `su-badge`        | 数字徽标或红点                                                         | -                                                                                                            |
+| Avatar       | `su-avatar`       | 头像，图片失败时显示首字母                                             | -                                                                                                            |
+| Empty        | `su-empty`        | 空状态                                                                 | -                                                                                                            |
+| Skeleton     | `su-skeleton`     | 骨架屏，可包裹真实内容                                                 | -                                                                                                            |
+| Descriptions | `su-descriptions` | 详情页描述列表，支持 `items/itemsJson`                                 | -                                                                                                            |
+| Tree         | `su-tree`         | 树形层级数据，支持展开与键盘导航                                       | `select`、`expand`                                                                                           |
+| Image        | `se-image`        | 图片懒加载、错误占位和预览                                             | `close`                                                                                                      |
+| AssetViewer  | `se-asset-viewer` | 图片、视频、音频、PDF 资源预览                                         | `asset-open`                                                                                                 |
 
 ## 导航
 

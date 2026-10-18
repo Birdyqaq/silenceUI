@@ -34,6 +34,7 @@ import './components/data/empty/index.js';
 import './components/data/skeleton/index.js';
 import './components/data/descriptions/index.js';
 import './components/data/tree/index.js';
+import './components/data/typewriter/index.js';
 
 import './components/feedback/modal/index.js';
 import './components/feedback/drawer/index.js';
@@ -83,6 +84,7 @@ export * from './components/data/empty/index';
 export * from './components/data/skeleton/index';
 export * from './components/data/descriptions/index';
 export * from './components/data/tree/index';
+export * from './components/data/typewriter/index';
 
 export * from './components/feedback/modal/index';
 export * from './components/feedback/drawer/index';

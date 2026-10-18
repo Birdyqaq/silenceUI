@@ -27,6 +27,8 @@
 
 事件：`select`，detail 直接是当前 `MenuItem`。
 
+收起时保留每项的可访问名称及原生悬停标题。未设置 `activeKey` 或指定的 key 不存在时，首项作为当前项，高亮和 `aria-current` 保持一致。
+
 `MenuItem`：
 
 | 字段    | 说明         | 类型     |

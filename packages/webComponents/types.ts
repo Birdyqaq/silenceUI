@@ -9,6 +9,7 @@ import type { SuSkeleton } from './components/data/skeleton';
 import type { SuStatCard } from './components/data/stat-card';
 import type { SuTag } from './components/data/tag';
 import type { SuTree } from './components/data/tree';
+import type { SuTypewriter } from './components/data/typewriter';
 import type { SuAlert } from './components/feedback/alert';
 import type { SuDrawer } from './components/feedback/drawer';
 import type { SuMessage } from './components/feedback/message';
@@ -88,6 +89,7 @@ declare global {
     'su-theme-toggle': SuThemeToggle;
     'su-tooltip': SuTooltip;
     'su-tree': SuTree;
+    'su-typewriter': SuTypewriter;
     'su-upload': SuUpload;
   }
 }

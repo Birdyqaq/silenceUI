@@ -4,6 +4,69 @@ import './index';
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('SeTable', () => {
+  it('exposes a focusable sort button and announces each sort direction', async () => {
+    const element = document.createElement('se-table');
+    element.columns = [
+      { key: 'name', label: '姓名', sortable: true, resizable: true },
+      { key: 'id', label: '编号' },
+    ];
+    element.data = [
+      { id: 1, name: 'Bob' },
+      { id: 2, name: 'Alice' },
+    ];
+    const sort = vi.fn();
+    element.addEventListener('sort-change', sort);
+    document.body.append(element);
+    await element.updateComplete;
+    const header = element.shadowRoot!.querySelector('th')!;
+    const button = header.querySelector<HTMLButtonElement>('.sort-button')!;
+    button.focus();
+    expect(element.shadowRoot!.activeElement).toBe(button);
+    expect(header.getAttribute('aria-sort')).toBe('none');
+    button.click();
+    await element.updateComplete;
+    expect(header.getAttribute('aria-sort')).toBe('ascending');
+    expect(element.sortedData[0].name).toBe('Alice');
+    header.querySelector<HTMLElement>('.resize-handle')!.click();
+    expect(sort).toHaveBeenCalledOnce();
+    button.click();
+    await element.updateComplete;
+    expect(header.getAttribute('aria-sort')).toBe('descending');
+    button.click();
+    await element.updateComplete;
+    expect(header.getAttribute('aria-sort')).toBe('none');
+    expect(element.sortedData[0].name).toBe('Bob');
+    expect(element.shadowRoot!.querySelectorAll('th')[1].hasAttribute('aria-sort')).toBe(false);
+    element.remove();
+  });
+
+  it('preserves the initial remote page and forwards one page event to the host', async () => {
+    const element = document.createElement('se-table');
+    element.remote = true;
+    element.total = 100;
+    element.currentPage = 3;
+    element.columns = [{ key: 'name', label: '姓名' }];
+    element.data = [{ id: 21, name: 'Alice' }];
+    const page = vi.fn();
+    const host = document.createElement('section');
+    host.addEventListener('page-change', page);
+    host.append(element);
+    document.body.append(host);
+    await element.updateComplete;
+    expect(element.currentPage).toBe(3);
+    const pagination = element.shadowRoot!.querySelector('se-pagination')!;
+    await pagination.updateComplete;
+    pagination.shadowRoot!.querySelectorAll<HTMLButtonElement>('button')[1].click();
+    await element.updateComplete;
+    expect(element.currentPage).toBe(4);
+    expect(page).toHaveBeenCalledOnce();
+    expect(page.mock.calls[0][0].detail).toEqual({ currentPage: 4 });
+    element.pageSize = 20;
+    element.currentPage = 2;
+    await element.updateComplete;
+    expect(element.currentPage).toBe(2);
+    host.remove();
+  });
   it('cleans resize listeners when detached', async () => {
     const element = document.createElement('se-table');
     element.columns = [{ key: 'name', label: '姓名', width: '100px', resizable: true }];

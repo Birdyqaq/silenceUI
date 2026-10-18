@@ -1,4 +1,4 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, css, html, type PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { baseControlStyles } from '../../_shared/styles';
 
@@ -8,13 +8,16 @@ const ICONS: Record<MessageType, string> = {
   info: 'ℹ',
   success: '✓',
   warning: '⚠',
-  error: '✕'
+  error: '✕',
 };
 
 @customElement('su-message')
 export class SuMessage extends LitElement {
   @property({ type: String }) type: MessageType = 'info';
   @property({ type: Number }) duration = 3000;
+
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private dismissed = false;
 
   static styles = [
     baseControlStyles,
@@ -63,16 +66,47 @@ export class SuMessage extends LitElement {
       .icon.error {
         color: var(--su-color-error);
       }
-    `
+    `,
   ];
 
-  firstUpdated() {
-    if (this.duration > 0) {
-      setTimeout(() => this.dismiss(), this.duration);
+  connectedCallback() {
+    super.connectedCallback();
+    this.dismissed = false;
+    if (this.hasUpdated) this.startTimer();
+  }
+
+  disconnectedCallback() {
+    this.clearTimer();
+    super.disconnectedCallback();
+  }
+
+  protected updated(changedProperties: PropertyValues<this>) {
+    if (changedProperties.has('duration')) this.startTimer();
+  }
+
+  private clearTimer() {
+    if (this.timer === undefined) return;
+    clearTimeout(this.timer);
+    this.timer = undefined;
+  }
+
+  /** 修改持续时间或重新挂载时，从当前时刻重新计时。 */
+  private startTimer() {
+    this.clearTimer();
+    if (
+      this.isConnected &&
+      !this.dismissed &&
+      Number.isFinite(this.duration) &&
+      this.duration > 0
+    ) {
+      this.timer = setTimeout(() => this.dismiss(), this.duration);
     }
   }
 
   dismiss() {
+    if (this.dismissed) return;
+    this.dismissed = true;
+    this.clearTimer();
     this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
     this.remove();
   }
@@ -80,7 +114,7 @@ export class SuMessage extends LitElement {
   render() {
     return html`
       <div class="message" role="status">
-        <span class="icon ${this.type}">${ICONS[this.type]}</span>
+        <span class="icon ${this.type}" aria-hidden="true">${ICONS[this.type]}</span>
         <slot></slot>
       </div>
     `;
@@ -101,7 +135,7 @@ function ensureContainer(): HTMLElement {
     display: 'grid',
     gap: '8px',
     justifyItems: 'center',
-    pointerEvents: 'none'
+    pointerEvents: 'none',
   });
   document.body.appendChild(container);
   return container;
@@ -124,8 +158,11 @@ export function message(content: string, options: MessageOptions = {}): SuMessag
 }
 
 message.info = (content: string, duration?: number) => message(content, { type: 'info', duration });
-message.success = (content: string, duration?: number) => message(content, { type: 'success', duration });
-message.warning = (content: string, duration?: number) => message(content, { type: 'warning', duration });
-message.error = (content: string, duration?: number) => message(content, { type: 'error', duration });
+message.success = (content: string, duration?: number) =>
+  message(content, { type: 'success', duration });
+message.warning = (content: string, duration?: number) =>
+  message(content, { type: 'warning', duration });
+message.error = (content: string, duration?: number) =>
+  message(content, { type: 'error', duration });
 
 export type { MessageType, MessageOptions };

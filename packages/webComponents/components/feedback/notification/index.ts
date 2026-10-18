@@ -113,15 +113,12 @@ export class SuNotification extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.dismissed = false;
+    if (this.hasUpdated) this.startTimer();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.clearTimer();
-  }
-
-  protected firstUpdated() {
-    this.startTimer();
   }
 
   protected updated(changedProperties: PropertyValues<this>) {
@@ -136,7 +133,12 @@ export class SuNotification extends LitElement {
 
   private startTimer() {
     this.clearTimer();
-    if (this.duration > 0 && !this.dismissed) {
+    if (
+      this.isConnected &&
+      !this.dismissed &&
+      Number.isFinite(this.duration) &&
+      this.duration > 0
+    ) {
       this.timer = setTimeout(() => this.dismiss('timeout'), this.duration);
     }
   }

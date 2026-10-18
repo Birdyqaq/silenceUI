@@ -90,7 +90,25 @@ export class SuInputNumber extends LitElement {
   ];
 
   private clamp(value: number) {
-    return Math.min(this.max, Math.max(this.min, value));
+    return Math.min(this.max, Math.max(this.min, Number.isFinite(value) ? value : 0));
+  }
+
+  /** 外部赋值与边界更新同样归一化，不派发用户交互事件。 */
+  protected willUpdate() {
+    if (!Number.isFinite(this.min)) this.min = Number.MIN_SAFE_INTEGER;
+    if (!Number.isFinite(this.max)) this.max = Number.MAX_SAFE_INTEGER;
+    if (this.max < this.min) this.max = this.min;
+    this.value = this.clamp(this.value);
+  }
+
+  /** 使用输入值的小数位精度消除常见十进制步进浮点尾数。 */
+  private stepValue(direction: number) {
+    const precision = (value: number) => {
+      const [coefficient, exponent = '0'] = String(value).toLowerCase().split('e');
+      return Math.max(0, (coefficient.split('.')[1]?.length ?? 0) - Number(exponent));
+    };
+    const digits = Math.min(100, Math.max(precision(this.value), precision(this.safeStep)));
+    this.emitChange(Number((this.value + direction * this.safeStep).toFixed(digits)));
   }
 
   private get safeStep() {
@@ -98,6 +116,7 @@ export class SuInputNumber extends LitElement {
   }
 
   private emitChange(next: number) {
+    if (this.disabled) return;
     const clamped = this.clamp(next);
     if (clamped === this.value) {
       this.requestUpdate();
@@ -150,7 +169,7 @@ export class SuInputNumber extends LitElement {
           type="button"
           aria-label="减少"
           ?disabled=${this.disabled || this.value <= this.min}
-          @click=${() => this.emitChange(this.value - this.safeStep)}
+          @click=${() => this.stepValue(-1)}
         >
           −
         </button>
@@ -168,7 +187,7 @@ export class SuInputNumber extends LitElement {
           type="button"
           aria-label="增加"
           ?disabled=${this.disabled || this.value >= this.max}
-          @click=${() => this.emitChange(this.value + this.safeStep)}
+          @click=${() => this.stepValue(1)}
         >
           +
         </button>

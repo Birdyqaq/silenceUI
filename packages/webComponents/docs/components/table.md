@@ -1,14 +1,6 @@
 # Table 表格
 
-## 服务端分页与排序
-
-设置 `remote = true`、`total = 服务端总数`、`currentPage = 当前页码`。
-`data` 只传当前页数据，组件不会再切片或本地排序。
-监听 `page-change` 的 `currentPage` 和 `sort-change` 的 `column`、`direction`，
-由业务层请求新数据并更新 `data`。排序会将页码重置为 1，数据响应不会重置页码或排序方向。
-业务层应处理请求失败和过期响应，并通过 `loading` 表示加载状态。
-
-面向业务数据场景的表格组件，支持排序、分页、行选择、固定列、列宽调整、无限滚动和大数据虚拟渲染。
+面向业务数据场景的表格组件，支持排序、分页、行选择、固定列、列宽调整、可展开行、服务端数据和大数据虚拟渲染。
 
 ## 基础用法
 
@@ -32,6 +24,66 @@ table.pageSize = 5;
 table.striped = true;
 table.hoverable = true;
 ```
+
+可排序列的表头包含原生按钮，支持 Tab 聚焦、Enter/Space 激活。排序按“升序 → 降序 → 无排序”循环，`aria-sort` 同步反映方向。调整列宽不会触发排序。
+
+## 服务端分页与排序
+
+独立使用 `se-pagination` 时，`pageSize` 小于 1 或不是有限数字会回退到 10，其余值向下取整；`total` 归一化为非负整数。当前页始终限制为有效整数页码，总数减少后自动回到有效范围。外部属性校正不派发 `page-change`，只有用户操作改变有效页码时派发；业务层需要主动处理数据更新后的请求。
+
+设置 `remote = true`、`total = 服务端总数`、`currentPage = 当前页码`。`data` 只传当前页数据，组件不会再切片或本地排序。数据响应不会重置页码或排序方向；修改 `pageSize` 时默认回到第 1 页，同一批更新中显式设置的 `currentPage` 优先。
+
+```html
+<se-table id="table-remote"></se-table>
+<p id="table-error" role="status"></p>
+```
+
+```js
+const table = document.querySelector('#table-remote');
+const errorText = document.querySelector('#table-error');
+table.remote = true;
+table.columns = [{ key: 'name', label: '姓名', sortable: true }];
+let sort = { column: '', direction: '' };
+let pending;
+
+async function loadRows() {
+  pending?.abort();
+  const request = new AbortController();
+  pending = request;
+  table.loading = true;
+  errorText.textContent = '';
+  try {
+    const params = new URLSearchParams({
+      page: String(table.currentPage),
+      pageSize: String(table.pageSize),
+      sort: sort.column,
+      direction: sort.direction,
+    });
+    const response = await fetch(`/api/users?${params}`, { signal: request.signal });
+    if (!response.ok) throw new Error('加载失败，请重试');
+    const result = await response.json(); // 业务接口约定：{ rows, total }
+    if (pending !== request || request.signal.aborted) return;
+    table.data = result.rows;
+    table.total = result.total;
+  } catch (error) {
+    if (!request.signal.aborted && pending === request) {
+      errorText.textContent = String(error);
+    }
+  } finally {
+    if (pending === request) table.loading = false;
+  }
+}
+
+table.addEventListener('page-change', loadRows);
+table.addEventListener('sort-change', (event) => {
+  sort = event.detail;
+  loadRows(); // 排序时表格已将 currentPage 重置为 1
+});
+loadRows();
+// 页面卸载时调用 pending?.abort()，框架组件还应清理其注册的事件监听。
+```
+
+每次分页操作只向业务层发送一次 `page-change`。排序触发 `sort-change` 并重置页码，不额外派发 `page-change`；业务层在排序回调中请求第 1 页即可。
 
 ## 固定列与列宽调整
 
@@ -95,8 +147,6 @@ table.addEventListener('load-more', async () => {
 });
 ```
 
-## 行选择
-
 ## 可展开行
 
 ```js
@@ -119,7 +169,7 @@ table.addEventListener('expand-change', (event) => console.log(event.detail));
 
 `expand-change` 事件内容：`{ key, row, expanded, keys }`。
 
-## 行选择示例
+## 行选择
 
 ```js
 const table = document.querySelector('#table-select');
@@ -218,46 +268,54 @@ table.spanMethod = ({ rowIndex, columnIndex }) => {
 
 ### 属性
 
-| 属性             | 说明                                   | 类型                                                 | 默认值                             |
-| ---------------- | -------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
-| columns          | 列配置                                 | `Column[]`                                           | `[]`                               |
-| data             | 数据源                                 | `Array<Record<string, unknown>>`                     | `[]`                               |
-| noDataText       | 空数据提示                             | `string`                                             | `暂无数据`                         |
-| borderStyle      | 边框样式                               | `string`                                             | `1px solid var(--su-border-color)` |
-| rowLines         | 行分隔线                               | `boolean`                                            | `true`                             |
-| columnLines      | 列分隔线                               | `boolean`                                            | `true`                             |
-| theadBgColor     | 表头背景色（CSS 颜色值，默认跟随主题） | `string`                                             | `''`                               |
-| theadTextColor   | 表头文字色（CSS 颜色值，默认跟随主题） | `string`                                             | `''`                               |
-| selectable       | 开启行选择                             | `boolean`                                            | `false`                            |
-| selectedKeys     | 选中的行 key（JS 设置，可受控）        | `string[]`                                           | `[]`                               |
-| loading          | 加载遮罩                               | `boolean`                                            | `false`                            |
-| pageSize         | 每页数量                               | `number`                                             | `10`                               |
-| pagination       | 是否启用分页                           | `boolean`                                            | `true`                             |
-| striped          | 斑马纹                                 | `boolean`                                            | `false`                            |
-| hoverable        | 悬停高亮                               | `boolean`                                            | `false`                            |
-| stickyHeader     | 是否吸顶表头                           | `boolean`                                            | `false`                            |
-| height           | 表格滚动容器高度                       | `string`                                             | `''`                               |
-| rowKey           | 行主键字段                             | `string`                                             | `'id'`                             |
-| spanMethod       | 合并单元格回调（JS 设置）              | `(args) => [rowspan, colspan] \| {rowspan, colspan}` | `undefined`                        |
-| infiniteScroll   | 开启滚动加载                           | `boolean`                                            | `false`                            |
-| hasMore          | 是否仍有更多数据                       | `boolean`                                            | `false`                            |
-| loadingMore      | 是否正在加载更多                       | `boolean`                                            | `false`                            |
-| loadMoreOffset   | 距离底部触发阈值（px）                 | `number`                                             | `80`                               |
-| virtualScroll    | 是否强制虚拟滚动                       | `boolean`                                            | `false`                            |
-| virtualThreshold | 超过该行数自动虚拟化                   | `number`                                             | `1000`                             |
-| virtualRowHeight | 虚拟行高（px）                         | `number`                                             | `44`                               |
-| virtualBuffer    | 视口外预渲染行数                       | `number`                                             | `8`                                |
+| 属性              | 说明                                      | 类型                                                 | 默认值                             |
+| ----------------- | ----------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
+| columns           | 列配置                                    | `Column[]`                                           | `[]`                               |
+| data              | 数据源                                    | `Array<Record<string, unknown>>`                     | `[]`                               |
+| noDataText        | 空数据提示                                | `string`                                             | `暂无数据`                         |
+| borderStyle       | 边框样式                                  | `string`                                             | `1px solid var(--su-border-color)` |
+| rowLines          | 行分隔线                                  | `boolean`                                            | `true`                             |
+| columnLines       | 列分隔线                                  | `boolean`                                            | `true`                             |
+| theadBgColor      | 表头背景色（CSS 颜色值，默认跟随主题）    | `string`                                             | `''`                               |
+| theadTextColor    | 表头文字色（CSS 颜色值，默认跟随主题）    | `string`                                             | `''`                               |
+| selectable        | 开启行选择                                | `boolean`                                            | `false`                            |
+| selectedKeys      | 选中的行 key（JS 设置，可受控）           | `string[]`                                           | `[]`                               |
+| loading           | 加载遮罩                                  | `boolean`                                            | `false`                            |
+| pageSize          | 每页数量                                  | `number`                                             | `10`                               |
+| pagination        | 是否启用分页                              | `boolean`                                            | `true`                             |
+| remote            | 服务端数据模式，不执行本地分页切片或排序  | `boolean`                                            | `false`                            |
+| total             | 服务端模式下的数据总数                    | `number`                                             | `0`                                |
+| currentPage       | 当前页码，从 1 开始，可通过 property 设置 | `number`                                             | `1`                                |
+| expandable        | 开启行展开，自动关闭虚拟渲染              | `boolean`                                            | `false`                            |
+| expandedKeys      | 展开行主键，仅 property                   | `string[]`                                           | `[]`                               |
+| rowExpandable     | 判断行是否可展开，仅 property             | `(row, rowIndex) => boolean`                         | `undefined`                        |
+| expandedRowRender | 展开内容渲染，仅 property                 | `(row, rowIndex) => unknown`                         | `undefined`                        |
+| striped           | 斑马纹                                    | `boolean`                                            | `false`                            |
+| hoverable         | 悬停高亮                                  | `boolean`                                            | `false`                            |
+| stickyHeader      | 是否吸顶表头                              | `boolean`                                            | `false`                            |
+| height            | 表格滚动容器高度                          | `string`                                             | `''`                               |
+| rowKey            | 行主键字段                                | `string`                                             | `'id'`                             |
+| spanMethod        | 合并单元格回调（JS 设置）                 | `(args) => [rowspan, colspan] \| {rowspan, colspan}` | `undefined`                        |
+| infiniteScroll    | 开启滚动加载                              | `boolean`                                            | `false`                            |
+| hasMore           | 是否仍有更多数据                          | `boolean`                                            | `false`                            |
+| loadingMore       | 是否正在加载更多                          | `boolean`                                            | `false`                            |
+| loadMoreOffset    | 距离底部触发阈值（px）                    | `number`                                             | `80`                               |
+| virtualScroll     | 是否强制虚拟滚动                          | `boolean`                                            | `false`                            |
+| virtualThreshold  | 超过该行数自动虚拟化                      | `number`                                             | `1000`                             |
+| virtualRowHeight  | 虚拟行高（px）                            | `number`                                             | `44`                               |
+| virtualBuffer     | 视口外预渲染行数                          | `number`                                             | `8`                                |
 
 ### 事件
 
-| 事件名           | 说明                       | 参数                                                   |
-| ---------------- | -------------------------- | ------------------------------------------------------ |
-| sort-change      | 排序变化                   | `{ column: string, direction: 'asc' \| 'desc' \| '' }` |
-| page-change      | 分页变化                   | `{ currentPage: number }`                              |
-| row-click        | 行点击                     | `{ row: Record<string, unknown>, rowIndex: number }`   |
-| load-more        | 触底加载                   | `{ loadedCount: number }`                              |
-| selection-change | 行选择变化                 | `{ keys: string[], rows: Record<string, unknown>[] }`  |
-| column-resize    | 列宽调整完成或通过键盘调整 | `{ column: string, width: number }`                    |
+| 事件名           | 说明                       | 参数                                                      |
+| ---------------- | -------------------------- | --------------------------------------------------------- |
+| sort-change      | 排序变化                   | `{ column: string, direction: 'asc' \| 'desc' \| '' }`    |
+| page-change      | 分页变化                   | `{ currentPage: number }`                                 |
+| row-click        | 行点击                     | `{ row: Record<string, unknown>, rowIndex: number }`      |
+| load-more        | 触底加载                   | `{ loadedCount: number }`                                 |
+| selection-change | 行选择变化                 | `{ keys: string[], rows: Record<string, unknown>[] }`     |
+| column-resize    | 列宽调整完成或通过键盘调整 | `{ column: string, width: number }`                       |
+| expand-change    | 行展开状态变化             | `{ key: string, row, expanded: boolean, keys: string[] }` |
 
 ### 合并单元格说明
 

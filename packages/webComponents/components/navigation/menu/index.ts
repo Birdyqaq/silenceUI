@@ -108,7 +108,9 @@ export class SuMenu extends LitElement {
             <button
               type="button"
               role="menuitem"
-              class="item ${item.key === this.activeKey ? 'active' : ''}"
+              class="item ${item.key === currentKey ? 'active' : ''}"
+              aria-label=${item.label}
+              title=${this.collapsed ? item.label : ''}
               aria-current=${item.key === currentKey ? 'page' : 'false'}
               tabindex=${item.key === currentKey || (!currentKey && index === 0) ? 0 : -1}
               @click=${() => this.onSelect(item)}
@@ -118,7 +120,7 @@ export class SuMenu extends LitElement {
             </button>
           `
         )}
-      </nav>
+      </div>
     `;
   }
 }

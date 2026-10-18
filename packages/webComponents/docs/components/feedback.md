@@ -96,7 +96,11 @@ message('普通提示', { type: 'info', duration: 3000 });
 | `type`     | 消息类型                                       | `'info' \| 'success' \| 'warning' \| 'error'` | `info` |
 | `duration` | 自动关闭时间，单位 ms；小于等于 0 时不自动关闭 | `number`                                      | `3000` |
 
-`su-message` 元素关闭时触发 `close`。
+`su-message` 元素关闭时触发 `close`（无 detail），可调用返回元素的 `dismiss()` 手动关闭。同一轮显示只触发一次 `close`。
+
+挂载后修改 `duration` 会重新计时，设为 `0` 可取消自动关闭。移除元素时清理计时器且不触发 `close`；重新挂载会按当前 `duration` 从头计时。
+
+按需调用：`import { message } from 'webcomponents/components/feedback/message'`。仍需在应用入口加载 `webcomponents/style.css`。
 
 ## Notification 通知 `notification`
 
@@ -127,6 +131,10 @@ notification({
 
 也可直接使用 `<su-notification>`。关闭时触发 `close`，detail 为 `{ source: 'manual' | 'timeout' }`。
 
+修改 `duration`、移除和重新挂载时的计时行为与 Message 相同。同一轮显示仅派发一次 `close`；`dismiss()` 默认为手动关闭。
+
+按需调用：`import { notification } from 'webcomponents/components/feedback/notification'`。
+
 ## Popconfirm 气泡确认框 `su-popconfirm`
 
 用于危险操作的轻量二次确认。默认插槽放触发元素：
@@ -156,6 +164,11 @@ notification({
 
 ## Tooltip 文字提示 `su-tooltip`
 
+<div style="display: flex; gap: 16px; padding: 20px 0; flex-wrap: wrap;">
+  <su-tooltip content="按 Tab 聚焦也能看到提示，Escape 可以关闭。" placement="top"><button type="button" style="border: 1px solid var(--vp-c-divider); padding: 8px 12px; border-radius: 6px;">聚焦或悬停查看</button></su-tooltip>
+  <su-tooltip content="空间不足时会自动翻转方向，并限制在视口范围内。" placement="right"><button type="button" style="border: 1px solid var(--vp-c-divider); padding: 8px 12px; border-radius: 6px;">右侧提示</button></su-tooltip>
+</div>
+
 ```html
 <su-tooltip content="这里是说明文字" placement="top">
   <su-button>悬停查看</su-button>
@@ -167,7 +180,13 @@ notification({
 | `content`   | 提示内容 | `string`                                 | `''`   |
 | `placement` | 展示方向 | `'top' \| 'bottom' \| 'left' \| 'right'` | `top`  |
 
-Tooltip 在 hover 或 focus-within 时显示。
+Tooltip 在悬停或焦点进入时显示，按 Escape 关闭；离开当前悬停/焦点区域后再次进入才会重新显示。移出有 150 ms 缓冲，可将鼠标移到提示内容上。空内容不显示。
+
+首选方向空间不足时自动翻转，并将位置限制在视口边缘内；滚动、窗口变化和内容尺寸变化会重新定位。支持 Popover API 的浏览器使用顶层显示，避免被父容器裁剪；旧浏览器退回 fixed 定位，带 transform 或裁剪的祖先可能仍限制显示。
+
+建议用原生按钮、链接或可聚焦控件作为触发器。组件会添加同一 DOM 树中的 `aria-describedby` 描述并保留已有 ID，卸载时移除自己的关联；开放 Shadow DOM 内的控件也支持，封闭 Shadow DOM 无法自动访问内部焦点元素。普通文字不会被自动加入 Tab 顺序。
+
+背景和文字颜色跟随主题，可通过 `--su-tooltip-bg`、`--su-tooltip-color` 覆盖。Tooltip 用于说明文字；带按钮、表单等操作内容应使用弹层组件。
 
 ## Spin 加载中 `su-spin`
 
@@ -188,6 +207,8 @@ Tooltip 在 hover 或 focus-within 时显示。
 无默认插槽内容时，`spinning` 为 true 会独立展示加载图标；有内容时会显示覆盖层。
 
 ## Progress 进度条 `su-progress`
+
+`percent` 限制在 0–100；`NaN`、正负无穷等非有限值按 0 展示，文本与 `aria-valuenow` 使用相同结果。
 
 ```html
 <su-progress percent="60"></su-progress>

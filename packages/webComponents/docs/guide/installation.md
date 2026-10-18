@@ -47,7 +47,9 @@ import 'webcomponents/components/table';
 
 入口路径与源码组件目录一致，例如 `data/tree`、`feedback/modal`、`navigation/menu`。每个入口只注册对应组件及其必要依赖；主题工具可从 `webcomponents/theme` 引入。不要同时引入根入口和按需入口，否则根入口仍会注册全部组件。
 
-当前生产构建中，独立入口约为 1.6–28.9 KB（未压缩），最大入口 `table` 约 7.1 KB gzip；完整根入口约 249.8 KB（46.2 KB gzip）。实际应用体积还会受构建器去重、压缩和使用组件组合影响。
+独立 ESM 入口复用 Lit 和共享代码块，根入口还包含全部组件与运行时，不能只比较单个入口文件来估算应用体积。以宿主项目的最终生产构建为准，并将 Lit、共享代码块和 CSS 计入下载成本。
+
+`pnpm package:verify` 会检查全部组件入口及其类型声明，每个入口 JS 文件上限为 80 KiB、gzip 上限为 20 KiB。这些是单文件回归阈值，不包含依赖代码块，也不是整个应用的体积承诺。入口数会随源码自动更新，当前组件清单见 [组件 API 基线](./component-inventory)。
 
 ## 产物入口
 

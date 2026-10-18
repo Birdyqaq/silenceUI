@@ -9,12 +9,75 @@ import './spin';
 import './tooltip';
 
 afterEach(() => {
-  vi.useRealTimers();
   document.body.replaceChildren();
+  vi.useRealTimers();
   document.body.style.overflow = '';
 });
 
 describe('feedback components', () => {
+  describe.each(['su-message', 'su-notification'] as const)('%s timer lifecycle', (tag) => {
+    it('restarts the duration when updated and cancels it when set to zero', async () => {
+      vi.useFakeTimers();
+      const element = document.createElement(tag);
+      element.duration = 100;
+      const close = vi.fn();
+      element.addEventListener('close', close);
+      document.body.append(element);
+      await element.updateComplete;
+      vi.advanceTimersByTime(50);
+      element.duration = 200;
+      await element.updateComplete;
+      vi.advanceTimersByTime(100);
+      expect(element.isConnected).toBe(true);
+      expect(close).not.toHaveBeenCalled();
+      element.duration = 0;
+      await element.updateComplete;
+      vi.advanceTimersByTime(500);
+      expect(close).not.toHaveBeenCalled();
+      element.dismiss();
+      element.dismiss();
+      expect(close).toHaveBeenCalledOnce();
+    });
+
+    it('clears detached timers and restarts a full duration on reconnect', async () => {
+      vi.useFakeTimers();
+      const element = document.createElement(tag);
+      element.duration = 100;
+      const close = vi.fn();
+      element.addEventListener('close', close);
+      document.body.append(element);
+      await element.updateComplete;
+      vi.advanceTimersByTime(50);
+      element.remove();
+      vi.advanceTimersByTime(200);
+      expect(close).not.toHaveBeenCalled();
+      document.body.append(element);
+      await element.updateComplete;
+      vi.advanceTimersByTime(99);
+      expect(element.isConnected).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(close).toHaveBeenCalledOnce();
+      expect(element.isConnected).toBe(false);
+    });
+
+    it('does not start a pending timer after removal or manual dismissal', async () => {
+      vi.useFakeTimers();
+      const element = document.createElement(tag);
+      element.duration = 100;
+      const close = vi.fn();
+      element.addEventListener('close', close);
+      document.body.append(element);
+      element.remove();
+      await element.updateComplete;
+      vi.advanceTimersByTime(200);
+      expect(close).not.toHaveBeenCalled();
+      document.body.append(element);
+      element.dismiss();
+      await element.updateComplete;
+      vi.advanceTimersByTime(200);
+      expect(close).toHaveBeenCalledOnce();
+    });
+  });
   it('closes a closable alert and emits a composed close event', async () => {
     const alert = document.createElement('su-alert') as HTMLElement & {
       closable: boolean;

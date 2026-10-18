@@ -49,6 +49,14 @@ import type { SuSelect as DirectSuSelect } from '../dist/components/form/select/
 import '../dist/index';
 import { setThemeColors, initTheme } from 'webcomponents/theme';
 import type { SuButton as PackageButton } from 'webcomponents/components/button';
+import type { SuTypewriter, TypewriterEffect } from 'webcomponents/components/data/typewriter';
+const typewriter: SuTypewriter = document.createElement('su-typewriter');
+const effect: TypewriterEffect = 'slide';
+typewriter.texts = ['你好', 'SilenceUI'];
+typewriter.effect = effect;
+typewriter.pause();
+typewriter.resume();
+typewriter.restart();
 const packageButton: PackageButton = document.createElement('su-button');
 void packageButton;
 void initTheme;
