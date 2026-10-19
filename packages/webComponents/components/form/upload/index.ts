@@ -207,9 +207,8 @@ export class SuUpload extends LitElement {
   }
 
   private handleDragOver(event: DragEvent) {
-    if (this.formValue.disabled) return;
     event.preventDefault();
-    this.dragging = true;
+    this.dragging = !this.formValue.disabled;
   }
 
   private handleDragLeave() {
@@ -217,9 +216,10 @@ export class SuUpload extends LitElement {
   }
 
   private handleDrop(event: DragEvent) {
-    if (this.formValue.disabled) return;
+    // 禁用时仍阻止浏览器默认打开文件，但不改变文件列表或发出事件。
     event.preventDefault();
     this.dragging = false;
+    if (this.formValue.disabled) return;
     this.selectFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
@@ -247,6 +247,10 @@ export class SuUpload extends LitElement {
 
   protected firstUpdated() {
     this.defaultFiles = [...this.files];
+  }
+
+  protected willUpdate() {
+    if (this.formValue.disabled) this.dragging = false;
   }
 
   /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */

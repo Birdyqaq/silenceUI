@@ -1,5 +1,5 @@
 import { LitElement, css, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -22,6 +22,8 @@ export class SuTree extends LitElement {
   @property({ type: String }) nodesJson = '';
   @property({ type: String }) selectedKey = '';
   @property({ type: Array, attribute: false }) expandedKeys: string[] = [];
+
+  @state() private focusedKey = '';
 
   static styles = [
     baseControlStyles,
@@ -137,6 +139,7 @@ export class SuTree extends LitElement {
   }
 
   private focusNode(key: string) {
+    this.focusedKey = key;
     void this.updateComplete.then(() => {
       Array.from(this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.label') ?? [])
         .find((button) => button.dataset.key === key)
@@ -177,9 +180,13 @@ export class SuTree extends LitElement {
 
   render() {
     const visible = this.visibleNodes;
-    const focusKey = visible.some(({ node }) => node.key === this.selectedKey && !node.disabled)
-      ? this.selectedKey
-      : (visible.find(({ node }) => !node.disabled)?.node.key ?? '');
+    // 焦点与选择独立：方向键移动后，Tab 再次进入时回到最近聚焦的可用节点。
+    const focusKey =
+      [this.focusedKey, this.selectedKey].find((key) =>
+        visible.some(({ node }) => node.key === key && !node.disabled)
+      ) ??
+      visible.find(({ node }) => !node.disabled)?.node.key ??
+      '';
 
     return html`
       <div class="tree" role="tree" aria-label="树形列表">
@@ -210,6 +217,9 @@ export class SuTree extends LitElement {
                 aria-expanded=${hasChildren ? String(expanded) : nothing}
                 tabindex=${node.key === focusKey ? 0 : -1}
                 ?disabled=${Boolean(node.disabled)}
+                @focus=${() => {
+                  this.focusedKey = node.key;
+                }}
                 @click=${() => this.selectNode(node)}
                 @keydown=${(event: KeyboardEvent) => this.onKeyDown(event, entry)}
               >

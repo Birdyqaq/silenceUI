@@ -199,3 +199,5 @@
 - `expand`：展开或收起时触发，detail 为 `{ key, expanded, node }`。
 
 键盘支持 `ArrowUp/ArrowDown` 移动、`ArrowRight` 展开或进入子节点、`ArrowLeft` 收起或返回父节点，以及 `Home/End/Enter/Space`。
+
+焦点与选中状态独立：方向键只移动焦点，`Enter/Space` 确认选择；Tab 再次进入时回到最近聚焦的可用节点。该节点隐藏、禁用或移除后，Tab 入口回退到可见的选中节点或首个可用节点。
