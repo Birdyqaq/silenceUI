@@ -9,7 +9,8 @@ export default defineConfig({
   vue: {
     template: {
       compilerOptions: {
-        isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+        isCustomElement: (tag) =>
+          tag.startsWith('su-') || tag.startsWith('se-') || tag === 'line-component',
       },
     },
   },
@@ -42,6 +43,8 @@ export default defineConfig({
             { text: '快速开始', link: '/guide/getting-started' },
             { text: '安装', link: '/guide/installation' },
             { text: 'API 约定', link: '/guide/api-conventions' },
+            { text: '兼容性与降级', link: '/guide/compatibility' },
+            { text: '文档验收', link: '/guide/docs-validation' },
             { text: '组件 API 基线', link: '/guide/component-inventory' },
           ],
         },

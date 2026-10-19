@@ -169,3 +169,23 @@ const publicElements: [
 ];
 
 publicElements[2].fit = 'contain';
+
+// 原生表单回调必须同时存在于源码与发布声明中。
+const nativeFormControls = [
+  document.createElement('su-input'),
+  document.createElement('su-select'),
+  document.createElement('su-date-picker'),
+  document.createElement('su-input-number'),
+  document.createElement('su-textarea'),
+  document.createElement('su-checkbox'),
+  document.createElement('su-switch'),
+  document.createElement('su-radio-group'),
+  document.createElement('su-cascader'),
+  document.createElement('su-upload'),
+];
+nativeFormControls.forEach((control) => {
+  control.name = 'profile';
+  control.formDisabledCallback(true);
+  control.formDisabledCallback(false);
+  control.formResetCallback();
+});

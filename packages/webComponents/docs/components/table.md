@@ -1,5 +1,7 @@
 # Table 表格
 
+<ClientOnly><ComponentDemo category="table" /></ClientOnly>
+
 面向业务数据场景的表格组件，支持排序、分页、行选择、固定列、列宽调整、可展开行、服务端数据和大数据虚拟渲染。
 
 ## 基础用法
@@ -171,6 +173,8 @@ table.addEventListener('expand-change', (event) => console.log(event.detail));
 
 ## 行选择
 
+推荐为每行提供稳定且唯一的 `rowKey`。缺少主键时，组件以同一行对象的身份生成临时 key，避免本地分页或排序导致选中串行；请求后用新对象替换数据时临时 key 不保持，因此服务端分页和跨请求保留选择必须提供业务主键。
+
 ```js
 const table = document.querySelector('#table-select');
 table.selectable = true;
@@ -197,6 +201,8 @@ table.loading = false;
 ```
 
 ## 1 万条数据渲染优化（虚拟滚动）
+
+虚拟滚动会限制渲染窗口到有效数据范围，数据缩减后不会因旧滚动位置而空白。`pageSize`、`currentPage`、`virtualBuffer` 使用整数；非法 pageSize 回退 10，非法 virtualRowHeight 回退 44，非法 virtualBuffer 回退 8，非法 virtualThreshold 回退 1000。服务端模式仍由业务层管理页码与请求。
 
 ```js
 const table = document.querySelector('#table-big-data');

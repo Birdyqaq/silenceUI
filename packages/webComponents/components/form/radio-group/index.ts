@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -17,12 +17,13 @@ export class SuRadioGroup extends LitElement {
   @property({ type: Array, attribute: false }) options: RadioOption[] = [];
   @property({ type: String }) optionsJson = '';
   @property({ type: String }) value = '';
-  @property({ type: String }) name = `su-radio-${Math.random().toString(36).slice(2)}`;
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
+  private readonly fallbackName = `su-radio-${Math.random().toString(36).slice(2)}`;
   @property({ type: Boolean, reflect: true }) disabled = false;
 
   private defaultValue = '';
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled || !this.value ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled || !this.value ? null : this.value
   );
 
   static styles = [
@@ -72,6 +73,11 @@ export class SuRadioGroup extends LitElement {
     this.defaultValue = this.value;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.value = this.defaultValue;
   }
@@ -94,10 +100,10 @@ export class SuRadioGroup extends LitElement {
             <label>
               <input
                 type="radio"
-                name=${this.name}
+                name=${this.name || this.fallbackName}
                 value=${option.value}
                 .checked=${this.value === option.value}
-                ?disabled=${this.disabled || Boolean(option.disabled)}
+                ?disabled=${this.formValue.disabled || Boolean(option.disabled)}
                 @change=${this.onChange}
               />
               <span>${option.label}</span>

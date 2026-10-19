@@ -66,6 +66,8 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 表单控件支持 Form Associated Custom Elements。设置 `name` 后，控件值会进入外层原生表单的 `FormData`；`disabled` 控件不会提交，调用 `form.reset()` 会恢复初始值。
 
+上述原生提交和 reset 行为要求浏览器支持 ElementInternals；不支持时 UI 仍可使用，需由应用手动收集/恢复 property。必填标记不是校验逻辑；浏览器降级和 SSR 注意事项见[兼容性](./compatibility)。
+
 ```html
 <form id="profile-form">
   <su-input name="nickname" value="Silence"></su-input>
@@ -86,6 +88,8 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 ```
 
 支持 `name` 的组件：`su-input`、`su-date-picker`、`su-cascader`、`su-upload`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
+
+这些控件的 name property 会同步到 attribute；fieldset 的禁用状态由原生 formDisabledCallback 同步至内部控件。控件自身的 disabled 与继承禁用分别保存，防止父级重新启用时意外启用原本禁用的字段。
 
 ## 事件监听
 

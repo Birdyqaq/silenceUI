@@ -20,6 +20,41 @@ async function mount() {
 }
 
 describe('tooltip interactions', () => {
+  it('updates dynamically replaced nested triggers and removes stale descriptions', async () => {
+    const { tooltip, button } = await mount();
+    const wrapper = document.createElement('div');
+    const first = document.createElement('button');
+    first.textContent = '第一项';
+    wrapper.append(first);
+    button.replaceWith(wrapper);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const firstId = first.getAttribute('aria-describedby')!;
+    expect(document.getElementById(firstId)!.textContent).toBe('说明');
+    tooltip.content = '动态内容';
+    await tooltip.updateComplete;
+    expect(first.getAttribute('aria-describedby')).toBe(firstId);
+    expect(document.getElementById(firstId)!.textContent).toBe('动态内容');
+    const second = document.createElement('button');
+    first.replaceWith(second);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(first.hasAttribute('aria-describedby')).toBe(false);
+    expect(document.getElementById(firstId)).toBeNull();
+    const secondId = second.getAttribute('aria-describedby')!;
+    expect(document.getElementById(secondId)!.textContent).toBe('动态内容');
+    tooltip.remove();
+    expect(document.getElementById(secondId)).toBeNull();
+  });
+
+  it('closes when a focused nested trigger is removed without a focusout event', async () => {
+    const { tooltip, button, bubble } = await mount();
+    button.focus();
+    await tooltip.updateComplete;
+    expect(bubble.getAttribute('aria-hidden')).toBe('false');
+    button.remove();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await tooltip.updateComplete;
+    expect(bubble.getAttribute('aria-hidden')).toBe('true');
+  });
   it('adds same-tree descriptions, updates text and preserves existing IDs on detach', async () => {
     const { tooltip, button } = await mount();
     const ids = button.getAttribute('aria-describedby')!.split(' ');

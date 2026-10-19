@@ -1,8 +1,14 @@
 # 表单组件
 
+<ClientOnly><ComponentDemo category="form" /></ClientOnly>
+
 表单组件以原生控件行为为基础，统一使用主题 token、焦点样式和 `CustomEvent`。复杂选项通过 DOM property 赋值；纯 HTML 场景可使用 `optionsJson`。
 
 所有控件设置 `name` 后都能参与外层原生 `<form>` 提交，并支持 `form.reset()`。复选框和开关仅在选中时提交其 `value`。
+
+原生表单集成要求 `ElementInternals.setFormValue`；不支持时需由业务层手动收集和恢复值，详见[兼容性与降级](../guide/compatibility)。
+
+字段名通过 `name` attribute 或 property 设置均可，动态改名会自动同步。原生 `fieldset[disabled]` 会让内部控件同步禁用且不提交；解除 fieldset 禁用不会覆盖控件自身的 disabled。
 
 <ClientOnly>
   <FormDemo />
@@ -211,7 +217,7 @@
 | `options`     | 单选项，需通过 JS property 设置 | `RadioOption[]` | `[]`     |
 | `optionsJson` | 单选项 JSON 字符串              | `string`        | `''`     |
 | `value`       | 当前值                          | `string`        | `''`     |
-| `name`        | 表单字段名及内部 radio name     | `string`        | 随机生成 |
+| `name`        | 表单字段名；为空时只生成内部 radio 分组名，不创建提交字段 | `string` | `''` |
 | `disabled`    | 是否禁用整个单选组              | `boolean`       | `false`  |
 
 事件：`change`，detail 为 `{ value: string }`。

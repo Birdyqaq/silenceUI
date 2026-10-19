@@ -11,10 +11,12 @@ export class SuTooltip extends LitElement {
   @state() private open = false;
   private hovered = false;
   private focused = false;
+  private focusTarget?: HTMLElement;
   private dismissed = false;
   private observer?: ResizeObserver;
   private leaveTimer?: ReturnType<typeof setTimeout>;
   private descriptions = new Map<HTMLElement, HTMLSpanElement>();
+  private descriptionObserver?: MutationObserver;
 
   static styles = [
     baseControlStyles,
@@ -58,6 +60,7 @@ export class SuTooltip extends LitElement {
     this.addEventListener('focusin', this.onFocusIn);
     this.addEventListener('focusout', this.onFocusOut);
     document.addEventListener('keydown', this.onKeyDown);
+    this.descriptionObserver = new MutationObserver(this.syncDescriptions);
     if (this.hasUpdated) this.syncDescriptions();
   }
 
@@ -68,11 +71,14 @@ export class SuTooltip extends LitElement {
     this.removeEventListener('focusin', this.onFocusIn);
     this.removeEventListener('focusout', this.onFocusOut);
     document.removeEventListener('keydown', this.onKeyDown);
+    this.descriptionObserver?.disconnect();
+    this.descriptionObserver = undefined;
     this.stopPositioning();
     clearTimeout(this.leaveTimer);
     this.clearDescriptions();
     this.hideBubblePopover();
     this.open = this.hovered = this.focused = this.dismissed = false;
+    this.focusTarget = undefined;
     super.disconnectedCallback();
   }
 
@@ -128,13 +134,17 @@ export class SuTooltip extends LitElement {
   };
   private onFocusIn = (event: FocusEvent) => {
     const target = event.composedPath()[0];
-    if (target instanceof HTMLElement) this.describe(target);
+    if (target instanceof HTMLElement) {
+      this.focusTarget = target;
+      this.describe(target);
+    }
     this.focused = true;
     this.updateOpen();
   };
   private onFocusOut = (event: FocusEvent) => {
     if (event.relatedTarget instanceof Node && this.contains(event.relatedTarget)) return;
     this.focused = false;
+    this.focusTarget = undefined;
     this.updateOpen();
   };
   private onKeyDown = (event: KeyboardEvent) => {
@@ -158,31 +168,55 @@ export class SuTooltip extends LitElement {
     this.descriptions.set(target, description);
   }
 
-  /** 插槽更新后清理已移出的元素，并提前关联可聚焦后代。 */
+  /** 增量维护动态触发器的描述，保留已有 ID，移除后释放失效关联。 */
   private syncDescriptions = () => {
     if (!this.isConnected) return;
-    this.clearDescriptions();
+    this.descriptionObserver?.disconnect();
+    const targets = new Set<HTMLElement>();
+    const roots = new Set<ShadowRoot>();
     const visit = (element: Element) => {
       if (
         element instanceof HTMLElement &&
         element.matches('button, input, select, textarea, a[href], [tabindex]')
       )
-        this.describe(element);
+        targets.add(element);
       for (const child of element.children) visit(child);
-      if (element.shadowRoot) for (const child of element.shadowRoot.children) visit(child);
+      if (element.shadowRoot) {
+        roots.add(element.shadowRoot);
+        for (const child of element.shadowRoot.children) visit(child);
+      }
     };
     for (const element of this.shadowRoot?.querySelector('slot')?.assignedElements() ?? [])
       visit(element);
+    for (const [target, description] of this.descriptions) {
+      if (!targets.has(target)) {
+        this.removeDescription(target, description);
+        this.descriptions.delete(target);
+      }
+    }
+    for (const target of targets) this.describe(target);
+    if (this.focusTarget && !targets.has(this.focusTarget)) {
+      this.focusTarget = undefined;
+      this.focused = false;
+      this.updateOpen();
+    }
+    this.descriptionObserver?.observe(this, { childList: true, subtree: true });
+    for (const root of roots)
+      this.descriptionObserver?.observe(root, { childList: true, subtree: true });
   };
+
+  private removeDescription(target: HTMLElement, description: HTMLSpanElement) {
+    const remaining = (target.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter((id) => id && id !== description.id);
+    if (remaining.length) target.setAttribute('aria-describedby', remaining.join(' '));
+    else target.removeAttribute('aria-describedby');
+    description.remove();
+  }
 
   private clearDescriptions() {
     for (const [target, description] of this.descriptions) {
-      const remaining = (target.getAttribute('aria-describedby') ?? '')
-        .split(/\s+/)
-        .filter((id) => id && id !== description.id);
-      if (remaining.length) target.setAttribute('aria-describedby', remaining.join(' '));
-      else target.removeAttribute('aria-describedby');
-      description.remove();
+      this.removeDescription(target, description);
     }
     this.descriptions.clear();
   }
@@ -230,6 +264,8 @@ export class SuTooltip extends LitElement {
   }
 
   render() {
+    // 保留纯文本的首尾空白语义，不让格式化为内容额外插入换行。
+    // prettier-ignore
     return html`<slot @slotchange=${this.syncDescriptions}></slot>
       <div
         class="bubble ${this.open ? 'visible' : ''}"

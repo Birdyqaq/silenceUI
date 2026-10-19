@@ -48,6 +48,9 @@ initTheme();
 
 ```ts
 // vite.config.ts：告诉 Vue 编译器 su-/se- 开头的是原生自定义元素
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+
 export default defineConfig({
   plugins: [
     vue({
@@ -113,6 +116,8 @@ export function Header() {
 React（19 之前）对自定义元素的复杂属性和自定义事件支持有限：传对象数组请用 ref 赋值（`ref.current.items = [...]`），监听组件事件请用 `addEventListener`。如果用 TypeScript，需要在 `d.ts` 中为 JSX 声明标签类型：
 
 ```ts
+import type * as React from 'react';
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
@@ -138,11 +143,14 @@ components/
 
 ## 可用组件（后台系统常用）
 
-- 表单：`su-button` `su-input` `su-input-number` `su-select` `su-textarea` `su-checkbox` `su-radio-group` `su-switch` `su-form-item`
-- 数据：`se-table` `se-pagination` `su-card` `su-stat-card` `su-tag` `su-badge` `su-avatar` `su-empty` `su-skeleton` `su-descriptions` `se-image` `se-asset-viewer`
+- 基础：`su-button` `su-input` `line-component`（历史分割线）
+- 表单：`su-input-number` `su-select` `su-textarea` `su-checkbox` `su-radio-group` `su-switch` `su-form-item` `su-date-picker` `su-cascader` `su-upload`
+- 数据：`se-table` `se-pagination` `su-card` `su-stat-card` `su-tag` `su-badge` `su-avatar` `su-empty` `su-skeleton` `su-descriptions` `su-tree` `su-typewriter` `se-image` `se-asset-viewer`
 - 导航：`su-menu` `su-breadcrumb` `su-tabs` `su-dropdown` `su-steps`
-- 反馈：`su-modal` `su-drawer` `su-alert` `su-message` `su-tooltip` `su-spin` `su-progress`
-- 布局：`su-container` `su-divider`
+- 反馈：`su-modal` `su-drawer` `su-alert` `su-message` `su-notification` `su-popconfirm` `su-tooltip` `su-spin` `su-progress`
+- 布局：`su-container` `su-divider` `su-theme-toggle`
+
+`se-image-preview` 由图片入口注册并用于内部预览，通常通过 `se-image` 打开。完整 API 清单与在线示例见文档站组件总览；兼容性、SSR 和 ElementInternals 降级见 `docs/guide/compatibility.md`。尚未建立最低浏览器版本矩阵。
 
 命令式消息提示：
 
@@ -162,6 +170,8 @@ message.error('请求失败', 5000);
 - 自定义事件使用 `CustomEvent`，业务数据放在 `event.detail`
 - 表单控件设置 `name` 后会进入原生 `FormData`，并支持 `form.reset()`
 - 包内置 `HTMLElementTagNameMap`，原生 TypeScript 可推断组件实例类型
+
+原生表单集成要求浏览器支持 `ElementInternals.setFormValue`；不支持时由应用手动收集/恢复值。React 旧版中数组和布尔值均通过 ref 的 DOM property 赋值；SSR 中只在客户端注册组件。
 
 ## 主题系统
 

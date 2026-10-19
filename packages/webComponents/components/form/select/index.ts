@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -17,13 +17,13 @@ export class SuSelect extends LitElement {
   @property({ type: Array, attribute: false }) options: SelectOption[] = [];
   @property({ type: String }) optionsJson = '';
   @property({ type: String }) value = '';
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) placeholder = '请选择';
   @property({ type: Boolean, reflect: true }) disabled = false;
 
   private defaultValue = '';
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled ? null : this.value
   );
 
   static styles = [
@@ -77,6 +77,11 @@ export class SuSelect extends LitElement {
     this.defaultValue = this.value;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.value = this.defaultValue;
   }
@@ -99,7 +104,7 @@ export class SuSelect extends LitElement {
       <select
         class="select"
         .value=${this.value}
-        ?disabled=${this.disabled}
+        ?disabled=${this.formValue.disabled}
         @change=${this.handleChange}
       >
         <option value="">${this.placeholder}</option>

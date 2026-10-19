@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles } from '../../_shared/styles';
 
 @customElement('su-checkbox')
@@ -9,13 +9,13 @@ export class SuCheckbox extends LitElement {
 
   @property({ type: Boolean }) checked = false;
   @property({ type: Boolean, reflect: true }) disabled = false;
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) value = 'on';
   @property({ type: String }) label = '';
 
   private defaultChecked = false;
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled || !this.checked ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled || !this.checked ? null : this.value
   );
 
   static styles = [
@@ -63,6 +63,11 @@ export class SuCheckbox extends LitElement {
     this.defaultChecked = this.checked;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.checked = this.defaultChecked;
   }
@@ -81,7 +86,7 @@ export class SuCheckbox extends LitElement {
         <input
           type="checkbox"
           .checked=${this.checked}
-          ?disabled=${this.disabled}
+          ?disabled=${this.formValue.disabled}
           @change=${this.onChange}
         />
         <span>${this.label}</span>

@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { FormValueController, type FormValue } from '../../_shared/form';
+import { formNameConverter, FormValueController, type FormValue } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 type UploadRejectReason = 'type' | 'size' | 'count';
@@ -15,7 +15,7 @@ export class SuUpload extends LitElement {
   static formAssociated = true;
 
   @property({ type: Array, attribute: false }) files: File[] = [];
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) accept = '';
   @property({ type: Boolean, reflect: true }) multiple = false;
   @property({ type: Number, attribute: 'max-size' }) maxSize = 0;
@@ -64,7 +64,8 @@ export class SuUpload extends LitElement {
         background: rgba(var(--su-color-primary-rgb), 0.06);
       }
 
-      :host([disabled]) .picker {
+      :host([disabled]) .picker,
+      :host(:disabled) .picker {
         background: var(--su-bg-muted);
         color: var(--su-text-3);
         cursor: not-allowed;
@@ -142,7 +143,7 @@ export class SuUpload extends LitElement {
   ];
 
   private getFormValue(): FormValue {
-    if (this.disabled || this.files.length === 0) return null;
+    if (this.formValue.disabled || this.files.length === 0) return null;
     if (this.files.length === 1) return this.files[0];
     if (!this.name) return null;
 
@@ -168,7 +169,7 @@ export class SuUpload extends LitElement {
   }
 
   private selectFiles(candidates: File[]) {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
 
     const accepted: File[] = [];
     const rejected: UploadRejection[] = [];
@@ -206,7 +207,7 @@ export class SuUpload extends LitElement {
   }
 
   private handleDragOver(event: DragEvent) {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
     event.preventDefault();
     this.dragging = true;
   }
@@ -216,7 +217,7 @@ export class SuUpload extends LitElement {
   }
 
   private handleDrop(event: DragEvent) {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
     event.preventDefault();
     this.dragging = false;
     this.selectFiles(Array.from(event.dataTransfer?.files ?? []));
@@ -233,19 +234,24 @@ export class SuUpload extends LitElement {
   }
 
   private removeFile(index: number) {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
     this.files = this.files.filter((_, fileIndex) => fileIndex !== index);
     this.emitChange();
   }
 
   clear() {
-    if (this.disabled || this.files.length === 0) return;
+    if (this.formValue.disabled || this.files.length === 0) return;
     this.files = [];
     this.emitChange();
   }
 
   protected firstUpdated() {
     this.defaultFiles = [...this.files];
+  }
+
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
   }
 
   formResetCallback() {
@@ -284,7 +290,7 @@ export class SuUpload extends LitElement {
             type="file"
             accept=${this.accept}
             ?multiple=${this.multiple}
-            ?disabled=${this.disabled}
+            ?disabled=${this.formValue.disabled}
             aria-label=${this.label}
             @change=${this.handleInputChange}
           />
@@ -305,7 +311,7 @@ export class SuUpload extends LitElement {
                         class="remove"
                         type="button"
                         aria-label=${`移除 ${file.name}`}
-                        ?disabled=${this.disabled}
+                        ?disabled=${this.formValue.disabled}
                         @click=${() => this.removeFile(index)}
                       >
                         ✕

@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 @customElement('su-textarea')
@@ -8,15 +8,15 @@ export class SuTextarea extends LitElement {
   static formAssociated = true;
 
   @property({ type: String }) value = '';
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) placeholder = '请输入';
   @property({ type: Number }) rows = 4;
   @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: Boolean }) readonly = false;
 
   private defaultValue = '';
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled ? null : this.value
   );
 
   static styles = [
@@ -71,6 +71,11 @@ export class SuTextarea extends LitElement {
     this.defaultValue = this.value;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.value = this.defaultValue;
   }
@@ -89,7 +94,7 @@ export class SuTextarea extends LitElement {
         .value=${this.value}
         placeholder=${this.placeholder}
         rows=${this.rows}
-        ?disabled=${this.disabled}
+        ?disabled=${this.formValue.disabled}
         ?readonly=${this.readonly}
         @input=${this.handleInput}
       ></textarea>

@@ -427,7 +427,28 @@ export class seTable extends LitElement {
     };
   }
 
+  private readonly fallbackRowKeys = new WeakMap<TableRow, string>();
+  private nextFallbackKey = 0;
+
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
+    // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
+    this.pageSize =
+      Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
+    this.total = Number.isFinite(this.total) ? Math.max(0, Math.floor(this.total)) : 0;
+    this.currentPage = Number.isFinite(this.currentPage)
+      ? Math.max(1, Math.floor(this.currentPage))
+      : 1;
+    this.virtualRowHeight =
+      Number.isFinite(this.virtualRowHeight) && this.virtualRowHeight > 0
+        ? this.virtualRowHeight
+        : 44;
+    this.virtualBuffer = Number.isFinite(this.virtualBuffer)
+      ? Math.max(0, Math.floor(this.virtualBuffer))
+      : 8;
+    this.virtualThreshold =
+      Number.isFinite(this.virtualThreshold) && this.virtualThreshold >= 1
+        ? Math.floor(this.virtualThreshold)
+        : 1000;
     // Update table border styles
     if (changedProperties.has('borderStyle')) {
       this.style.setProperty('--border-style', this.borderStyle);
@@ -464,6 +485,10 @@ export class seTable extends LitElement {
 
     // Update sorted columns and data when columns or data change
     if (changedProperties.has('columns') || changedProperties.has('data')) {
+      for (const row of this.data) {
+        if (!this.fallbackRowKeys.has(row))
+          this.fallbackRowKeys.set(row, `row-${this.nextFallbackKey++}`);
+      }
       const directions = new Map(
         this.sortedColumns.map((column) => [column.key, column.sortDirection])
       );
@@ -491,6 +516,8 @@ export class seTable extends LitElement {
     if (changedProperties.has('loadingMore') && !this.loadingMore) {
       this.loadMorePending = false;
     }
+    if (this.shouldUsePagination && !this.remote)
+      this.currentPage = Math.min(this.currentPage, this.totalPages);
   }
 
   firstUpdated() {
@@ -718,9 +745,9 @@ export class seTable extends LitElement {
     }
     const viewportHeight = this.viewportHeight || 420;
     const visible = Math.ceil(viewportHeight / this.virtualRowHeight) + this.virtualBuffer * 2;
-    const start = Math.max(
-      0,
-      Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer
+    const start = Math.min(
+      Math.max(0, rows.length - visible),
+      Math.max(0, Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer)
     );
     const end = Math.min(rows.length, start + visible);
     return {
@@ -753,7 +780,7 @@ export class seTable extends LitElement {
   private getRowKey(row: TableRow, rowIndex: number) {
     const explicitKey = row[this.rowKey];
     if (explicitKey != null && explicitKey !== '') return String(explicitKey);
-    return `row-${rowIndex}`;
+    return this.fallbackRowKeys.get(row) ?? `row-${rowIndex}`;
   }
 
   private getCellDisplayValue(row: TableRow, column: Column, rowIndex: number) {

@@ -1,5 +1,7 @@
 # 数据展示组件
 
+<ClientOnly><ComponentDemo category="data" /></ClientOnly>
+
 数据展示组件用于卡片、指标、状态、空态、骨架屏和详情信息展示。表格与图片组件有独立页面：[`se-table`](./table)、[`se-image`](./image)、[`se-asset-viewer`](./asset-viewer)。
 
 动态文案使用独立的 [Typewriter 打字机](./typewriter) 组件，支持五种文字效果、多条轮播和播放控制，页面提供在线调参示例。

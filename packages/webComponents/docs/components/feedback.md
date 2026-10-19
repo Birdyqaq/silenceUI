@@ -1,5 +1,7 @@
 # 反馈组件
 
+<ClientOnly><ComponentDemo category="feedback" /></ClientOnly>
+
 反馈组件用于确认、抽屉详情、页面提示、全局消息、悬浮说明、加载与进度展示。
 
 ## Modal 模态框 `su-modal`
@@ -181,6 +183,8 @@ notification({
 | `placement` | 展示方向 | `'top' \| 'bottom' \| 'left' \| 'right'` | `top`  |
 
 Tooltip 在悬停或焦点进入时显示，按 Escape 关闭；离开当前悬停/焦点区域后再次进入才会重新显示。移出有 150 ms 缓冲，可将鼠标移到提示内容上。空内容不显示。
+
+动态替换触发器或其开放 Shadow DOM 内的控件时，描述关联自动更新；提示内容更新保留现有描述 ID，移除触发器及卸载时清理自己的隐藏描述节点。
 
 首选方向空间不足时自动翻转，并将位置限制在视口边缘内；滚动、窗口变化和内容尺寸变化会重新定位。支持 Popover API 的浏览器使用顶层显示，避免被父容器裁剪；旧浏览器退回 fixed 定位，带 transform 或裁剪的祖先可能仍限制显示。
 

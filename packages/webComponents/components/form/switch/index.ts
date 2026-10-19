@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 @customElement('su-switch')
@@ -9,12 +9,12 @@ export class SuSwitch extends LitElement {
 
   @property({ type: Boolean }) checked = false;
   @property({ type: Boolean, reflect: true }) disabled = false;
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) value = 'on';
 
   private defaultChecked = false;
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled || !this.checked ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled || !this.checked ? null : this.value
   );
 
   static styles = [
@@ -65,7 +65,7 @@ export class SuSwitch extends LitElement {
   ];
 
   private handleClick() {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
     this.checked = !this.checked;
     this.dispatchEvent(
       new CustomEvent('change', {
@@ -78,6 +78,11 @@ export class SuSwitch extends LitElement {
 
   firstUpdated() {
     this.defaultChecked = this.checked;
+  }
+
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
   }
 
   formResetCallback() {
@@ -99,7 +104,7 @@ export class SuSwitch extends LitElement {
         type="button"
         role="switch"
         aria-checked=${this.checked ? 'true' : 'false'}
-        ?disabled=${this.disabled}
+        ?disabled=${this.formValue.disabled}
         @click=${this.handleClick}
       ></button>
     `;

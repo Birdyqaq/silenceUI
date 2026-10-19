@@ -1,5 +1,7 @@
 # 导航组件
 
+<ClientOnly><ComponentDemo category="navigation" /></ClientOnly>
+
 导航组件用于后台侧边栏、路径导航、标签页、下拉操作与流程展示。列表型数据均支持 JS property 与 `itemsJson` 两种传法。
 
 ## Menu 菜单 `su-menu`

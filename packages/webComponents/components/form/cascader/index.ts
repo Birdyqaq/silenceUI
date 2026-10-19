@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -21,7 +21,7 @@ export class SuCascader extends LitElement {
   @property({ type: String }) optionsJson = '';
   @property({ type: Array, attribute: false }) value: string[] = [];
   @property({ type: String }) valueJson = '';
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) placeholder = '请选择';
   @property({ type: String }) separator = ' / ';
   @property({ type: Boolean, reflect: true }) disabled = false;
@@ -31,8 +31,10 @@ export class SuCascader extends LitElement {
 
   private readonly panelId = `su-cascader-${++cascaderInstanceId}`;
   private defaultValue: string[] = [];
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled || this.currentValue.length === 0 ? null : JSON.stringify(this.currentValue)
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled || this.currentValue.length === 0
+      ? null
+      : JSON.stringify(this.currentValue)
   );
 
   static styles = [
@@ -193,13 +195,13 @@ export class SuCascader extends LitElement {
   }
 
   private toggleOpen() {
-    if (this.disabled) return;
+    if (this.formValue.disabled) return;
     this.open = !this.open;
     if (this.open) this.activePath = [...this.currentValue];
   }
 
   private selectOption(option: CascaderOption, level: number) {
-    if (option.disabled) return;
+    if (this.formValue.disabled || option.disabled) return;
     const path = [...this.activePath.slice(0, level), option.value];
     this.activePath = path;
     if (option.children?.length) return;
@@ -264,6 +266,7 @@ export class SuCascader extends LitElement {
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>) {
+    if (this.formValue.disabled) this.open = false;
     if (changedProperties.has('valueJson') && this.value.length === 0 && this.valueJson) {
       this.value = parseJsonArray<string>(this.valueJson, []);
     }
@@ -276,6 +279,11 @@ export class SuCascader extends LitElement {
     if (changedProperties.has('open') && this.open) {
       this.focusOption(0, 0);
     }
+  }
+
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
   }
 
   formResetCallback() {
@@ -300,7 +308,7 @@ export class SuCascader extends LitElement {
       <button
         class="trigger"
         type="button"
-        ?disabled=${this.disabled}
+        ?disabled=${this.formValue.disabled}
         aria-haspopup="listbox"
         aria-expanded=${String(this.open)}
         aria-controls=${this.panelId}

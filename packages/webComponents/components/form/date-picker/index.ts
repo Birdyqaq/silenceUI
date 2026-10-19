@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -20,7 +20,7 @@ export class SuDatePicker extends LitElement {
   static formAssociated = true;
 
   @property({ type: String }) value = '';
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) min = '';
   @property({ type: String }) max = '';
   @property({ type: String }) label = '';
@@ -28,8 +28,8 @@ export class SuDatePicker extends LitElement {
   @property({ type: Boolean }) readonly = false;
 
   private defaultValue = '';
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled ? null : this.value
   );
 
   static styles = [
@@ -117,6 +117,11 @@ export class SuDatePicker extends LitElement {
     this.defaultValue = this.value;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.value = this.defaultValue;
   }
@@ -131,7 +136,7 @@ export class SuDatePicker extends LitElement {
 
   showPicker() {
     const input = this.shadowRoot?.querySelector<HTMLInputElement>('input');
-    if (this.disabled || this.readonly) return;
+    if (this.formValue.disabled || this.readonly) return;
     input?.showPicker?.();
   }
 
@@ -145,7 +150,7 @@ export class SuDatePicker extends LitElement {
           .value=${this.value}
           .min=${this.min}
           .max=${this.max}
-          ?disabled=${this.disabled}
+          ?disabled=${this.formValue.disabled}
           ?readonly=${this.readonly}
           aria-label=${this.label || '选择日期'}
           aria-readonly=${this.readonly ? 'true' : 'false'}

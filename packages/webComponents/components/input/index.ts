@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../_shared/form';
+import { formNameConverter, FormValueController } from '../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../_shared/styles';
 
 @customElement('su-input')
@@ -8,7 +8,7 @@ export class SuInput extends LitElement {
   static formAssociated = true;
 
   @property({ type: String }) value = '';
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: String }) placeholder = '请输入';
   @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: String }) type = 'text';
@@ -19,8 +19,8 @@ export class SuInput extends LitElement {
   @property({ type: Boolean }) clearable = false;
 
   private defaultValue = '';
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled ? null : this.value
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled ? null : this.value
   );
 
   static styles = [
@@ -57,7 +57,9 @@ export class SuInput extends LitElement {
         border: 1px solid var(--su-border-color);
         border-radius: var(--su-radius-sm);
         outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
         background-color: var(--su-bg-card);
         color: var(--su-text-1);
       }
@@ -133,7 +135,7 @@ export class SuInput extends LitElement {
   }
 
   private handleClear() {
-    if (this.disabled || this.readonly) return;
+    if (this.formValue.disabled || this.readonly) return;
     this.value = '';
     this.emitChange();
     this.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
@@ -142,6 +144,11 @@ export class SuInput extends LitElement {
 
   firstUpdated() {
     this.defaultValue = this.value;
+  }
+
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
   }
 
   formResetCallback() {
@@ -167,7 +174,7 @@ export class SuInput extends LitElement {
             .value=${this.value}
             .placeholder=${this.placeholder}
             .type=${this.type}
-            ?disabled=${this.disabled}
+            ?disabled=${this.formValue.disabled}
             ?readonly=${this.readonly}
             @input=${this.handleInput}
             aria-invalid=${this.error ? 'true' : 'false'}

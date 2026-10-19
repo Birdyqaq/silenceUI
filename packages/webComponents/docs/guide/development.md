@@ -96,6 +96,8 @@ export class SuExample extends LitElement {
 pnpm check
 ```
 
+`pnpm check` 包含文档约定验证；单独检查页面示例、组件目录和属性传参约定可运行 `pnpm docs:verify`，范围见[文档验收](./docs-validation)。
+
 组件的标签、properties、事件、slots 与直接测试覆盖清单由脚本维护。新增或调整公开 API 后同步执行：
 
 ```bash

@@ -69,6 +69,8 @@ import 'webcomponents/components/table';
 
 ## CDN
 
+以下为发布后的 URL 格式示例。当前仓库版本为 `0.0.0`，不代表公共 npm/CDN 上已有同名同版本产物；发布前请使用本地打包或 workspace 接入，发布后核验包名与版本再填写生产地址。CDN 连通性不属于文档构建的校验范围。
+
 ```html
 <link rel="stylesheet" href="https://unpkg.com/webcomponents@latest/dist/style.css" />
 <script src="https://unpkg.com/webcomponents@latest/dist/index.umd.cjs"></script>
