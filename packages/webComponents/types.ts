@@ -1,5 +1,8 @@
 import type { SeAssetViewer } from './components/asset-viewer';
 import type { SuButton } from './components/button';
+import type { SuIcon } from './components/icon';
+import type { SuForm } from './components/form/form';
+import type { SuDateRange } from './components/form/date-range';
 import type { SuAvatar } from './components/data/avatar';
 import type { SuBadge } from './components/data/badge';
 import type { SuCard } from './components/data/card';
@@ -8,20 +11,27 @@ import type { SuEmpty } from './components/data/empty';
 import type { SuSkeleton } from './components/data/skeleton';
 import type { SuStatCard } from './components/data/stat-card';
 import type { SuTag } from './components/data/tag';
+import type { SuTree } from './components/data/tree';
+import type { SuTypewriter } from './components/data/typewriter';
 import type { SuAlert } from './components/feedback/alert';
 import type { SuDrawer } from './components/feedback/drawer';
 import type { SuMessage } from './components/feedback/message';
 import type { SuModal } from './components/feedback/modal';
+import type { SuNotification } from './components/feedback/notification';
+import type { SuPopconfirm } from './components/feedback/popconfirm';
 import type { SuProgress } from './components/feedback/progress';
 import type { SuSpin } from './components/feedback/spin';
 import type { SuTooltip } from './components/feedback/tooltip';
 import type { SuCheckbox } from './components/form/checkbox';
+import type { SuCascader } from './components/form/cascader';
+import type { SuDatePicker } from './components/form/date-picker';
 import type { SuFormItem } from './components/form/form-item';
 import type { SuInputNumber } from './components/form/input-number';
 import type { SuRadioGroup } from './components/form/radio-group';
 import type { SuSelect } from './components/form/select';
 import type { SuSwitch } from './components/form/switch';
 import type { SuTextarea } from './components/form/textarea';
+import type { SuUpload } from './components/form/upload';
 import type { SeImage } from './components/image';
 import type { SeImagePreview } from './components/image/preview';
 import type { SuInput } from './components/input';
@@ -39,6 +49,9 @@ import type { seTable } from './components/table';
 
 declare global {
   interface HTMLElementTagNameMap {
+    'su-icon': SuIcon;
+    'su-form': SuForm;
+    'su-date-range': SuDateRange;
     'line-component': LineComponent;
     'se-asset-viewer': SeAssetViewer;
     'se-image': SeImage;
@@ -51,7 +64,9 @@ declare global {
     'su-breadcrumb': SuBreadcrumb;
     'su-button': SuButton;
     'su-card': SuCard;
+    'su-cascader': SuCascader;
     'su-checkbox': SuCheckbox;
+    'su-date-picker': SuDatePicker;
     'su-container': SuContainer;
     'su-descriptions': SuDescriptions;
     'su-divider': SuDivider;
@@ -64,6 +79,8 @@ declare global {
     'su-menu': SuMenu;
     'su-message': SuMessage;
     'su-modal': SuModal;
+    'su-notification': SuNotification;
+    'su-popconfirm': SuPopconfirm;
     'su-progress': SuProgress;
     'su-radio-group': SuRadioGroup;
     'su-select': SuSelect;
@@ -77,6 +94,9 @@ declare global {
     'su-textarea': SuTextarea;
     'su-theme-toggle': SuThemeToggle;
     'su-tooltip': SuTooltip;
+    'su-tree': SuTree;
+    'su-typewriter': SuTypewriter;
+    'su-upload': SuUpload;
   }
 }
 

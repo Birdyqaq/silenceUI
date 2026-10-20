@@ -46,9 +46,9 @@ export class SuBreadcrumb extends LitElement {
       }
 
       .sep {
-        color: #9ca3af;
+        color: var(--su-text-3);
       }
-    `
+    `,
   ];
 
   private get mergedItems() {
@@ -61,7 +61,7 @@ export class SuBreadcrumb extends LitElement {
       new CustomEvent('navigate', {
         detail: { item, index },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -69,11 +69,15 @@ export class SuBreadcrumb extends LitElement {
   render() {
     const list = this.mergedItems;
     return html`
-      <nav>
+      <nav aria-label="面包屑">
         ${list.map((item, index) => {
           const isLast = index === list.length - 1;
           return html`
-            <button class=${isLast ? 'current' : ''} @click=${() => this.handleClick(item, index)}>
+            <button
+              class=${isLast ? 'current' : ''}
+              aria-current=${isLast ? 'page' : 'false'}
+              @click=${() => this.handleClick(item, index)}
+            >
               ${item.label}
             </button>
             ${isLast ? '' : html`<span class="sep">${this.separator}</span>`}

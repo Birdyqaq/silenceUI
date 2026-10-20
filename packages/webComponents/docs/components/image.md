@@ -1,3 +1,7 @@
+<script setup>
+import { withBase } from 'vitepress';
+</script>
+
 # Image 图片
 
 增强版图片组件，支持懒加载、占位与全屏预览。
@@ -9,13 +13,13 @@
     <se-image
       width="200"
       height="140"
-      src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400"
+      :src="withBase('/demo/landscape.svg')"
       alt="Ocean">
     </se-image>
     <se-image
       width="200"
       height="140"
-      src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400"
+      :src="withBase('/demo/landscape.svg')"
       alt="Mountain">
     </se-image>
   </div>
@@ -32,9 +36,9 @@
     width="240"
     height="160"
     lazy
-    placeholder="https://dummyimage.com/240x160/eee/999&text=Loading..."
-    errorPlaceholder="https://dummyimage.com/240x160/fed7e2/ff4d4f&text=Load+Failed"
-    src="https://images.unsplash.com/photo-1521292270410-a8c2e5a52dff?w=800">
+    :placeholder="withBase('/demo/placeholder.svg')"
+    :errorPlaceholder="withBase('/demo/placeholder.svg')"
+    :src="withBase('/demo/landscape.svg')">
   </se-image>
 </ClientOnly>
 
@@ -58,7 +62,7 @@
   <se-image
     width="240"
     height="160"
-    src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800">
+    :src="withBase('/demo/landscape.svg')">
   </se-image>
 </ClientOnly>
 

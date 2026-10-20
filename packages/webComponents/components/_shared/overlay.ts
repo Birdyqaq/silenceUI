@@ -4,6 +4,8 @@ const FOCUSABLE_SELECTOR = [
   'input:not([disabled])',
   'select:not([disabled])',
   'textarea:not([disabled])',
+  'iframe',
+  'summary',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
@@ -11,23 +13,53 @@ let activeLocks = 0;
 let previousOverflow = '';
 const overlayStack: HTMLElement[] = [];
 
-function isFocusable(element: HTMLElement) {
-  return !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true';
-}
+function collectFocusable(root: ParentNode, pendingUpdates?: Promise<unknown>[]): HTMLElement[] {
+  const elements: HTMLElement[] = [];
+  const visited = new Set<Element>();
+  // 按实际渲染顺序穿过 slot 和开放 ShadowRoot，不能先遍历弹层再追加插槽内容。
+  const visit = (element: Element) => {
+    if (visited.has(element)) return;
+    visited.add(element);
+    if (
+      element.hasAttribute('hidden') ||
+      element.hasAttribute('inert') ||
+      element.getAttribute('aria-hidden') === 'true'
+    )
+      return;
+    const style = getComputedStyle(element);
+    if (
+      style.display === 'none' ||
+      style.visibility === 'hidden' ||
+      style.visibility === 'collapse'
+    )
+      return;
 
-function collectFocusable(root: ParentNode): HTMLElement[] {
-  const elements = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const updatable = element as Element & {
+      isUpdatePending?: boolean;
+      updateComplete?: Promise<unknown>;
+    };
+    if (updatable.isUpdatePending && updatable.updateComplete) {
+      pendingUpdates?.push(updatable.updateComplete);
+    }
 
-  root.querySelectorAll<HTMLSlotElement>('slot').forEach((slot) => {
-    slot.assignedElements({ flatten: true }).forEach((element) => {
-      if (element instanceof HTMLElement && element.matches(FOCUSABLE_SELECTOR)) {
-        elements.push(element);
-      }
-      elements.push(...Array.from(element.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)));
-    });
-  });
+    if (
+      element instanceof HTMLElement &&
+      element.matches(FOCUSABLE_SELECTOR) &&
+      element.tabIndex >= 0 &&
+      !element.matches(':disabled') &&
+      !element.shadowRoot?.delegatesFocus
+    )
+      elements.push(element);
 
-  return [...new Set(elements)].filter(isFocusable);
+    if (element instanceof HTMLSlotElement) {
+      const assigned = element.assignedElements({ flatten: true });
+      Array.from(assigned.length ? assigned : element.children).forEach(visit);
+    } else {
+      Array.from((element.shadowRoot ?? element).children).forEach(visit);
+    }
+  };
+  Array.from(root.children).forEach(visit);
+  return elements;
 }
 
 export function lockBodyScroll() {
@@ -69,9 +101,26 @@ export function getDeepActiveElement(): HTMLElement | null {
 }
 
 export function focusFirstElement(container: HTMLElement) {
-  const autofocus = container.querySelector<HTMLElement>('[autofocus]');
-  const target = autofocus ?? collectFocusable(container)[0] ?? container;
+  const pendingUpdates: Promise<unknown>[] = [];
+  const focusable = collectFocusable(container, pendingUpdates);
+  const target =
+    focusable.find((element) => element.hasAttribute('autofocus')) ?? focusable[0] ?? container;
   target.focus();
+  // 多层 Lit 包装器可能逐轮生成子控件；等待尚未完成的更新后再校正首次焦点。
+  // 用户已移动焦点、弹层已关闭或失去顶层位置时，不再自动抢回。
+  if (pendingUpdates.length) {
+    const active = getDeepActiveElement();
+    const owner = overlayStack.find((element) => element.shadowRoot === container.getRootNode());
+    void Promise.allSettled(pendingUpdates).then(() => {
+      if (
+        container.isConnected &&
+        getDeepActiveElement() === active &&
+        (!owner || isTopOverlay(owner))
+      ) {
+        focusFirstElement(container);
+      }
+    });
+  }
 }
 
 export function trapFocus(event: KeyboardEvent, container: HTMLElement) {

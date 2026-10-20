@@ -12,6 +12,10 @@ interface Column {
   width?: string;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
+  fixed?: 'left' | 'right';
+  resizable?: boolean;
+  minWidth?: number;
+  maxWidth?: number;
   formatter?: (value: unknown, row: TableRow, rowIndex: number) => unknown;
 }
 
@@ -31,6 +35,7 @@ type CellSpan = { rowspan: number; colspan: number };
 
 @customElement('se-table')
 export class seTable extends LitElement {
+  @property({ type: Object, attribute: false }) filters: Record<string, string> = {};
   @property({ type: Array })
 
   //数据源 data starts here
@@ -72,6 +77,12 @@ export class seTable extends LitElement {
   @property({ type: Boolean })
   pagination: boolean = true;
 
+  @property({ type: Boolean })
+  remote = false;
+
+  @property({ type: Number })
+  total = 0;
+
   // 斑马纹
   @property({ type: Boolean })
   striped: boolean = false;
@@ -99,6 +110,18 @@ export class seTable extends LitElement {
   // 选中的行 key 集合（可受控）
   @property({ attribute: false })
   selectedKeys: string[] = [];
+
+  @property({ type: Boolean })
+  expandable = false;
+
+  @property({ attribute: false })
+  expandedKeys: string[] = [];
+
+  @property({ attribute: false })
+  rowExpandable?: (row: TableRow, rowIndex: number) => boolean;
+
+  @property({ attribute: false })
+  expandedRowRender?: (row: TableRow, rowIndex: number) => unknown;
 
   // 加载中遮罩
   @property({ type: Boolean })
@@ -144,7 +167,7 @@ export class seTable extends LitElement {
   virtualBuffer: number = 8;
 
   // 当前页 current page starts here
-  @state()
+  @property({ type: Number })
   currentPage: number = 1;
 
   // 排序的列 sorted columns starts here
@@ -163,6 +186,11 @@ export class seTable extends LitElement {
 
   @state()
   private loadMorePending: boolean = false;
+
+  @state()
+  private columnWidths: Record<string, number> = {};
+
+  private resizeCleanup?: () => void;
 
   // 排序函数 sort function starts here
   sortColumn: (index: number) => void;
@@ -194,9 +222,24 @@ export class seTable extends LitElement {
         user-select: none;
       }
 
-      thead th.sortable::after {
-        content: attr(data-sort);
-        margin-left: 6px;
+      .sort-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .sort-button:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: 2px;
+      }
+
+      .sort-indicator {
         font-size: 12px;
         color: var(--su-text-3);
       }
@@ -233,6 +276,33 @@ export class seTable extends LitElement {
       .selection-cell input {
         accent-color: var(--su-color-primary);
         cursor: pointer;
+      }
+
+      .expansion-cell {
+        width: 40px;
+        text-align: center;
+      }
+
+      .expansion-cell button {
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        cursor: pointer;
+      }
+
+      .expansion-cell button:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+      }
+
+      .expansion-cell button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      .expanded-row td {
+        background: var(--su-bg-page);
+        text-align: left;
       }
 
       .table-wrapper {
@@ -275,6 +345,58 @@ export class seTable extends LitElement {
         padding: 0 !important;
         height: 0;
       }
+
+      th.fixed-column,
+      td.fixed-column {
+        position: sticky;
+        z-index: 2;
+        background: var(--su-bg-card);
+      }
+
+      thead th.fixed-column {
+        z-index: 3;
+        background: var(--thead-bg-color, var(--su-bg-hover));
+      }
+
+      .fixed-left-edge {
+        box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.24);
+      }
+
+      .fixed-right-edge {
+        box-shadow: -4px 0 6px -4px rgba(0, 0, 0, 0.24);
+      }
+
+      .column-header {
+        position: relative;
+      }
+
+      .resize-handle {
+        position: absolute;
+        top: 0;
+        right: -4px;
+        width: 8px;
+        height: 100%;
+        cursor: col-resize;
+        touch-action: none;
+        z-index: 4;
+      }
+
+      .resize-handle:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: -2px;
+      }
+      .column-filter {
+        display: block;
+        width: 100%;
+        min-width: 70px;
+        margin-top: 6px;
+        padding: 4px;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        font: inherit;
+      }
     `,
   ];
 
@@ -284,7 +406,7 @@ export class seTable extends LitElement {
     this.sortedData = [...this.data];
     this.sortColumn = (index: number) => {
       const col = this.sortedColumns[index];
-      if (!col.sortable) return;
+      if (!col?.sortable) return;
 
       const nextDirection: SortDirection =
         col.sortDirection === 'asc' ? 'desc' : col.sortDirection === 'desc' ? '' : 'asc';
@@ -295,10 +417,10 @@ export class seTable extends LitElement {
         sortDirection: i === index ? nextDirection : '',
       }));
 
-      if (nextDirection === '') {
-        this.sortedData = [...this.data];
+      if (this.remote || nextDirection === '') {
+        this.sortedData = [...this.filteredData];
       } else {
-        this.sortedData = [...this.data].sort((a, b) => {
+        this.sortedData = [...this.filteredData].sort((a, b) => {
           const result = this.compareValues(a[col.key], b[col.key]);
           return nextDirection === 'asc' ? result : result * -1;
         });
@@ -318,7 +440,65 @@ export class seTable extends LitElement {
     };
   }
 
+  private readonly fallbackRowKeys = new WeakMap<TableRow, string>();
+  private nextFallbackKey = 0;
+
+  private filterValue(key: string) {
+    return Object.prototype.hasOwnProperty.call(this.filters, key) &&
+      typeof this.filters[key] === 'string'
+      ? this.filters[key]
+      : '';
+  }
+
+  private get filteredData() {
+    if (this.remote) return this.data;
+    return this.data.filter((row) =>
+      this.columns.every((column) => {
+        const query = this.filterValue(column.key);
+        return (
+          !column.filterable ||
+          !query ||
+          String(row[column.key] ?? '')
+            .toLocaleLowerCase()
+            .includes(query.toLocaleLowerCase())
+        );
+      })
+    );
+  }
+
+  private changeFilter(key: string, value: string) {
+    this.filters = { ...this.filters, [key]: value };
+    this.currentPage = 1;
+    this.scrollTop = 0;
+    this.resetViewportScroll();
+    this.dispatchEvent(
+      new CustomEvent('filter-change', {
+        detail: { filters: { ...this.filters } },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
+    // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
+    this.pageSize =
+      Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
+    this.total = Number.isFinite(this.total) ? Math.max(0, Math.floor(this.total)) : 0;
+    this.currentPage = Number.isFinite(this.currentPage)
+      ? Math.max(1, Math.floor(this.currentPage))
+      : 1;
+    this.virtualRowHeight =
+      Number.isFinite(this.virtualRowHeight) && this.virtualRowHeight > 0
+        ? this.virtualRowHeight
+        : 44;
+    this.virtualBuffer = Number.isFinite(this.virtualBuffer)
+      ? Math.max(0, Math.floor(this.virtualBuffer))
+      : 8;
+    this.virtualThreshold =
+      Number.isFinite(this.virtualThreshold) && this.virtualThreshold >= 1
+        ? Math.floor(this.virtualThreshold)
+        : 1000;
     // Update table border styles
     if (changedProperties.has('borderStyle')) {
       this.style.setProperty('--border-style', this.borderStyle);
@@ -354,10 +534,33 @@ export class seTable extends LitElement {
     }
 
     // Update sorted columns and data when columns or data change
-    if (changedProperties.has('columns') || changedProperties.has('data')) {
+    if (
+      changedProperties.has('columns') ||
+      changedProperties.has('data') ||
+      changedProperties.has('filters') ||
+      changedProperties.has('remote')
+    ) {
+      for (const row of this.data) {
+        if (!this.fallbackRowKeys.has(row))
+          this.fallbackRowKeys.set(row, `row-${this.nextFallbackKey++}`);
+      }
+      const directions = new Map(
+        this.sortedColumns.map((column) => [column.key, column.sortDirection])
+      );
       this.sortedColumns = this.columns.map((c) => ({ ...c, sortDirection: '' }));
-      this.sortedData = [...this.data];
-      this.currentPage = 1;
+      if (this.remote || changedProperties.has('filters'))
+        this.sortedColumns = this.sortedColumns.map((column) => ({
+          ...column,
+          sortDirection: directions.get(column.key) ?? '',
+        }));
+      this.sortedData = [...this.filteredData];
+      const sort = this.sortedColumns.find((column) => column.sortDirection);
+      if (!this.remote && sort)
+        this.sortedData.sort(
+          (a, b) =>
+            this.compareValues(a[sort.key], b[sort.key]) * (sort.sortDirection === 'asc' ? 1 : -1)
+        );
+      if (!this.remote) this.currentPage = 1;
     }
 
     if (
@@ -365,7 +568,8 @@ export class seTable extends LitElement {
       changedProperties.has('pagination') ||
       changedProperties.has('infiniteScroll')
     ) {
-      this.currentPage = 1;
+      // 首次远程加载或显式同步页码时保留业务层传入的当前页。
+      if (this.hasUpdated && !changedProperties.has('currentPage')) this.currentPage = 1;
       this.scrollTop = 0;
       this.resetViewportScroll();
     }
@@ -373,6 +577,8 @@ export class seTable extends LitElement {
     if (changedProperties.has('loadingMore') && !this.loadingMore) {
       this.loadMorePending = false;
     }
+    if (this.shouldUsePagination && !this.remote)
+      this.currentPage = Math.min(this.currentPage, this.totalPages);
   }
 
   firstUpdated() {
@@ -381,6 +587,112 @@ export class seTable extends LitElement {
 
   updated() {
     this.measureViewportHeight();
+  }
+
+  disconnectedCallback() {
+    this.resizeCleanup?.();
+    super.disconnectedCallback();
+  }
+
+  /** 返回列的当前像素宽度；未拖拽时优先使用列配置。 */
+  private getColumnWidth(column: ColumnState) {
+    const resized = this.columnWidths[column.key];
+    if (resized != null) return `${resized}px`;
+    return column.width || 'auto';
+  }
+
+  /** 将 CSS 宽度转换为固定列偏移使用的像素值。 */
+  private getColumnPixelWidth(column: ColumnState) {
+    const resized = this.columnWidths[column.key];
+    if (resized != null) return resized;
+    const parsed = Number.parseFloat(column.width || '');
+    return Number.isFinite(parsed) ? parsed : 120;
+  }
+
+  /** 计算固定列相对表格左右边缘的偏移量。 */
+  private getFixedOffset(index: number, side: 'left' | 'right') {
+    if (side === 'left') {
+      const selectionOffset = this.selectable ? 40 : 0;
+      return (
+        selectionOffset +
+        this.sortedColumns
+          .slice(0, index)
+          .filter((column) => column.fixed === 'left')
+          .reduce((sum, column) => sum + this.getColumnPixelWidth(column), 0)
+      );
+    }
+    return this.sortedColumns
+      .slice(index + 1)
+      .filter((column) => column.fixed === 'right')
+      .reduce((sum, column) => sum + this.getColumnPixelWidth(column), 0);
+  }
+
+  /** 返回固定列的样式与边界阴影类名。 */
+  private getColumnPresentation(column: ColumnState, index: number) {
+    const width = this.getColumnWidth(column);
+    const widthStyle = width === 'auto' ? 'width: auto;' : `width: ${width}; min-width: ${width};`;
+    if (!column.fixed) return { className: '', style: widthStyle };
+    const sameSide = this.sortedColumns.filter((item) => item.fixed === column.fixed);
+    const edge = column.fixed === 'left' ? sameSide[sameSide.length - 1] : sameSide[0];
+    return {
+      className: `fixed-column ${edge?.key === column.key ? `fixed-${column.fixed}-edge` : ''}`,
+      style: `${widthStyle} ${column.fixed}: ${this.getFixedOffset(index, column.fixed)}px;`,
+    };
+  }
+
+  /** 开始拖拽列宽，并在结束时发送 column-resize 事件。 */
+  private startColumnResize(event: PointerEvent, column: ColumnState) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.resizeCleanup?.();
+    const startX = event.clientX;
+    const header = (event.currentTarget as HTMLElement).closest('th');
+    const startWidth = header?.getBoundingClientRect().width || this.getColumnPixelWidth(column);
+    const min = Math.max(40, column.minWidth ?? 64);
+    const max = Math.max(min, column.maxWidth ?? Number.POSITIVE_INFINITY);
+    let currentWidth = startWidth;
+    const move = (moveEvent: PointerEvent) => {
+      currentWidth = Math.min(max, Math.max(min, startWidth + moveEvent.clientX - startX));
+      this.columnWidths = { ...this.columnWidths, [column.key]: Math.round(currentWidth) };
+    };
+    const stop = () => {
+      this.resizeCleanup?.();
+      this.dispatchEvent(
+        new CustomEvent('column-resize', {
+          detail: { column: column.key, width: Math.round(currentWidth) },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop, { once: true });
+    window.addEventListener('pointercancel', stop, { once: true });
+    this.resizeCleanup = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      this.resizeCleanup = undefined;
+    };
+  }
+
+  /** 支持使用方向键以 10px 步长调整列宽。 */
+  private handleResizeKeydown(event: KeyboardEvent, column: ColumnState) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    event.stopPropagation();
+    const min = Math.max(40, column.minWidth ?? 64);
+    const max = Math.max(min, column.maxWidth ?? Number.POSITIVE_INFINITY);
+    const delta = event.key === 'ArrowRight' ? 10 : -10;
+    const width = Math.min(max, Math.max(min, this.getColumnPixelWidth(column) + delta));
+    this.columnWidths = { ...this.columnWidths, [column.key]: width };
+    this.dispatchEvent(
+      new CustomEvent('column-resize', {
+        detail: { column: column.key, width },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private compareValues(a: unknown, b: unknown) {
@@ -394,7 +706,10 @@ export class seTable extends LitElement {
   }
 
   private get totalPages() {
-    return Math.max(1, Math.ceil(this.sortedData.length / this.pageSize));
+    return Math.max(
+      1,
+      Math.ceil((this.remote ? this.total : this.sortedData.length) / Math.max(1, this.pageSize))
+    );
   }
 
   private get shouldUsePagination() {
@@ -408,11 +723,11 @@ export class seTable extends LitElement {
   }
 
   private get sourceData() {
-    return this.shouldUsePagination ? this.paginatedData : this.sortedData;
+    return this.shouldUsePagination && !this.remote ? this.paginatedData : this.sortedData;
   }
 
   private get shouldUseVirtualScroll() {
-    if (this.spanMethod) return false;
+    if (this.spanMethod || this.expandable) return false;
     return this.virtualScroll || this.sourceData.length >= this.virtualThreshold;
   }
 
@@ -421,7 +736,26 @@ export class seTable extends LitElement {
   }
 
   private get totalColumnCount() {
-    return Math.max(1, this.sortedColumns.length + (this.selectable ? 1 : 0));
+    return Math.max(
+      1,
+      this.sortedColumns.length + (this.selectable ? 1 : 0) + (this.expandable ? 1 : 0)
+    );
+  }
+
+  /** 展开状态以稳定 rowKey 保存，分页或排序后仍对应同一条记录。 */
+  private toggleRowExpansion(row: TableRow, rowIndex: number) {
+    const key = this.getRowKey(row, rowIndex);
+    const expanded = !this.expandedKeys.includes(key);
+    this.expandedKeys = expanded
+      ? [...this.expandedKeys, key]
+      : this.expandedKeys.filter((item) => item !== key);
+    this.dispatchEvent(
+      new CustomEvent('expand-change', {
+        detail: { key, row, expanded, keys: [...this.expandedKeys] },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   private isRowSelected(row: TableRow, rowIndex: number) {
@@ -472,9 +806,9 @@ export class seTable extends LitElement {
     }
     const viewportHeight = this.viewportHeight || 420;
     const visible = Math.ceil(viewportHeight / this.virtualRowHeight) + this.virtualBuffer * 2;
-    const start = Math.max(
-      0,
-      Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer
+    const start = Math.min(
+      Math.max(0, rows.length - visible),
+      Math.max(0, Math.floor(this.scrollTop / this.virtualRowHeight) - this.virtualBuffer)
     );
     const end = Math.min(rows.length, start + visible);
     return {
@@ -507,7 +841,7 @@ export class seTable extends LitElement {
   private getRowKey(row: TableRow, rowIndex: number) {
     const explicitKey = row[this.rowKey];
     if (explicitKey != null && explicitKey !== '') return String(explicitKey);
-    return `row-${rowIndex}`;
+    return this.fallbackRowKeys.get(row) ?? `row-${rowIndex}`;
   }
 
   private getCellDisplayValue(row: TableRow, column: Column, rowIndex: number) {
@@ -553,6 +887,8 @@ export class seTable extends LitElement {
   }
 
   private handlePaginationChange(event: Event) {
+    // 内部分页器的事件由表格转发一次，避免外部重复发起请求。
+    event.stopPropagation();
     const customEvent = event as CustomEvent<{ currentPage: number }>;
     this.setCurrentPage(customEvent.detail?.currentPage ?? 1);
   }
@@ -635,6 +971,9 @@ export class seTable extends LitElement {
       (row, localIndex) => {
         const rowIndex = virtual.start + localIndex;
         const globalRowIndex = sourceOffset + rowIndex;
+        const expanded =
+          this.expandable && this.expandedKeys.includes(this.getRowKey(row, rowIndex));
+        const canExpand = this.rowExpandable?.(row, globalRowIndex) ?? true;
         return html`
           <tr
             class="${this.striped ? 'striped' : ''} ${this.hoverable ? 'hoverable' : ''}"
@@ -642,7 +981,17 @@ export class seTable extends LitElement {
           >
             ${this.selectable
               ? html`
-                  <td class="selection-cell" @click="${(e: Event) => e.stopPropagation()}">
+                  <td
+                    class="selection-cell ${this.sortedColumns.some(
+                      (column) => column.fixed === 'left'
+                    )
+                      ? 'fixed-column'
+                      : ''}"
+                    style="${this.sortedColumns.some((column) => column.fixed === 'left')
+                      ? 'left: 0;'
+                      : ''}"
+                    @click="${(e: Event) => e.stopPropagation()}"
+                  >
                     <input
                       type="checkbox"
                       .checked="${this.isRowSelected(row, rowIndex)}"
@@ -650,6 +999,22 @@ export class seTable extends LitElement {
                     />
                   </td>
                 `
+              : nothing}
+            ${this.expandable
+              ? html`<td class="expansion-cell">
+                  <button
+                    type="button"
+                    aria-label="${expanded ? '收起行' : '展开行'}"
+                    aria-expanded="${expanded}"
+                    ?disabled="${!canExpand}"
+                    @click="${(event: Event) => {
+                      event.stopPropagation();
+                      this.toggleRowExpansion(row, rowIndex);
+                    }}"
+                  >
+                    ${expanded ? '−' : '+'}
+                  </button>
+                </td>`
               : nothing}
             ${this.sortedColumns.map((col, columnIndex) => {
               const cellKey = `${rowIndex}-${columnIndex}`;
@@ -671,18 +1036,28 @@ export class seTable extends LitElement {
               }
               const align = col.align ?? 'center';
               const value = this.getCellDisplayValue(row, col, rowIndex);
+              const presentation = this.getColumnPresentation(col, columnIndex);
               return html`
                 <td
-                  class="${col.ellipsis ? 'ellipsis' : ''}"
+                  class="${col.ellipsis ? 'ellipsis' : ''} ${presentation.className}"
                   rowspan="${span.rowspan}"
                   colspan="${span.colspan}"
-                  style="text-align: ${align}; max-width: ${col.width || 'auto'};"
+                  style="text-align: ${align}; max-width: ${this.getColumnWidth(
+                    col
+                  )}; ${presentation.style}"
                 >
                   ${value}
                 </td>
               `;
             })}
           </tr>
+          ${expanded && canExpand
+            ? html`<tr class="expanded-row">
+                <td colspan="${this.totalColumnCount}">
+                  ${this.expandedRowRender?.(row, globalRowIndex) ?? nothing}
+                </td>
+              </tr>`
+            : nothing}
         `;
       }
     );
@@ -696,7 +1071,7 @@ export class seTable extends LitElement {
       <se-pagination
         class="pagination"
         .currentPage="${this.currentPage}"
-        .total="${this.sortedData.length}"
+        .total="${this.remote ? this.total : this.sortedData.length}"
         .pageSize="${this.pageSize}"
         @page-change="${this.handlePaginationChange}"
       ></se-pagination>
@@ -717,7 +1092,12 @@ export class seTable extends LitElement {
     const allSelected = visibleKeys.length > 0 && selectedVisible.length === visibleKeys.length;
     const indeterminate = selectedVisible.length > 0 && !allSelected;
     return html`
-      <th class="selection-cell">
+      <th
+        class="selection-cell ${this.sortedColumns.some((column) => column.fixed === 'left')
+          ? 'fixed-column'
+          : ''}"
+        style="${this.sortedColumns.some((column) => column.fixed === 'left') ? 'left: 0;' : ''}"
+      >
         <input
           type="checkbox"
           aria-label="全选"
@@ -742,22 +1122,74 @@ export class seTable extends LitElement {
             <thead class="${this.stickyHeader && scrollable ? 'sticky' : ''}">
               <tr>
                 ${this.renderSelectionHeader()}
-                ${this.sortedColumns.map(
-                  (col, index) => html`
+                ${this.expandable
+                  ? html`<th class="expansion-cell" aria-label="行展开"></th>`
+                  : nothing}
+                ${this.sortedColumns.map((col, index) => {
+                  const presentation = this.getColumnPresentation(col, index);
+                  return html`
                     <th
-                      class="${col.sortable ? 'sortable' : ''}"
-                      style="width: ${col.width || 'auto'}; text-align: ${col.align || 'center'};"
-                      data-sort="${col.sortDirection === 'asc'
-                        ? '↑'
-                        : col.sortDirection === 'desc'
-                        ? '↓'
-                        : '⇅'}"
+                      class="column-header ${col.sortable
+                        ? 'sortable'
+                        : ''} ${presentation.className}"
+                      style="${presentation.style} text-align: ${col.align || 'center'};"
+                      scope="col"
+                      aria-sort="${col.sortable
+                        ? col.sortDirection === 'asc'
+                          ? 'ascending'
+                          : col.sortDirection === 'desc'
+                            ? 'descending'
+                            : 'none'
+                        : nothing}"
                       @click="${() => this.sortColumn(index)}"
                     >
-                      ${col.label}
+                      ${col.sortable
+                        ? html`<button
+                            type="button"
+                            class="sort-button"
+                            @click="${(event: Event) => {
+                              event.stopPropagation();
+                              this.sortColumn(index);
+                            }}"
+                          >
+                            ${col.label}<span class="sort-indicator" aria-hidden="true"
+                              >${col.sortDirection === 'asc'
+                                ? '↑'
+                                : col.sortDirection === 'desc'
+                                  ? '↓'
+                                  : '⇅'}</span
+                            >
+                          </button>`
+                        : col.label}
+                      ${col.filterable
+                        ? html`<input
+                            type="search"
+                            class="column-filter"
+                            aria-label=${`筛选${col.label}`}
+                            .value=${this.filterValue(col.key)}
+                            placeholder="筛选"
+                            @click=${(event: Event) => event.stopPropagation()}
+                            @input=${(event: Event) =>
+                              this.changeFilter(col.key, (event.target as HTMLInputElement).value)}
+                          />`
+                        : nothing}
+                      ${col.resizable
+                        ? html`<span
+                            class="resize-handle"
+                            role="separator"
+                            aria-label="调整${col.label}列宽"
+                            aria-orientation="vertical"
+                            tabindex="0"
+                            @click="${(event: Event) => event.stopPropagation()}"
+                            @pointerdown="${(event: PointerEvent) =>
+                              this.startColumnResize(event, col)}"
+                            @keydown="${(event: KeyboardEvent) =>
+                              this.handleResizeKeydown(event, col)}"
+                          ></span>`
+                        : nothing}
                     </th>
-                  `
-                )}
+                  `;
+                })}
               </tr>
             </thead>
             <tbody>

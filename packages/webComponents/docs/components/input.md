@@ -20,6 +20,8 @@
 
 ## 错误与辅助文案
 
+`helperText` 会通过内部 `aria-describedby` 与输入框关联，清空文案时同步移除关联；`error` 同步设置 `aria-invalid`。这些属性负责提示展示，校验规则由业务层提供。
+
 <ClientOnly>
   <div style="display: grid; gap: 12px; max-width: 420px; margin: 20px 0;">
     <su-input
@@ -66,6 +68,8 @@ Input 组件会在输入时触发 `input-change` 事件，返回当前值。
 ```
 
 ## 一键清空
+
+禁用（包括继承 fieldset 禁用）或只读时，清空按钮同时禁用，不进入 Tab 顺序；重新启用后可正常清空并聚焦输入框。
 
 <ClientOnly>
   <div style="display: grid; gap: 12px; max-width: 420px; margin: 20px 0;">

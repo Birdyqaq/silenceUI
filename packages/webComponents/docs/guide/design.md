@@ -11,13 +11,13 @@ SilenceUI 是一套面向后台管理系统的 Web Components 组件库，基于
 
 ## 技术选型
 
-| 事项 | 选择 | 理由 |
-|---|---|---|
-| 组件模型 | Lit 3 + 装饰器 | 响应式属性、Shadow DOM 样式隔离、模板高效更新 |
-| 样式方案 | Shadow DOM 内 `static styles` + 全局 CSS 变量 | 隔离宿主样式污染，token 从外部穿透实现主题化 |
-| 构建 | Vite（ES / CJS / UMD 三产物）+ vite-plugin-dts | 类型声明齐全，兼容各种引入方式 |
-| 测试 | Vitest + jsdom + Testing Library | 与 Vite 共享配置 |
-| 文档 | VitePress | Markdown 驱动，支持组件演示 |
+| 事项     | 选择                                           | 理由                                          |
+| -------- | ---------------------------------------------- | --------------------------------------------- |
+| 组件模型 | Lit 3 + 装饰器                                 | 响应式属性、Shadow DOM 样式隔离、模板高效更新 |
+| 样式方案 | Shadow DOM 内 `static styles` + 全局 CSS 变量  | 隔离宿主样式污染，token 从外部穿透实现主题化  |
+| 构建     | Vite（ES / CJS / UMD 三产物）+ vite-plugin-dts | 类型声明齐全，兼容各种引入方式                |
+| 测试     | Vitest + jsdom + Testing Library               | 与 Vite 共享配置                              |
+| 文档     | VitePress                                      | Markdown 驱动，支持组件演示                   |
 
 ## 目录结构
 
@@ -83,6 +83,8 @@ utils/theme.ts       # 主题管理器（模式切换、自定义色、持久化
 ## 无障碍（a11y）
 
 - 交互元素使用原生 `button` / `input` / `select`，天然获得键盘与焦点行为。
+- 导航组件提供可识别的语义：菜单项使用 `menuitem`，面包屑使用 `aria-current="page"`，步骤条使用 `list` / `listitem` 与 `aria-current="step"`。
+- 菜单支持 `ArrowUp` / `ArrowDown` / `Home` / `End` 在菜单项之间移动焦点；组件外层应避免再包一层同样响应这些按键的容器。
 - 弹层类组件（modal / drawer）标注 `role="dialog"` + `aria-modal`，支持 Escape 关闭。
 - 状态类组件标注 `role="alert" / "status" / "progressbar"` 等语义角色。
 - 共享的 `focusRingStyles` 提供统一的 `:focus-visible` 焦点环。
@@ -94,9 +96,10 @@ utils/theme.ts       # 主题管理器（模式切换、自定义色、持久化
 
 ## 路线图
 
-- [ ] date-picker / upload（后台表单高频，复杂度高，优先级最高）
-- [ ] notification（右上角通知，复用 message 的容器机制）
-- [ ] popconfirm（危险操作二次确认）
-- [ ] tree / cascader（组织架构、分类选择）
-- [ ] 表格列固定、列宽拖拽
-- [ ] 按需引入（每组件独立入口）
+- [x] date-picker（原生日期能力、边界与表单关联）
+- [x] upload（文件类型、大小、数量校验与表单关联）
+- [x] notification（右上角通知，支持堆叠与自动关闭）
+- [x] popconfirm（危险操作二次确认）
+- [x] tree / cascader（组织架构、分类选择与键盘交互）
+- [x] 表格列固定、列宽拖拽
+- [x] 按需引入（每组件独立入口）

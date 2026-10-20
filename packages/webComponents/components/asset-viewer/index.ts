@@ -1,8 +1,19 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { baseControlStyles } from '../_shared/styles';
+import { baseControlStyles, focusRingStyles } from '../_shared/styles';
+import {
+  focusFirstElement,
+  getDeepActiveElement,
+  isTopOverlay,
+  lockBodyScroll,
+  registerOverlay,
+  trapFocus,
+  unregisterOverlay,
+  unlockBodyScroll,
+} from '../_shared/overlay';
 
 type AssetType = 'image' | 'video' | 'audio' | 'pdf' | 'unknown';
+let assetViewerInstanceId = 0;
 
 @customElement('se-asset-viewer')
 export class SeAssetViewer extends LitElement {
@@ -12,9 +23,72 @@ export class SeAssetViewer extends LitElement {
   @property({ type: Boolean }) downloadable = true;
   @property({ type: String }) type: AssetType = 'unknown';
   @state() private previewVisible = false;
+  @state() private previewError = false;
+
+  private readonly titleId = `se-asset-viewer-${++assetViewerInstanceId}-title`;
+  private overlayActive = false;
+  private previouslyFocused: HTMLElement | null = null;
+
+  private onKeydown = (event: KeyboardEvent) => {
+    if (event.defaultPrevented || !this.previewVisible || !isTopOverlay(this)) return;
+    const panel = this.shadowRoot?.querySelector<HTMLElement>('.overlay-content');
+    if (panel) trapFocus(event, panel);
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closePreview();
+    }
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('keydown', this.onKeydown);
+    if (this.hasUpdated) this.requestUpdate();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('keydown', this.onKeydown);
+    this.deactivateOverlay(false);
+  }
+
+  protected willUpdate(changed: PropertyValues<this>) {
+    if (changed.has('src') || changed.has('type')) {
+      this.deactivateOverlay();
+      this.previewVisible = false;
+      this.previewError = false;
+    }
+  }
+
+  protected updated() {
+    if (!this.isConnected) return;
+    if (!this.previewVisible) {
+      this.deactivateOverlay();
+    } else if (!this.overlayActive) {
+      this.overlayActive = true;
+      this.previouslyFocused = getDeepActiveElement();
+      registerOverlay(this);
+      lockBodyScroll();
+      const panel = this.shadowRoot?.querySelector<HTMLElement>('.overlay-content');
+      if (panel) focusFirstElement(panel);
+    }
+  }
+
+  private deactivateOverlay(restoreFocus = true) {
+    this.shadowRoot?.querySelectorAll<HTMLMediaElement>('video, audio').forEach((media) => {
+      if (!media.paused) media.pause();
+    });
+    if (!this.overlayActive) return;
+    const shouldRestoreFocus = restoreFocus && isTopOverlay(this);
+    this.overlayActive = false;
+    unregisterOverlay(this);
+    unlockBodyScroll();
+    if (shouldRestoreFocus && this.previouslyFocused?.isConnected) this.previouslyFocused.focus();
+    this.previouslyFocused = null;
+  }
 
   static styles = [
     baseControlStyles,
+    focusRingStyles,
     css`
       :host {
         display: block;
@@ -43,6 +117,9 @@ export class SeAssetViewer extends LitElement {
         background: var(--su-bg-muted);
         color: var(--su-text-3);
         cursor: pointer;
+        border: 0;
+        padding: 0;
+        font: inherit;
       }
 
       .preview img {
@@ -86,7 +163,9 @@ export class SeAssetViewer extends LitElement {
         font-size: var(--su-font-size-xs);
         cursor: pointer;
         text-decoration: none;
-        transition: border-color 0.2s ease, color 0.2s ease;
+        transition:
+          border-color 0.2s ease,
+          color 0.2s ease;
       }
 
       button:hover,
@@ -142,7 +221,14 @@ export class SeAssetViewer extends LitElement {
 
   private resolveType(): AssetType {
     if (this.type !== 'unknown') return this.type;
-    const lower = this.src.toLowerCase();
+    if (!this.src) return 'unknown';
+    let pathname: string;
+    try {
+      pathname = new URL(this.src, document.baseURI).pathname;
+    } catch {
+      pathname = this.src.split(/[?#]/, 1)[0];
+    }
+    const lower = pathname.toLowerCase();
     if (lower.match(/\.(png|jpe?g|gif|webp|svg)$/)) return 'image';
     if (lower.match(/\.(mp4|webm|mov)$/)) return 'video';
     if (lower.match(/\.(mp3|wav|ogg)$/)) return 'audio';
@@ -151,7 +237,8 @@ export class SeAssetViewer extends LitElement {
   }
 
   private openPreview() {
-    if (!this.src) return;
+    if (!this.src || this.previewVisible) return;
+    this.previewError = false;
     this.previewVisible = true;
     this.dispatchEvent(
       new CustomEvent('asset-open', {
@@ -163,7 +250,12 @@ export class SeAssetViewer extends LitElement {
   }
 
   private closePreview() {
+    this.deactivateOverlay();
     this.previewVisible = false;
+  }
+
+  private handlePreviewError() {
+    this.previewError = true;
   }
 
   private renderPreviewThumb() {
@@ -187,20 +279,48 @@ export class SeAssetViewer extends LitElement {
     const kind = this.resolveType();
     return html`
       <div class="overlay" @click=${this.closePreview}>
-        <div class="overlay-content" @click=${(e: Event) => e.stopPropagation()}>
+        <div
+          class="overlay-content"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby=${this.titleId}
+          tabindex="-1"
+          @click=${(e: Event) => e.stopPropagation()}
+        >
           <header>
-            <h3>${this.title || this.src}</h3>
-            <button @click=${this.closePreview}>关闭</button>
+            <h3 id=${this.titleId}>${this.title || this.src}</h3>
+            <button type="button" @click=${this.closePreview}>关闭</button>
           </header>
-          ${kind === 'image'
-            ? html`<img src=${this.src} alt=${this.title || 'asset'} />`
-            : kind === 'pdf'
-            ? html`<iframe src=${this.src} title="PDF preview"></iframe>`
-            : kind === 'video'
-            ? html`<video src=${this.src} controls></video>`
-            : kind === 'audio'
-            ? html`<audio src=${this.src} controls></audio>`
-            : html`<p>暂不支持预览该文件类型</p>`}
+          ${this.previewError
+            ? html`<div role="alert">
+                资源加载失败，请检查地址或重试。
+                <button
+                  type="button"
+                  class="retry"
+                  @click=${() => {
+                    this.previewError = false;
+                  }}
+                >
+                  重试
+                </button>
+              </div>`
+            : kind === 'image'
+              ? html`<img
+                  src=${this.src}
+                  alt=${this.title || 'asset'}
+                  @error=${this.handlePreviewError}
+                />`
+              : kind === 'pdf'
+                ? html`<iframe src=${this.src} title="PDF preview"></iframe>`
+                : kind === 'video'
+                  ? html`<video src=${this.src} controls @error=${this.handlePreviewError}></video>`
+                  : kind === 'audio'
+                    ? html`<audio
+                        src=${this.src}
+                        controls
+                        @error=${this.handlePreviewError}
+                      ></audio>`
+                    : html`<p>暂不支持预览该文件类型</p>`}
         </div>
       </div>
     `;
@@ -209,13 +329,20 @@ export class SeAssetViewer extends LitElement {
   render() {
     return html`
       <div class="card">
-        <div class="preview" @click=${this.openPreview}>${this.renderPreviewThumb()}</div>
+        <button
+          type="button"
+          class="preview"
+          aria-label=${`预览：${this.title || '资源'}`}
+          @click=${this.openPreview}
+        >
+          ${this.renderPreviewThumb()}
+        </button>
         <div class="meta">
           <p class="title">${this.title || this.src}</p>
           <small>${this.resolveType().toUpperCase()} · 点击预览</small>
         </div>
         <div class="actions">
-          <button @click=${this.openPreview}>预览</button>
+          <button type="button" @click=${this.openPreview}>预览</button>
           ${this.downloadable && this.src
             ? html`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer"
                 >下载</a

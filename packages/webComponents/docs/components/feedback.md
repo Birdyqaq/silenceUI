@@ -1,5 +1,7 @@
 # 反馈组件
 
+<ClientOnly><ComponentDemo category="feedback" /></ClientOnly>
+
 反馈组件用于确认、抽屉详情、页面提示、全局消息、悬浮说明、加载与进度展示。
 
 ## Modal 模态框 `su-modal`
@@ -16,6 +18,8 @@
 ```
 
 支持 `slot="footer"` 自定义底部。打开后焦点会进入弹层，Tab 焦点不会跑出弹层，关闭后焦点会回到打开前的元素，页面滚动也会恢复。
+
+焦点管理会按渲染顺序访问插槽与开放 Shadow DOM 内的控件，跳过隐藏、inert 和禁用元素；关闭下层弹层不会抢走上层焦点。保留 `open` 状态移除再挂载时会恢复滚动锁与键盘行为。内部控件若已对 Escape 调用 `preventDefault()`，外层不会重复关闭。封闭 Shadow DOM 内部控件无法被直接遍历。
 
 点击确认按钮时会先触发可取消的 `confirm`，再触发 `close`。监听器调用 `event.preventDefault()` 可以阻止本次关闭，适合在提交校验失败时保留弹层。
 
@@ -74,7 +78,7 @@
 命令式调用，自动挂载到页面顶部居中，超时自动消失：
 
 ```ts
-import { message } from 'webcomponents';
+import { message } from 'silenceui';
 
 message.success('保存成功');
 message.error('请求失败', 5000);
@@ -96,9 +100,78 @@ message('普通提示', { type: 'info', duration: 3000 });
 | `type`     | 消息类型                                       | `'info' \| 'success' \| 'warning' \| 'error'` | `info` |
 | `duration` | 自动关闭时间，单位 ms；小于等于 0 时不自动关闭 | `number`                                      | `3000` |
 
-`su-message` 元素关闭时触发 `close`。
+`su-message` 元素关闭时触发 `close`（无 detail），可调用返回元素的 `dismiss()` 手动关闭。同一轮显示只触发一次 `close`。
+
+挂载后修改 `duration` 会重新计时，设为 `0` 可取消自动关闭。移除元素时清理计时器且不触发 `close`；重新挂载会按当前 `duration` 从头计时。
+
+按需调用：`import { message } from 'silenceui/components/feedback/message'`。仍需在应用入口加载 `silenceui/style.css`。
+
+## Notification 通知 `notification`
+
+通知显示在页面右上角，适合展示比 Message 更完整的标题与说明。命令式 API 会自动创建堆叠容器：
+
+```ts
+import { notification } from 'silenceui';
+
+notification.success('发布成功', '版本 1.2.0 已上线');
+notification.error('同步失败', '请检查网络后重试', 0);
+notification({
+  title: '审批提醒',
+  description: '你有 3 条申请待处理',
+  type: 'info',
+  duration: 6000,
+});
+```
+
+| API / 字段                              | 说明                                             |
+| --------------------------------------- | ------------------------------------------------ |
+| `notification(options)`                 | 创建通知并返回 `SuNotification` 元素             |
+| `notification.success(title, desc, ms)` | 创建成功通知；另有 `info/warning/error` 快捷方法 |
+| `title`                                 | 通知标题                                         |
+| `description`                           | 通知说明                                         |
+| `type`                                  | `info/success/warning/error`                     |
+| `duration`                              | 自动关闭时间；小于等于 0 时不自动关闭            |
+| `closable`                              | 是否显示手动关闭按钮，默认 `true`                |
+
+也可直接使用 `<su-notification>`。关闭时触发 `close`，detail 为 `{ source: 'manual' | 'timeout' }`。
+
+修改 `duration`、移除和重新挂载时的计时行为与 Message 相同。同一轮显示仅派发一次 `close`；`dismiss()` 默认为手动关闭。
+
+按需调用：`import { notification } from 'silenceui/components/feedback/notification'`。
+
+## Popconfirm 气泡确认框 `su-popconfirm`
+
+用于危险操作的轻量二次确认。默认插槽放触发元素：
+
+```html
+<su-popconfirm title="确定删除这条记录吗？" placement="top">
+  <su-button type="danger">删除</su-button>
+</su-popconfirm>
+
+<script type="module">
+  document.querySelector('su-popconfirm').addEventListener('confirm', () => {
+    console.log('执行删除');
+  });
+</script>
+```
+
+| 属性          | 说明                              | 默认值               |
+| ------------- | --------------------------------- | -------------------- |
+| `open`        | 是否显示，会 reflect 到 attribute | `false`              |
+| `disabled`    | 是否禁用触发                      | `false`              |
+| `title`       | 确认提示                          | `确定执行此操作吗？` |
+| `confirmText` | 确认按钮文案                      | `确定`               |
+| `cancelText`  | 取消按钮文案                      | `取消`               |
+| `placement`   | `top/bottom/left/right`           | `top`                |
+
+`confirm` 事件可取消；监听器调用 `event.preventDefault()` 可保持气泡打开。取消时触发 `cancel`，任意关闭都会触发 `close`，detail 中的 source 为 `confirm/cancel/escape/outside`。组件支持 Escape 关闭、外部点击关闭和焦点恢复。
 
 ## Tooltip 文字提示 `su-tooltip`
+
+<div style="display: flex; gap: 16px; padding: 20px 0; flex-wrap: wrap;">
+  <su-tooltip content="按 Tab 聚焦也能看到提示，Escape 可以关闭。" placement="top"><button type="button" style="border: 1px solid var(--vp-c-divider); padding: 8px 12px; border-radius: 6px;">聚焦或悬停查看</button></su-tooltip>
+  <su-tooltip content="空间不足时会自动翻转方向，并限制在视口范围内。" placement="right"><button type="button" style="border: 1px solid var(--vp-c-divider); padding: 8px 12px; border-radius: 6px;">右侧提示</button></su-tooltip>
+</div>
 
 ```html
 <su-tooltip content="这里是说明文字" placement="top">
@@ -111,7 +184,15 @@ message('普通提示', { type: 'info', duration: 3000 });
 | `content`   | 提示内容 | `string`                                 | `''`   |
 | `placement` | 展示方向 | `'top' \| 'bottom' \| 'left' \| 'right'` | `top`  |
 
-Tooltip 在 hover 或 focus-within 时显示。
+Tooltip 在悬停或焦点进入时显示，按 Escape 关闭；离开当前悬停/焦点区域后再次进入才会重新显示。移出有 150 ms 缓冲，可将鼠标移到提示内容上。空内容不显示。
+
+动态替换触发器或其开放 Shadow DOM 内的控件时，描述关联自动更新；提示内容更新保留现有描述 ID，移除触发器及卸载时清理自己的隐藏描述节点。
+
+首选方向空间不足时自动翻转，并将位置限制在视口边缘内；滚动、窗口变化和内容尺寸变化会重新定位。支持 Popover API 的浏览器使用顶层显示，避免被父容器裁剪；旧浏览器退回 fixed 定位，带 transform 或裁剪的祖先可能仍限制显示。
+
+建议用原生按钮、链接或可聚焦控件作为触发器。组件会添加同一 DOM 树中的 `aria-describedby` 描述并保留已有 ID，卸载时移除自己的关联；开放 Shadow DOM 内的控件也支持，封闭 Shadow DOM 无法自动访问内部焦点元素。普通文字不会被自动加入 Tab 顺序。
+
+背景和文字颜色跟随主题，可通过 `--su-tooltip-bg`、`--su-tooltip-color` 覆盖。Tooltip 用于说明文字；带按钮、表单等操作内容应使用弹层组件。
 
 ## Spin 加载中 `su-spin`
 
@@ -132,6 +213,8 @@ Tooltip 在 hover 或 focus-within 时显示。
 无默认插槽内容时，`spinning` 为 true 会独立展示加载图标；有内容时会显示覆盖层。
 
 ## Progress 进度条 `su-progress`
+
+`percent` 限制在 0–100；`NaN`、正负无穷等非有限值按 0 展示，文本与 `aria-valuenow` 使用相同结果。
 
 ```html
 <su-progress percent="60"></su-progress>

@@ -1,8 +1,16 @@
 # 表单组件
 
+整表规则校验、多选搜索和日期范围见[后台管理增强](./admin)。`su-form` 提供同步/异步校验与错误关联；并非所有控件都支持全部原生约束属性，支持边界详见该页。
+
+<ClientOnly><ComponentDemo category="form" /></ClientOnly>
+
 表单组件以原生控件行为为基础，统一使用主题 token、焦点样式和 `CustomEvent`。复杂选项通过 DOM property 赋值；纯 HTML 场景可使用 `optionsJson`。
 
 所有控件设置 `name` 后都能参与外层原生 `<form>` 提交，并支持 `form.reset()`。复选框和开关仅在选中时提交其 `value`。
+
+原生表单集成要求 `ElementInternals.setFormValue`；不支持时需由业务层手动收集和恢复值，详见[兼容性与降级](../guide/compatibility)。
+
+字段名通过 `name` attribute 或 property 设置均可，动态改名会自动同步。原生 `fieldset[disabled]` 会让内部控件同步禁用且不提交；解除 fieldset 禁用不会覆盖控件自身的 disabled。
 
 <ClientOnly>
   <FormDemo />
@@ -58,13 +66,114 @@
 
 事件：`change`，detail 为 `{ value: string }`。
 
+## DatePicker 日期选择器 `su-date-picker`
+
+基于原生日期输入，值统一使用 `YYYY-MM-DD`，并支持外层原生表单提交与 reset：
+
+```html
+<su-date-picker
+  name="startDate"
+  label="开始日期"
+  value="2026-08-12"
+  min="2026-08-01"
+  max="2026-08-31"
+></su-date-picker>
+```
+
+用户选择超出 `min` / `max` 的日期时，组件会将值裁剪到最近边界。可通过 `focus()` 聚焦，也可调用 `showPicker()` 打开浏览器原生日期面板。
+
+| 属性       | 说明                          | 类型      | 默认值  |
+| ---------- | ----------------------------- | --------- | ------- |
+| `value`    | 当前日期，格式为 `YYYY-MM-DD` | `string`  | `''`    |
+| `name`     | 表单字段名                    | `string`  | `''`    |
+| `min`      | 最小日期                      | `string`  | `''`    |
+| `max`      | 最大日期                      | `string`  | `''`    |
+| `label`    | 可见标签，同时作为无障碍名称  | `string`  | `''`    |
+| `disabled` | 是否禁用                      | `boolean` | `false` |
+| `readonly` | 是否只读                      | `boolean` | `false` |
+
+事件：`change`，detail 为 `{ value: string }`。
+
+## Cascader 级联选择 `su-cascader`
+
+用于地区、组织架构等层级选项。选中的完整路径是字符串数组，表单提交值为该数组的 JSON 字符串：
+
+```html
+<su-cascader id="region" name="region" placeholder="请选择地区"></su-cascader>
+
+<script type="module">
+  const cascader = document.querySelector('#region');
+  cascader.options = [
+    {
+      value: 'cn',
+      label: '中国',
+      children: [
+        { value: 'sh', label: '上海' },
+        { value: 'bj', label: '北京' },
+      ],
+    },
+  ];
+</script>
+```
+
+纯 HTML 可使用 `optionsJson` 和 `valueJson`。选项支持 `value`、`label`、`disabled` 和递归 `children`。
+
+| 属性          | 说明                              | 类型               | 默认值   |
+| ------------- | --------------------------------- | ------------------ | -------- |
+| `options`     | 选项树，需通过 JS property 设置   | `CascaderOption[]` | `[]`     |
+| `optionsJson` | 选项 JSON 字符串                  | `string`           | `''`     |
+| `value`       | 选中路径，需通过 JS property 设置 | `string[]`         | `[]`     |
+| `valueJson`   | 选中路径 JSON 字符串              | `string`           | `''`     |
+| `name`        | 表单字段名                        | `string`           | `''`     |
+| `placeholder` | 未选择时的提示                    | `string`           | `请选择` |
+| `separator`   | 路径展示分隔符                    | `string`           | `/`      |
+| `disabled`    | 是否禁用                          | `boolean`          | `false`  |
+| `open`        | 是否展开，会 reflect 到 attribute | `boolean`          | `false`  |
+
+事件：`change`，detail 为 `{ value: string[], option }`。支持方向键、Home/End、Enter/Space、Escape、外部点击关闭和焦点恢复。
+
+## Upload 文件选择 `su-upload`
+
+禁用（包括继承 `fieldset[disabled]`）时保留已有文件，不接受新文件或触发选择事件；仍拦截拖放默认行为，避免浏览器直接打开被拖入的文件。
+
+支持点击和拖拽选择文件，并在提交原生表单时写入 `File`。组件只负责选择与校验，不会自动发送网络请求：
+
+```html
+<su-upload
+  name="attachments"
+  label="选择附件"
+  hint="支持 PNG、JPEG 和 PDF，单个文件不超过 5 MB"
+  accept="image/*,.pdf"
+  max-size="5242880"
+  max-count="3"
+  multiple
+></su-upload>
+```
+
+| 属性        | 说明                                | 类型      | 默认值     |
+| ----------- | ----------------------------------- | --------- | ---------- |
+| `files`     | 已选择文件，需通过 JS property 设置 | `File[]`  | `[]`       |
+| `name`      | 表单字段名                          | `string`  | `''`       |
+| `accept`    | MIME 类型或扩展名规则               | `string`  | `''`       |
+| `multiple`  | 是否允许多选                        | `boolean` | `false`    |
+| `max-size`  | 单文件字节上限，0 表示不限制        | `number`  | `0`        |
+| `max-count` | 多选数量上限，0 表示不限制          | `number`  | `0`        |
+| `label`     | 选择区域文案及无障碍名称            | `string`  | `选择文件` |
+| `hint`      | 辅助说明                            | `string`  | `''`       |
+| `disabled`  | 是否禁用                            | `boolean` | `false`    |
+
+- `change`：选择、移除或调用 `clear()` 后触发，detail 为 `{ files: File[] }`。
+- `reject`：文件校验失败时触发，detail 为 `{ rejected: UploadRejection[] }`；原因是 `type`、`size` 或 `count`。
+
+可调用 `focus()` 聚焦文件输入，调用 `clear()` 清空文件。多文件表单提交时会使用相同 `name` 写入多条文件记录。
+
 ## InputNumber 数字输入框 `su-input-number`
 
 ```html
 <su-input-number value="1" min="1" max="99" step="1"></su-input-number>
 ```
 
-输入或点击按钮时会按 `min` / `max` 裁剪最终值。
+输入、点击按钮、外部赋值或动态修改边界时，都会按 `min` / `max` 裁剪最终值。小数步进会按当前值与步长的精度消除常见浮点尾数（例如 `0.2 + 0.1` 得到 `0.3`），仍使用 JavaScript number，不适合任意精度财务计算。非法 value 按 0 再裁剪；非法边界恢复默认值，min 大于 max 时将 max 校正到 min。外部更新不会派发 `change`。
 
 | 属性       | 说明       | 类型      | 默认值                    |
 | ---------- | ---------- | --------- | ------------------------- |
@@ -107,13 +216,13 @@
 </script>
 ```
 
-| 属性          | 说明                            | 类型            | 默认值   |
-| ------------- | ------------------------------- | --------------- | -------- |
-| `options`     | 单选项，需通过 JS property 设置 | `RadioOption[]` | `[]`     |
-| `optionsJson` | 单选项 JSON 字符串              | `string`        | `''`     |
-| `value`       | 当前值                          | `string`        | `''`     |
-| `name`        | 表单字段名及内部 radio name     | `string`        | 随机生成 |
-| `disabled`    | 是否禁用整个单选组              | `boolean`       | `false`  |
+| 属性          | 说明                                                      | 类型            | 默认值  |
+| ------------- | --------------------------------------------------------- | --------------- | ------- |
+| `options`     | 单选项，需通过 JS property 设置                           | `RadioOption[]` | `[]`    |
+| `optionsJson` | 单选项 JSON 字符串                                        | `string`        | `''`    |
+| `value`       | 当前值                                                    | `string`        | `''`    |
+| `name`        | 表单字段名；为空时只生成内部 radio 分组名，不创建提交字段 | `string`        | `''`    |
+| `disabled`    | 是否禁用整个单选组                                        | `boolean`       | `false` |
 
 事件：`change`，detail 为 `{ value: string }`。
 
@@ -135,19 +244,29 @@
 ## Textarea 多行输入 `su-textarea`
 
 ```html
-<su-textarea placeholder="请输入备注" rows="4"></su-textarea>
+<su-textarea
+  label="备注"
+  helperText="请填写补充说明"
+  placeholder="请输入备注"
+  rows="4"
+></su-textarea>
 ```
 
-| 属性          | 说明       | 类型      | 默认值   |
-| ------------- | ---------- | --------- | -------- |
-| `value`       | 当前值     | `string`  | `''`     |
-| `name`        | 表单字段名 | `string`  | `''`     |
-| `placeholder` | 占位提示   | `string`  | `请输入` |
-| `rows`        | 行数       | `number`  | `4`      |
-| `disabled`    | 是否禁用   | `boolean` | `false`  |
-| `readonly`    | 是否只读   | `boolean` | `false`  |
+| 属性          | 说明           | 类型      | 默认值   |
+| ------------- | -------------- | --------- | -------- |
+| `value`       | 当前值         | `string`  | `''`     |
+| `name`        | 表单字段名     | `string`  | `''`     |
+| `placeholder` | 占位提示       | `string`  | `请输入` |
+| `rows`        | 行数           | `number`  | `4`      |
+| `label`       | 内部关联标签   | `string`  | `''`     |
+| `helperText`  | 辅助或错误说明 | `string`  | `''`     |
+| `error`       | 错误状态       | `boolean` | `false`  |
+| `disabled`    | 是否禁用       | `boolean` | `false`  |
+| `readonly`    | 是否只读       | `boolean` | `false`  |
 
 事件：`input-change`，detail 为 `{ value: string }`。
+
+Textarea 的 `label` 与内部 textarea 关联，`helperText` 通过 `aria-describedby` 提供描述，`error` 设置 `aria-invalid`。它们不自动执行校验；可由业务层动态更新。
 
 ## FormItem 表单项 `su-form-item`
 
@@ -171,6 +290,10 @@
 | 组件              | 事件           | detail                 |
 | ----------------- | -------------- | ---------------------- |
 | `su-select`       | `change`       | `{ value: string }`    |
+| `su-date-picker`  | `change`       | `{ value: string }`    |
+| `su-cascader`     | `change`       | `{ value, option }`    |
+| `su-upload`       | `change`       | `{ files: File[] }`    |
+| `su-upload`       | `reject`       | `{ rejected }`         |
 | `su-input-number` | `change`       | `{ value: number }`    |
 | `su-checkbox`     | `change`       | `{ checked: boolean }` |
 | `su-radio-group`  | `change`       | `{ value: string }`    |

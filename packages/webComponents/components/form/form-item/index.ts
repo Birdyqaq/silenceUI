@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { baseControlStyles } from '../../_shared/styles';
+import { getFormController } from '../../_shared/form';
 
 @customElement('su-form-item')
 export class SuFormItem extends LitElement {
@@ -50,16 +51,25 @@ export class SuFormItem extends LitElement {
       .message.success {
         color: var(--su-color-success);
       }
-    `
+    `,
   ];
+
+  updated() {
+    this.querySelectorAll<HTMLElement>('[name]').forEach((field) =>
+      getFormController(field)?.sync()
+    );
+  }
 
   render() {
     return html`
       <div class="item">
         ${this.label
-          ? html`<label class="label">${this.required ? html`<span class="required">*</span>` : nothing}${this.label}</label>`
+          ? html`<label class="label"
+              >${this.required ? html`<span class="required">*</span>` : nothing}${this
+                .label}</label
+            >`
           : nothing}
-        <slot></slot>
+        <slot @slotchange=${() => this.updated()}></slot>
         ${this.message ? html`<div class="message ${this.status}">${this.message}</div>` : nothing}
       </div>
     `;

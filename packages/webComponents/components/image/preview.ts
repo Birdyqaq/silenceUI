@@ -85,7 +85,7 @@ export class SeImagePreview extends LitElement {
   ];
 
   private onKeydown = (event: KeyboardEvent) => {
-    if (!isTopOverlay(this)) return;
+    if (event.defaultPrevented || !isTopOverlay(this)) return;
     const preview = this.shadowRoot?.querySelector<HTMLElement>('.preview');
     if (preview) trapFocus(event, preview);
 
@@ -101,19 +101,28 @@ export class SeImagePreview extends LitElement {
     registerOverlay(this);
     lockBodyScroll();
     window.addEventListener('keydown', this.onKeydown);
+    if (this.hasUpdated) this.focusPreview();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('keydown', this.onKeydown);
+    const shouldRestoreFocus = isTopOverlay(this);
     unregisterOverlay(this);
     unlockBodyScroll();
-    if (this.previouslyFocused?.isConnected) this.previouslyFocused.focus();
+    if (shouldRestoreFocus && this.previouslyFocused?.isConnected) this.previouslyFocused.focus();
+    this.previouslyFocused = null;
   }
 
   firstUpdated() {
-    const preview = this.shadowRoot?.querySelector<HTMLElement>('.preview');
-    if (preview) focusFirstElement(preview);
+    this.focusPreview();
+  }
+
+  private focusPreview() {
+    queueMicrotask(() => {
+      const preview = this.shadowRoot?.querySelector<HTMLElement>('.preview');
+      if (this.isConnected && isTopOverlay(this) && preview) focusFirstElement(preview);
+    });
   }
 
   private close() {

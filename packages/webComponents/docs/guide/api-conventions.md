@@ -5,8 +5,8 @@
 应用入口建议先引入主题样式，再注册组件：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 ```
 
 ## 标签前缀
@@ -66,9 +66,14 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 表单控件支持 Form Associated Custom Elements。设置 `name` 后，控件值会进入外层原生表单的 `FormData`；`disabled` 控件不会提交，调用 `form.reset()` 会恢复初始值。
 
+上述原生提交和 reset 行为要求浏览器支持 ElementInternals；不支持时 UI 仍可使用，需由应用手动收集/恢复 property。必填标记不是校验逻辑；浏览器降级和 SSR 注意事项见[兼容性](./compatibility)。
+
 ```html
 <form id="profile-form">
   <su-input name="nickname" value="Silence"></su-input>
+  <su-date-picker name="birthday" label="出生日期"></su-date-picker>
+  <su-cascader name="region"></su-cascader>
+  <su-upload name="avatar" accept="image/*" label="上传头像"></su-upload>
   <su-select name="city" optionsJson='[{"label":"上海","value":"sh"}]'></su-select>
   <su-checkbox name="agreement" value="accepted" label="同意协议"></su-checkbox>
   <su-button native-type="submit">提交</su-button>
@@ -82,7 +87,9 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 </script>
 ```
 
-支持 `name` 的组件：`su-input`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
+支持 `name` 的组件：`su-input`、`su-date-picker`、`su-cascader`、`su-upload`、`su-select`、`su-textarea`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`。
+
+这些控件的 name property 会同步到 attribute；fieldset 的禁用状态由原生 formDisabledCallback 同步至内部控件。控件自身的 disabled 与继承禁用分别保存，防止父级重新启用时意外启用原本禁用的字段。
 
 ## 事件监听
 
@@ -100,14 +107,20 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 常见事件包括：
 
-| 事件           | 组件                                                                                                       | detail                   |
-| -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `input-change` | `su-input`、`su-textarea`                                                                                  | `{ value }`              |
-| `change`       | `su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档           |
-| `select`       | `su-menu`、`su-dropdown`                                                                                   | 菜单项或 `{ key, item }` |
-| `close`        | `su-modal`、`su-drawer`、`su-alert`、`su-message`                                                          | 关闭来源或空 detail      |
-| `page-change`  | `se-table`、`se-pagination`                                                                                | `{ currentPage }`        |
-| `sort-change`  | `se-table`                                                                                                 | `{ column, direction }`  |
+| 事件            | 组件                                                                                                                                                     | detail                         |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `input-change`  | `su-input`、`su-textarea`                                                                                                                                | `{ value }`                    |
+| `change`        | `su-date-picker`、`su-cascader`、`su-upload`、`su-select`、`su-input-number`、`su-checkbox`、`su-radio-group`、`su-switch`、`su-tabs`、`su-theme-toggle` | 见对应组件文档                 |
+| `reject`        | `su-upload`                                                                                                                                              | `{ rejected }`                 |
+| `select`        | `su-menu`、`su-dropdown`、`su-tree`                                                                                                                      | 见对应组件文档                 |
+| `expand`        | `su-tree`                                                                                                                                                | `{ key, expanded, node }`      |
+| `close`         | `su-modal`、`su-drawer`、`su-alert`、`su-message`、`su-notification`、`su-popconfirm`                                                                    | 关闭来源或空 detail            |
+| `confirm`       | `su-modal`、`su-popconfirm`                                                                                                                              | 无，可调用 preventDefault      |
+| `cancel`        | `su-popconfirm`                                                                                                                                          | 无                             |
+| `page-change`   | `se-table`、`se-pagination`                                                                                                                              | `{ currentPage }`              |
+| `sort-change`   | `se-table`                                                                                                                                               | `{ column, direction }`        |
+| `expand-change` | `se-table`                                                                                                                                               | `{ key, row, expanded, keys }` |
+| `column-resize` | `se-table`                                                                                                                                               | `{ column, width }`            |
 
 ## 框架接入
 
