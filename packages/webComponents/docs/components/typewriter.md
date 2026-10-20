@@ -9,11 +9,11 @@
 ## 按需引入
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents/components/data/typewriter';
+import 'silenceui/style.css';
+import 'silenceui/components/data/typewriter';
 ```
 
-全量 `import 'webcomponents'` 已包含注册。仅使用按需入口且需要恢复持久化主题时，请调用 `webcomponents/theme` 的 `initTheme()`。
+全量 `import 'silenceui'` 已包含注册。仅使用按需入口且需要恢复持久化主题时，请调用 `silenceui/theme` 的 `initTheme()`。
 
 ## 单条文本和效果
 
@@ -35,8 +35,8 @@ import 'webcomponents/components/data/typewriter';
 <button id="restart" type="button">重播</button>
 
 <script type="module">
-  import 'webcomponents/style.css';
-  import 'webcomponents/components/data/typewriter';
+  import 'silenceui/style.css';
+  import 'silenceui/components/data/typewriter';
 
   const writer = document.querySelector('#headline');
   writer.texts = ['一次编写', '跨框架使用', '支持主题切换 ✨'];
@@ -58,8 +58,8 @@ import 'webcomponents/components/data/typewriter';
 ```vue
 <script setup>
 import { ref } from 'vue';
-import 'webcomponents/style.css';
-import 'webcomponents/components/data/typewriter';
+import 'silenceui/style.css';
+import 'silenceui/components/data/typewriter';
 
 const phrases = ref(['欢迎回来', '今天也有新的进展']);
 const paused = ref(false);

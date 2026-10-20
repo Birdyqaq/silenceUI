@@ -2,12 +2,14 @@
 
 ## 安装
 
+npm 包名为小写 `silenceui`，项目展示名称为 SilenceUI。以下安装命令用于正式发布后；仓库源码改名不等于已经发布到 npm，发布前请使用本地打包接入，见[安装指南](./installation)。
+
 ```bash
-npm install webcomponents
+npm install silenceui
 # 或
-yarn add webcomponents
+yarn add silenceui
 # 或
-pnpm add webcomponents
+pnpm add silenceui
 ```
 
 ## 注册组件
@@ -15,8 +17,8 @@ pnpm add webcomponents
 在应用入口引入样式并注册全部组件：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 ```
 
 ```html
@@ -28,16 +30,16 @@ import 'webcomponents';
 只使用部分组件时，推荐按需引入：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents/components/button';
-import 'webcomponents/components/input';
-import 'webcomponents/components/data/card';
+import 'silenceui/style.css';
+import 'silenceui/components/button';
+import 'silenceui/components/input';
+import 'silenceui/components/data/card';
 ```
 
 按需入口不会自动初始化主题持久化。如需主题 API，请显式调用：
 
 ```ts
-import { initTheme } from 'webcomponents/theme';
+import { initTheme } from 'silenceui/theme';
 
 initTheme();
 ```
@@ -61,8 +63,8 @@ initTheme();
 </su-container>
 
 <script type="module">
-  import 'webcomponents/style.css';
-  import 'webcomponents';
+  import 'silenceui/style.css';
+  import 'silenceui';
 
   const menu = document.querySelector('#menu');
   menu.items = [
@@ -122,8 +124,8 @@ export default defineConfig({
 
 ```vue
 <script setup lang="ts">
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 
 const handleInput = (event: CustomEvent<{ value: string }>) => {
   console.log(event.detail.value);
@@ -144,9 +146,9 @@ React 19 之前，复杂属性建议通过 ref 赋值，自定义事件建议用
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import type { seTable } from 'webcomponents';
-import 'webcomponents/style.css';
-import 'webcomponents';
+import type { seTable } from 'silenceui';
+import 'silenceui/style.css';
+import 'silenceui';
 
 export function DemoTable({ rows }: { rows: Record<string, unknown>[] }) {
   const tableRef = useRef<seTable>(null);
@@ -177,7 +179,7 @@ TypeScript 项目可按需补充 JSX 标签声明：
 
 ```ts
 import type * as React from 'react';
-import type { SuButton, SuInput, seTable } from 'webcomponents';
+import type { SuButton, SuInput, seTable } from 'silenceui';
 
 declare module 'react' {
   namespace JSX {
@@ -196,8 +198,8 @@ declare module 'react' {
 
 ```ts
 import { CUSTOM_ELEMENTS_SCHEMA, Component } from '@angular/core';
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 
 @Component({
   selector: 'app-root',

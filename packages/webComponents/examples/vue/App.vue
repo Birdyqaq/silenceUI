@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import 'webcomponents/style.css';
-import 'webcomponents/components/button';
-import 'webcomponents/components/input';
-import { initTheme, setThemeColors, toggleThemeMode } from 'webcomponents/theme';
+import 'silenceui/style.css';
+import 'silenceui/components/button';
+import 'silenceui/components/input';
+import { initTheme, setThemeColors, toggleThemeMode } from 'silenceui/theme';
 
 initTheme();
 </script>

@@ -5,10 +5,10 @@
 在应用入口初始化一次，组件通过 CSS 变量自动响应主题变化：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents/components/button';
-import 'webcomponents/components/table';
-import { initTheme, setThemeMode, setThemeColors, resetThemeColors } from 'webcomponents/theme';
+import 'silenceui/style.css';
+import 'silenceui/components/button';
+import 'silenceui/components/table';
+import { initTheme, setThemeMode, setThemeColors, resetThemeColors } from 'silenceui/theme';
 
 initTheme(); // 恢复上次保存的主题
 setThemeMode('dark'); // 切换暗色；light 为亮色
@@ -31,7 +31,7 @@ setThemeColors({ primary: '#7c3aed' }); // 切换品牌色，并派生 hover、R
 或使用 API：
 
 ```ts
-import { setThemeMode, toggleThemeMode, getThemeMode } from 'webcomponents/theme';
+import { setThemeMode, toggleThemeMode, getThemeMode } from 'silenceui/theme';
 
 toggleThemeMode(); // 明暗互切
 setThemeMode('dark'); // 指定模式
@@ -53,7 +53,7 @@ window.addEventListener('su-theme-change', onThemeChange);
 ## 自定义主题色
 
 ```ts
-import { setThemeColors, resetThemeColors } from 'webcomponents/theme';
+import { setThemeColors, resetThemeColors } from 'silenceui/theme';
 
 setThemeColors({ primary: '#7c3aed' }); // 换品牌色
 setThemeColors({ success: '#22c55e', error: '#dc2626' }); // 换状态色

@@ -5,8 +5,8 @@
 应用入口建议先引入主题样式，再注册组件：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 ```
 
 ## 标签前缀

@@ -1,5 +1,8 @@
 import type { SeAssetViewer } from './components/asset-viewer';
 import type { SuButton } from './components/button';
+import type { SuIcon } from './components/icon';
+import type { SuForm } from './components/form/form';
+import type { SuDateRange } from './components/form/date-range';
 import type { SuAvatar } from './components/data/avatar';
 import type { SuBadge } from './components/data/badge';
 import type { SuCard } from './components/data/card';
@@ -46,6 +49,9 @@ import type { seTable } from './components/table';
 
 declare global {
   interface HTMLElementTagNameMap {
+    'su-icon': SuIcon;
+    'su-form': SuForm;
+    'su-date-range': SuDateRange;
     'line-component': LineComponent;
     'se-asset-viewer': SeAssetViewer;
     'se-image': SeImage;

@@ -1,5 +1,7 @@
 # Table 表格
 
+列筛选已支持：设置 `Column.filterable = true`，通过 `filters` 与 `filter-change` 管理条件。本地为文本包含匹配，remote 模式交给服务端；详见[后台管理增强](./admin#table-列筛选)。
+
 <ClientOnly><ComponentDemo category="table" /></ClientOnly>
 
 面向业务数据场景的表格组件，支持排序、分页、行选择、固定列、列宽调整、可展开行、服务端数据和大数据虚拟渲染。

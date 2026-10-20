@@ -78,7 +78,7 @@
 命令式调用，自动挂载到页面顶部居中，超时自动消失：
 
 ```ts
-import { message } from 'webcomponents';
+import { message } from 'silenceui';
 
 message.success('保存成功');
 message.error('请求失败', 5000);
@@ -104,14 +104,14 @@ message('普通提示', { type: 'info', duration: 3000 });
 
 挂载后修改 `duration` 会重新计时，设为 `0` 可取消自动关闭。移除元素时清理计时器且不触发 `close`；重新挂载会按当前 `duration` 从头计时。
 
-按需调用：`import { message } from 'webcomponents/components/feedback/message'`。仍需在应用入口加载 `webcomponents/style.css`。
+按需调用：`import { message } from 'silenceui/components/feedback/message'`。仍需在应用入口加载 `silenceui/style.css`。
 
 ## Notification 通知 `notification`
 
 通知显示在页面右上角，适合展示比 Message 更完整的标题与说明。命令式 API 会自动创建堆叠容器：
 
 ```ts
-import { notification } from 'webcomponents';
+import { notification } from 'silenceui';
 
 notification.success('发布成功', '版本 1.2.0 已上线');
 notification.error('同步失败', '请检查网络后重试', 0);
@@ -137,7 +137,7 @@ notification({
 
 修改 `duration`、移除和重新挂载时的计时行为与 Message 相同。同一轮显示仅派发一次 `close`；`dismiss()` 默认为手动关闭。
 
-按需调用：`import { notification } from 'webcomponents/components/feedback/notification'`。
+按需调用：`import { notification } from 'silenceui/components/feedback/notification'`。
 
 ## Popconfirm 气泡确认框 `su-popconfirm`
 

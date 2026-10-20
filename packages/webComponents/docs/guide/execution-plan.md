@@ -11,14 +11,20 @@
 
 Vue 示例见 `examples/vue/App.vue`。在宿主 Vite 项目的 Vue 插件中设置
 `isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-')`。
-主色与明暗切换通过公开的 `webcomponents/theme` 入口执行。
+主色与明暗切换通过公开的 `silenceui/theme` 入口执行。
 
 ## 后续完善
+
+### 后台基础能力批次（2026-10-20）
+
+- 本批实现：本地图标、Form 规则校验/错误关联、Select 搜索多选、独立日期范围、多级 Menu、Table 文本筛选、Tree 权限勾选。
+- 验收入口：[后台管理增强](../components/admin)；不包含自定义日历、悬浮子菜单、复杂枚举筛选、网络请求和服务端权限系统。
+- UnoCSS：不迁移现有组件内部样式；宿主页面可选用，原因见增强页。
 
 ### 表单可访问性第一批（2026-10-20）
 
 - 已完成：Input 帮助文案关联、禁用/只读清空按钮状态；Textarea 增加 label/helperText/error 及内部关联；补齐公开类型检查和交互回归。
-- 继续保留：FormItem 跨组件标签/错误关联、其他表单控件可访问性及原生校验能力。
+- 后台基础能力批次补齐了 FormItem 关联及共享原生约束桥接；复杂控件完整约束 API 与更多浏览器自动化仍待扩展。
 
 ### 本轮问题修复（2026-10-19）
 

@@ -35,6 +35,7 @@ type CellSpan = { rowspan: number; colspan: number };
 
 @customElement('se-table')
 export class seTable extends LitElement {
+  @property({ type: Object, attribute: false }) filters: Record<string, string> = {};
   @property({ type: Array })
 
   //数据源 data starts here
@@ -384,6 +385,18 @@ export class seTable extends LitElement {
         outline: 2px solid var(--su-color-primary);
         outline-offset: -2px;
       }
+      .column-filter {
+        display: block;
+        width: 100%;
+        min-width: 70px;
+        margin-top: 6px;
+        padding: 4px;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        font: inherit;
+      }
     `,
   ];
 
@@ -405,9 +418,9 @@ export class seTable extends LitElement {
       }));
 
       if (this.remote || nextDirection === '') {
-        this.sortedData = [...this.data];
+        this.sortedData = [...this.filteredData];
       } else {
-        this.sortedData = [...this.data].sort((a, b) => {
+        this.sortedData = [...this.filteredData].sort((a, b) => {
           const result = this.compareValues(a[col.key], b[col.key]);
           return nextDirection === 'asc' ? result : result * -1;
         });
@@ -429,6 +442,43 @@ export class seTable extends LitElement {
 
   private readonly fallbackRowKeys = new WeakMap<TableRow, string>();
   private nextFallbackKey = 0;
+
+  private filterValue(key: string) {
+    return Object.prototype.hasOwnProperty.call(this.filters, key) &&
+      typeof this.filters[key] === 'string'
+      ? this.filters[key]
+      : '';
+  }
+
+  private get filteredData() {
+    if (this.remote) return this.data;
+    return this.data.filter((row) =>
+      this.columns.every((column) => {
+        const query = this.filterValue(column.key);
+        return (
+          !column.filterable ||
+          !query ||
+          String(row[column.key] ?? '')
+            .toLocaleLowerCase()
+            .includes(query.toLocaleLowerCase())
+        );
+      })
+    );
+  }
+
+  private changeFilter(key: string, value: string) {
+    this.filters = { ...this.filters, [key]: value };
+    this.currentPage = 1;
+    this.scrollTop = 0;
+    this.resetViewportScroll();
+    this.dispatchEvent(
+      new CustomEvent('filter-change', {
+        detail: { filters: { ...this.filters } },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
 
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
     // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
@@ -484,7 +534,12 @@ export class seTable extends LitElement {
     }
 
     // Update sorted columns and data when columns or data change
-    if (changedProperties.has('columns') || changedProperties.has('data')) {
+    if (
+      changedProperties.has('columns') ||
+      changedProperties.has('data') ||
+      changedProperties.has('filters') ||
+      changedProperties.has('remote')
+    ) {
       for (const row of this.data) {
         if (!this.fallbackRowKeys.has(row))
           this.fallbackRowKeys.set(row, `row-${this.nextFallbackKey++}`);
@@ -493,12 +548,18 @@ export class seTable extends LitElement {
         this.sortedColumns.map((column) => [column.key, column.sortDirection])
       );
       this.sortedColumns = this.columns.map((c) => ({ ...c, sortDirection: '' }));
-      if (this.remote)
+      if (this.remote || changedProperties.has('filters'))
         this.sortedColumns = this.sortedColumns.map((column) => ({
           ...column,
           sortDirection: directions.get(column.key) ?? '',
         }));
-      this.sortedData = [...this.data];
+      this.sortedData = [...this.filteredData];
+      const sort = this.sortedColumns.find((column) => column.sortDirection);
+      if (!this.remote && sort)
+        this.sortedData.sort(
+          (a, b) =>
+            this.compareValues(a[sort.key], b[sort.key]) * (sort.sortDirection === 'asc' ? 1 : -1)
+        );
       if (!this.remote) this.currentPage = 1;
     }
 
@@ -1100,6 +1161,18 @@ export class seTable extends LitElement {
                             >
                           </button>`
                         : col.label}
+                      ${col.filterable
+                        ? html`<input
+                            type="search"
+                            class="column-filter"
+                            aria-label=${`筛选${col.label}`}
+                            .value=${this.filterValue(col.key)}
+                            placeholder="筛选"
+                            @click=${(event: Event) => event.stopPropagation()}
+                            @input=${(event: Event) =>
+                              this.changeFilter(col.key, (event.target as HTMLInputElement).value)}
+                          />`
+                        : nothing}
                       ${col.resizable
                         ? html`<span
                             class="resize-handle"

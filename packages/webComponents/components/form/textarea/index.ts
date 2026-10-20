@@ -16,6 +16,7 @@ export class SuTextarea extends LitElement {
   @property({ type: String }) label = '';
   @property({ type: String }) helperText = '';
   @property({ type: Boolean }) error = false;
+  @property({ type: Boolean }) required = false;
 
   private defaultValue = '';
   private readonly formValue: FormValueController = new FormValueController(this, () =>
@@ -125,6 +126,7 @@ export class SuTextarea extends LitElement {
           rows=${this.rows}
           ?disabled=${this.formValue.disabled}
           ?readonly=${this.readonly}
+          ?required=${this.required}
           aria-invalid=${String(this.error)}
           aria-describedby=${this.helperText ? 'helper-text' : nothing}
           @input=${this.handleInput}

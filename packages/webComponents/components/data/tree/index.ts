@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
+import '../../icon';
 
 interface TreeNode {
   key: string;
@@ -22,6 +23,9 @@ export class SuTree extends LitElement {
   @property({ type: String }) nodesJson = '';
   @property({ type: String }) selectedKey = '';
   @property({ type: Array, attribute: false }) expandedKeys: string[] = [];
+  @property({ type: Boolean }) checkable = false;
+  @property({ type: Array, attribute: false }) checkedKeys: string[] = [];
+  @property({ type: Boolean }) checkStrictly = false;
 
   @state() private focusedKey = '';
 
@@ -88,6 +92,22 @@ export class SuTree extends LitElement {
 
       button:disabled {
         cursor: not-allowed;
+      }
+      .check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+        border: 1px solid var(--su-border-color);
+        border-radius: 3px;
+        vertical-align: middle;
+      }
+      .check.active {
+        color: var(--su-color-primary);
+        border-color: var(--su-color-primary);
+        background: rgba(var(--su-color-primary-rgb), 0.1);
       }
     `,
   ];
@@ -161,6 +181,60 @@ export class SuTree extends LitElement {
     );
   }
 
+  /** Disabled subtrees are independent boundaries and never participate in cascading checks. */
+  private checkState(node: TreeNode, seen = new Set<TreeNode>()): 'true' | 'false' | 'mixed' {
+    if (seen.has(node)) return 'false';
+    seen.add(node);
+    if (this.checkStrictly || node.disabled)
+      return this.checkedKeys.includes(node.key) ? 'true' : 'false';
+    const children = this.childrenOf(node).filter((child) => !child.disabled && !seen.has(child));
+    if (!children.length) return this.checkedKeys.includes(node.key) ? 'true' : 'false';
+    const states = children.map((child) => this.checkState(child, new Set(seen)));
+    return states.every((state) => state === 'true')
+      ? 'true'
+      : states.some((state) => state !== 'false')
+        ? 'mixed'
+        : 'false';
+  }
+
+  private checkNode(node: TreeNode) {
+    if (node.disabled) return;
+    const checked = this.checkState(node) !== 'true';
+    const keys = new Set(this.checkedKeys);
+    const visited = new Set<TreeNode>();
+    const toggle = (item: TreeNode) => {
+      if (item.disabled || visited.has(item)) return;
+      visited.add(item);
+      if (checked) keys.add(item.key);
+      else keys.delete(item.key);
+      if (!this.checkStrictly) this.childrenOf(item).forEach(toggle);
+    };
+    toggle(node);
+    this.checkedKeys = [...keys];
+    const halfCheckedKeys: string[] = [];
+    const normalized = new Set(this.checkedKeys);
+    visited.clear();
+    const collect = (item: TreeNode) => {
+      if (visited.has(item)) return;
+      visited.add(item);
+      if (item.disabled) return;
+      const state = this.checkState(item);
+      if (state === 'true') normalized.add(item.key);
+      else normalized.delete(item.key);
+      if (state === 'mixed') halfCheckedKeys.push(item.key);
+      this.childrenOf(item).forEach(collect);
+    };
+    this.mergedNodes.forEach(collect);
+    this.checkedKeys = [...normalized];
+    this.dispatchEvent(
+      new CustomEvent('check', {
+        detail: { key: node.key, checked, checkedKeys: [...this.checkedKeys], halfCheckedKeys },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   private focusNode(key: string) {
     this.focusedKey = key;
     void this.updateComplete.then(() => {
@@ -197,7 +271,8 @@ export class SuTree extends LitElement {
       else if (entry.parentKey) this.focusNode(entry.parentKey);
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      this.selectNode(entry.node);
+      if (event.key === ' ' && this.checkable) this.checkNode(entry.node);
+      else this.selectNode(entry.node);
     }
   }
 
@@ -227,7 +302,7 @@ export class SuTree extends LitElement {
                 ?disabled=${node.disabled || !hasChildren}
                 @click=${() => this.toggleNode(node)}
               >
-                ${expanded ? '▾' : '▸'}
+                <su-icon name=${expanded ? 'chevron-down' : 'chevron-right'}></su-icon>
               </button>
               <button
                 class="label"
@@ -236,6 +311,7 @@ export class SuTree extends LitElement {
                 role="treeitem"
                 aria-level=${level}
                 aria-selected=${node.key === this.selectedKey ? 'true' : 'false'}
+                aria-checked=${this.checkable ? this.checkState(node) : nothing}
                 aria-disabled=${node.disabled ? 'true' : 'false'}
                 aria-expanded=${hasChildren ? String(expanded) : nothing}
                 tabindex=${node.key === focusKey ? 0 : -1}
@@ -243,9 +319,20 @@ export class SuTree extends LitElement {
                 @focus=${() => {
                   this.focusedKey = node.key;
                 }}
-                @click=${() => this.selectNode(node)}
+                @click=${() => (this.checkable ? this.checkNode(node) : this.selectNode(node))}
                 @keydown=${(event: KeyboardEvent) => this.onKeyDown(event, entry)}
               >
+                ${this.checkable
+                  ? html`<span
+                      class="check ${this.checkState(node) !== 'false' ? 'active' : ''}"
+                      aria-hidden="true"
+                      >${this.checkState(node) === 'true'
+                        ? html`<su-icon name="check"></su-icon>`
+                        : this.checkState(node) === 'mixed'
+                          ? '−'
+                          : ''}</span
+                    >`
+                  : nothing}
                 ${node.label}
               </button>
             </div>

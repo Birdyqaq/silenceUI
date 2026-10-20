@@ -66,6 +66,8 @@ export default defineConfig({
         {
           text: '基础组件',
           items: [
+            { text: 'Icon 图标', link: '/components/icon' },
+            { text: '后台管理增强', link: '/components/admin' },
             { text: 'Button 按钮', link: '/components/button' },
             { text: 'Input 输入框', link: '/components/input' },
             { text: 'Image 图片', link: '/components/image' },

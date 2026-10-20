@@ -17,6 +17,8 @@ export class SuInput extends LitElement {
   @property({ type: String }) label = '';
   @property({ type: String }) helperText = '';
   @property({ type: Boolean }) clearable = false;
+  @property({ type: Boolean }) required = false;
+  @property({ type: String }) pattern = '';
 
   private defaultValue = '';
   private readonly formValue: FormValueController = new FormValueController(this, () =>
@@ -176,6 +178,8 @@ export class SuInput extends LitElement {
             .type=${this.type}
             ?disabled=${this.formValue.disabled}
             ?readonly=${this.readonly}
+            ?required=${this.required}
+            pattern=${this.pattern || nothing}
             @input=${this.handleInput}
             aria-invalid=${this.error ? 'true' : 'false'}
             aria-describedby=${this.helperText ? 'helper-text' : nothing}

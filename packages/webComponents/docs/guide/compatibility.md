@@ -23,7 +23,7 @@
 
 ```ts
 // 仅在客户端执行
-await import('webcomponents/components/form/select');
+await import('silenceui/components/form/select');
 await customElements.whenDefined('su-select');
 const select = document.querySelector('su-select');
 if (select) select.options = [{ label: '上海', value: 'sh' }];

@@ -2,6 +2,14 @@
 
 ## 未发布
 
+- npm 包名统一为 `silenceui`，同步安装命令、根入口、按需组件、主题和样式路径及 CDN 示例。
+
+- 新增本地 Lucide `su-icon`，Button/Menu 统一图标入口，保留旧 iconClass/icon 文本接口。
+- 新增 `su-form` 同步/异步规则校验、过期结果保护、FormItem 错误关联和原生约束桥接；Input/Select/Textarea 补充必填支持。
+- Select 支持搜索、多选、清空和远程搜索事件；新增 `su-date-range`，支持范围有效性、表单提交和重置。
+- Menu 支持多级展开、禁用与键盘导航；Table 实现列文本筛选及远程筛选事件；Tree 增加勾选、半选、父子联动与独立勾选。
+- 新增后台联动演示、支持边界和 UnoCSS 接入评估。组件样式继续使用 Lit CSS 与主题变量。
+
 - Input 将帮助文案关联到内部输入框，禁用/只读时同步禁用清空按钮；Textarea 新增 label、helperText、error，提供关联标签、描述与错误状态，补充动态更新和继承禁用回归。
 
 - 修复 Modal/Drawer 打开状态下重挂载丢失滚动锁；弹层焦点按 slot 与开放 Shadow DOM 的渲染顺序遍历，跳过隐藏/禁用控件，避免下层关闭抢焦点及已处理 Escape 的重复关闭。
@@ -38,7 +46,7 @@
 ### 使用与兼容说明
 
 - 全量入口、CommonJS 和 UMD 保持兼容；按需入口使用 ESM。
-- 按需引入需要加载 `webcomponents/style.css`，持久化主题通过 `initTheme()` 恢复。
+- 按需引入需要加载 `silenceui/style.css`，持久化主题通过 `initTheme()` 恢复。
 - 服务端表格设置 `remote`、`total`、`currentPage`，由业务层监听分页与排序事件请求数据。
 - 可展开行关闭虚拟渲染；合并单元格不应跨越详情行。
 - 当前版本仍为 `0.0.0`；本次工作不发布 npm 包或创建版本标签。

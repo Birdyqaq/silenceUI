@@ -2,6 +2,9 @@ import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
 export * from './types';
+export * from './components/icon';
+export * from './components/form/form';
+export * from './components/form/date-range';
 
 // 恢复持久化的主题模式与自定义颜色
 initTheme();

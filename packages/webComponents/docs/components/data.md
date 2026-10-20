@@ -1,5 +1,7 @@
 # 数据展示组件
 
+Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./admin#权限树勾选)。
+
 <ClientOnly><ComponentDemo category="data" /></ClientOnly>
 
 数据展示组件用于卡片、指标、状态、空态、骨架屏和详情信息展示。表格与图片组件有独立页面：[`se-table`](./table)、[`se-image`](./image)、[`se-asset-viewer`](./asset-viewer)。

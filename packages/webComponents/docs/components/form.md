@@ -1,5 +1,7 @@
 # 表单组件
 
+整表规则校验、多选搜索和日期范围见[后台管理增强](./admin)。`su-form` 提供同步/异步校验与错误关联；并非所有控件都支持全部原生约束属性，支持边界详见该页。
+
 <ClientOnly><ComponentDemo category="form" /></ClientOnly>
 
 表单组件以原生控件行为为基础，统一使用主题 token、焦点样式和 `CustomEvent`。复杂选项通过 DOM property 赋值；纯 HTML 场景可使用 `optionsJson`。

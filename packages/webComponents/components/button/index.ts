@@ -4,6 +4,7 @@ import { rippleEffect } from '../../utils/ripple';
 import { findClosestForm } from '../_shared/utils';
 import { styleMap } from './styles';
 import type { ButtonIconPosition, ButtonSize, ButtonType } from './type';
+import '../icon';
 
 @customElement('su-button')
 export class SuButton extends LitElement {
@@ -14,6 +15,7 @@ export class SuButton extends LitElement {
   @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: Boolean, reflect: true }) loading = false;
   @property({ type: String }) iconClass = '';
+  @property({ type: String }) icon = '';
   @property({ type: String }) iconPosition: ButtonIconPosition = 'left';
   @property({ type: String }) rippleColor = '';
   @property({ type: Boolean }) ripple = true;
@@ -79,6 +81,8 @@ export class SuButton extends LitElement {
   }
 
   private renderIcon(position: ButtonIconPosition) {
+    if (this.icon && this.iconPosition === position)
+      return html`<su-icon class="icon ${position}" .name=${this.icon}></su-icon>`;
     if (!this.iconClass || this.iconPosition !== position) return nothing;
     return html`<i class="icon ${position} ${this.iconClass}" aria-hidden="true"></i>`;
   }

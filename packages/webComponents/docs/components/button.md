@@ -2,6 +2,8 @@
 
 常用的操作按钮。
 
+推荐使用新增 `icon` 属性显示本地 Lucide 图标，如 `<su-button icon="plus">新增</su-button>`。详见 [Icon 图标](./icon)；旧 `iconclass` 保留兼容。
+
 ## 基础用法
 
 <ClientOnly>

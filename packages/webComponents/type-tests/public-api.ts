@@ -1,4 +1,9 @@
 import type {
+  SuIcon,
+  SuForm,
+  SuDateRange,
+  FormRule,
+  IconName,
   LineComponent,
   SeAssetViewer,
   SeImage,
@@ -45,11 +50,19 @@ import type {
   seTable,
 } from '../dist/index';
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
+const iconName: IconName = 'search';
+const adminIcon: SuIcon = document.createElement('su-icon');
+adminIcon.name = iconName;
+const rule: FormRule = { required: true, validator: async () => '' };
+const adminForm: SuForm = document.createElement('su-form');
+adminForm.rules = { user: [rule] };
+const dateRange: SuDateRange = document.createElement('su-date-range');
+dateRange.value = ['2026-01-01', '2026-02-01'];
 import type { SuSelect as DirectSuSelect } from '../dist/components/form/select/index';
 import '../dist/index';
-import { setThemeColors, initTheme } from 'webcomponents/theme';
-import type { SuButton as PackageButton } from 'webcomponents/components/button';
-import type { SuTypewriter, TypewriterEffect } from 'webcomponents/components/data/typewriter';
+import { setThemeColors, initTheme } from 'silenceui/theme';
+import type { SuButton as PackageButton } from 'silenceui/components/button';
+import type { SuTypewriter, TypewriterEffect } from 'silenceui/components/data/typewriter';
 const typewriter: SuTypewriter = document.createElement('su-typewriter');
 const effect: TypewriterEffect = 'slide';
 typewriter.texts = ['你好', 'SilenceUI'];

@@ -5,6 +5,7 @@ import FormDemo from './FormDemo.vue';
 import ParallaxHome from './ParallaxHome.vue';
 import TypewriterDemo from './TypewriterDemo.vue';
 import ComponentDemo from './ComponentDemo.vue';
+import AdminDemo from './AdminDemo.vue';
 import './custom-home.css';
 
 export default {
@@ -19,6 +20,7 @@ export default {
     app.component('FormDemo', FormDemo);
     app.component('TypewriterDemo', TypewriterDemo);
     app.component('ComponentDemo', ComponentDemo);
+    app.component('AdminDemo', AdminDemo);
 
     // 导入并注册 Web Components
     if (typeof window !== 'undefined') {

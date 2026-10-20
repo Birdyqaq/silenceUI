@@ -1,29 +1,31 @@
 # SilenceUI Web Components
 
-基于 Lit + UnoCSS 的跨框架 Web Components 组件库，适用于后台管理系统场景。
+基于 Lit 与 CSS 主题变量的跨框架 Web Components 组件库，适用于后台管理系统场景。UnoCSS 为历史构建配置，并非组件内部样式依赖。
+
+后台新增：`su-icon` 本地图标、`su-form` 规则校验、`su-date-range` 日期范围。Select、多级 Menu、Table 筛选与 Tree 权限勾选见文档「后台管理增强」。
 
 > Maintainer: [Birdyqaq](https://github.com/Birdyqaq)
 
 ## 安装
 
 ```bash
-pnpm add webcomponents
+pnpm add silenceui
 ```
 
 ## 使用
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 ```
 
 当前包根入口会注册全部组件，并自动恢复持久化的主题配置。只使用少量组件时可按需注册：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents/components/button';
-import 'webcomponents/components/form/select';
-import { initTheme } from 'webcomponents/theme';
+import 'silenceui/style.css';
+import 'silenceui/components/button';
+import 'silenceui/components/form/select';
+import { initTheme } from 'silenceui/theme';
 
 initTheme();
 ```
@@ -66,9 +68,9 @@ export default defineConfig({
 
 ```vue
 <script setup lang="ts">
-import 'webcomponents/style.css';
-import 'webcomponents';
-import { toggleThemeMode, setThemeColors } from 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
+import { toggleThemeMode, setThemeColors } from 'silenceui';
 </script>
 
 <template>
@@ -83,9 +85,9 @@ import { toggleThemeMode, setThemeColors } from 'webcomponents';
 ## 在 React 中使用
 
 ```tsx
-import 'webcomponents/style.css';
-import 'webcomponents';
-import { toggleThemeMode, setThemeColors, getThemeMode } from 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
+import { toggleThemeMode, setThemeColors, getThemeMode } from 'silenceui';
 import { useEffect, useState } from 'react';
 
 // 订阅主题变化的 hook
@@ -155,7 +157,7 @@ components/
 命令式消息提示：
 
 ```ts
-import { message } from 'webcomponents';
+import { message } from 'silenceui';
 
 message.success('保存成功');
 message.error('请求失败', 5000);
@@ -186,7 +188,7 @@ message.error('请求失败', 5000);
 ```
 
 ```ts
-import { setThemeMode, toggleThemeMode, getThemeMode } from 'webcomponents';
+import { setThemeMode, toggleThemeMode, getThemeMode } from 'silenceui';
 
 toggleThemeMode(); // 明暗互切
 setThemeMode('dark'); // 指定模式
@@ -201,7 +203,7 @@ window.addEventListener('su-theme-change', (e) => {
 ### 自定义主题色
 
 ```ts
-import { setThemeColors, resetThemeColors } from 'webcomponents';
+import { setThemeColors, resetThemeColors } from 'silenceui';
 
 // 传入 hex 色值即可，primary 会自动派生 hover 色和浅色背景
 setThemeColors({ primary: '#7c3aed' });

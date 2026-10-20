@@ -1,8 +1,10 @@
 # 组件总览
 
-SilenceUI 组件围绕后台管理系统组织。应用入口加载 `webcomponents/style.css`，再选择根入口全量注册或 `webcomponents/components/*` 按需注册；两种方式见[安装指南](/guide/installation)。新组件使用 `su-` 前缀，历史兼容组件保留 `se-` 前缀。
+SilenceUI 组件围绕后台管理系统组织。应用入口加载 `silenceui/style.css`，再选择根入口全量注册或 `silenceui/components/*` 按需注册；两种方式见[安装指南](/guide/installation)。新组件使用 `su-` 前缀，历史兼容组件保留 `se-` 前缀。
 
 ## 命名
+
+新增能力见[后台管理增强](./admin)：`su-form`、`su-date-range`、Select 搜索多选、多级 Menu、Table 筛选和权限树勾选。[Icon 图标](./icon) 提供统一的 `su-icon`。
 
 | 前缀  | 说明               | 组件                                                       |
 | ----- | ------------------ | ---------------------------------------------------------- |
@@ -88,7 +90,7 @@ import {
   setThemeColors,
   setThemeMode,
   toggleThemeMode,
-} from 'webcomponents';
+} from 'silenceui';
 
 toggleThemeMode();
 setThemeColors({ primary: '#2563eb' });
