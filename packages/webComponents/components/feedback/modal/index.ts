@@ -1,4 +1,4 @@
-import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import {
   focusFirstElement,
@@ -25,7 +25,7 @@ export class SuModal extends LitElement {
   private previouslyFocused: HTMLElement | null = null;
 
   private onKeydown = (event: KeyboardEvent) => {
-    if (!this.open || !isTopOverlay(this)) return;
+    if (event.defaultPrevented || !this.open || !isTopOverlay(this)) return;
 
     const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
     if (panel) trapFocus(event, panel);
@@ -39,6 +39,7 @@ export class SuModal extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     window.addEventListener('keydown', this.onKeydown);
+    if (this.hasUpdated) this.requestUpdate();
   }
 
   disconnectedCallback() {
@@ -148,24 +149,28 @@ export class SuModal extends LitElement {
     registerOverlay(this);
     lockBodyScroll();
 
-    const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
-    if (panel) focusFirstElement(panel);
+    // 等同一轮插槽内的 Lit 控件完成首次渲染，再查找其内部可聚焦元素。
+    queueMicrotask(() => {
+      const panel = this.shadowRoot?.querySelector<HTMLElement>('.panel');
+      if (this.isConnected && this.open && isTopOverlay(this) && panel) focusFirstElement(panel);
+    });
   }
 
   private deactivateOverlay(restoreFocus = true) {
     if (!this.overlayActive) return;
+    const shouldRestoreFocus = restoreFocus && isTopOverlay(this);
     this.overlayActive = false;
     unregisterOverlay(this);
     unlockBodyScroll();
 
-    if (restoreFocus && this.previouslyFocused?.isConnected) {
+    if (shouldRestoreFocus && this.previouslyFocused?.isConnected) {
       this.previouslyFocused.focus();
     }
     this.previouslyFocused = null;
   }
 
-  protected updated(changedProperties: PropertyValues<this>) {
-    if (!changedProperties.has('open')) return;
+  protected updated() {
+    if (!this.isConnected) return;
     if (this.open) this.activateOverlay();
     else this.deactivateOverlay();
   }

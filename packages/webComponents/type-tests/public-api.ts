@@ -170,6 +170,11 @@ const publicElements: [
 
 publicElements[2].fit = 'contain';
 
+const accessibleTextarea: SuTextarea = document.createElement('su-textarea');
+accessibleTextarea.label = '备注';
+accessibleTextarea.helperText = '请填写补充说明';
+accessibleTextarea.error = false;
+
 // 原生表单回调必须同时存在于源码与发布声明中。
 const nativeFormControls = [
   document.createElement('su-input'),

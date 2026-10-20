@@ -134,9 +134,10 @@ function notify(kind) {
           ><su-button @click="notify('message')">显示消息</su-button
           ><su-button @click="notify('notification')">显示通知</su-button>
         </div>
-        <su-modal ref="modal" title="删除确认" @confirm="report" @close="report"
-          >这是一条可交互的确认信息。</su-modal
-        >
+        <su-modal ref="modal" title="删除确认" @confirm="report" @close="report">
+          <p>这是一条可交互的确认信息，可用 Tab 在输入框与底部按钮之间循环。</p>
+          <su-input label="操作说明" placeholder="输入操作说明" />
+        </su-modal>
         <su-drawer ref="drawer" title="订单详情" @close="report"
           >按 Escape 或点击遮罩关闭。</su-drawer
         >
@@ -178,7 +179,12 @@ function notify(kind) {
         />
         <su-input-number :value.prop="0.2" :step.prop="0.1" @change="report" />
         <su-radio-group :options.prop="choices" @change="report" /><su-switch @change="report" />
-        <su-textarea placeholder="输入备注" @input-change="report" />
+        <su-textarea
+          label="备注"
+          helperText="请填写补充说明"
+          placeholder="输入备注"
+          @input-change="report"
+        />
       </template>
       <output aria-live="polite">{{ result }}</output>
     </div>

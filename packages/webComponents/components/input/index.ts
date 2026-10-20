@@ -1,4 +1,4 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { formNameConverter, FormValueController } from '../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../_shared/styles';
@@ -178,6 +178,7 @@ export class SuInput extends LitElement {
             ?readonly=${this.readonly}
             @input=${this.handleInput}
             aria-invalid=${this.error ? 'true' : 'false'}
+            aria-describedby=${this.helperText ? 'helper-text' : nothing}
             aria-readonly=${this.readonly ? 'true' : 'false'}
           />
           ${this.clearable && this.value
@@ -185,6 +186,7 @@ export class SuInput extends LitElement {
                 class="clear-btn"
                 type="button"
                 aria-label="清空"
+                ?disabled=${this.formValue.disabled || this.readonly}
                 @click=${this.handleClear}
               >
                 ✕
@@ -192,7 +194,9 @@ export class SuInput extends LitElement {
             : ''}
         </div>
         ${this.helperText
-          ? html`<span class="helper-text ${this.error ? 'error' : ''}">${this.helperText}</span>`
+          ? html`<span id="helper-text" class="helper-text ${this.error ? 'error' : ''}"
+              >${this.helperText}</span
+            >`
           : ''}
       </div>
     `;

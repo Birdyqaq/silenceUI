@@ -93,17 +93,40 @@ export class SuTree extends LitElement {
   ];
 
   private get mergedNodes() {
-    if (this.nodes.length > 0) return this.nodes;
-    return parseJsonArray<TreeNode>(this.nodesJson, []);
+    const nodes =
+      Array.isArray(this.nodes) && this.nodes.length > 0
+        ? this.nodes
+        : parseJsonArray<unknown>(this.nodesJson, []);
+    return this.validNodes(nodes);
+  }
+
+  /** 只接纳具备字符串 key/label 的节点；保留原对象作为事件 detail。 */
+  private validNodes(value: unknown): TreeNode[] {
+    if (!Array.isArray(value)) return [];
+    return value.filter(
+      (node): node is TreeNode =>
+        node !== null &&
+        typeof node === 'object' &&
+        typeof node.key === 'string' &&
+        typeof node.label === 'string'
+    );
+  }
+
+  private childrenOf(node: TreeNode) {
+    return this.validNodes(node.children).filter((child) => child !== node);
   }
 
   private get visibleNodes() {
     const visible: VisibleTreeNode[] = [];
+    const visited = new Set<TreeNode>();
     const visit = (nodes: TreeNode[], level: number, parentKey?: string) => {
       nodes.forEach((node) => {
+        if (visited.has(node)) return;
+        visited.add(node);
         visible.push({ node, level, parentKey });
-        if (node.children?.length && this.expandedKeys.includes(node.key)) {
-          visit(node.children, level + 1, node.key);
+        const children = this.childrenOf(node);
+        if (children.length && this.expandedKeys.includes(node.key)) {
+          visit(children, level + 1, node.key);
         }
       });
     };
@@ -112,7 +135,7 @@ export class SuTree extends LitElement {
   }
 
   private toggleNode(node: TreeNode) {
-    if (node.disabled || !node.children?.length) return;
+    if (node.disabled || !this.childrenOf(node).length) return;
     const expanded = !this.expandedKeys.includes(node.key);
     this.expandedKeys = expanded
       ? [...this.expandedKeys, node.key]
@@ -161,11 +184,11 @@ export class SuTree extends LitElement {
     } else if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault();
       this.focusNode((event.key === 'Home' ? enabled[0] : enabled.at(-1))!.node.key);
-    } else if (event.key === 'ArrowRight' && entry.node.children?.length) {
+    } else if (event.key === 'ArrowRight' && this.childrenOf(entry.node).length) {
       event.preventDefault();
       if (!this.expandedKeys.includes(entry.node.key)) this.toggleNode(entry.node);
       else {
-        const child = entry.node.children.find((node) => !node.disabled);
+        const child = this.childrenOf(entry.node).find((node) => !node.disabled);
         if (child) this.focusNode(child.key);
       }
     } else if (event.key === 'ArrowLeft') {
@@ -192,7 +215,7 @@ export class SuTree extends LitElement {
       <div class="tree" role="tree" aria-label="树形列表">
         ${visible.map((entry) => {
           const { node, level } = entry;
-          const hasChildren = Boolean(node.children?.length);
+          const hasChildren = this.childrenOf(node).length > 0;
           const expanded = this.expandedKeys.includes(node.key);
           return html`
             <div class="item" role="presentation" style=${`--tree-level: ${level}`}>

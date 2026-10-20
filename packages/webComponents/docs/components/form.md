@@ -242,19 +242,29 @@
 ## Textarea 多行输入 `su-textarea`
 
 ```html
-<su-textarea placeholder="请输入备注" rows="4"></su-textarea>
+<su-textarea
+  label="备注"
+  helperText="请填写补充说明"
+  placeholder="请输入备注"
+  rows="4"
+></su-textarea>
 ```
 
-| 属性          | 说明       | 类型      | 默认值   |
-| ------------- | ---------- | --------- | -------- |
-| `value`       | 当前值     | `string`  | `''`     |
-| `name`        | 表单字段名 | `string`  | `''`     |
-| `placeholder` | 占位提示   | `string`  | `请输入` |
-| `rows`        | 行数       | `number`  | `4`      |
-| `disabled`    | 是否禁用   | `boolean` | `false`  |
-| `readonly`    | 是否只读   | `boolean` | `false`  |
+| 属性          | 说明           | 类型      | 默认值   |
+| ------------- | -------------- | --------- | -------- |
+| `value`       | 当前值         | `string`  | `''`     |
+| `name`        | 表单字段名     | `string`  | `''`     |
+| `placeholder` | 占位提示       | `string`  | `请输入` |
+| `rows`        | 行数           | `number`  | `4`      |
+| `label`       | 内部关联标签   | `string`  | `''`     |
+| `helperText`  | 辅助或错误说明 | `string`  | `''`     |
+| `error`       | 错误状态       | `boolean` | `false`  |
+| `disabled`    | 是否禁用       | `boolean` | `false`  |
+| `readonly`    | 是否只读       | `boolean` | `false`  |
 
 事件：`input-change`，detail 为 `{ value: string }`。
+
+Textarea 的 `label` 与内部 textarea 关联，`helperText` 通过 `aria-describedby` 提供描述，`error` 设置 `aria-invalid`。它们不自动执行校验；可由业务层动态更新。
 
 ## FormItem 表单项 `su-form-item`
 
