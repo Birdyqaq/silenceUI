@@ -40,7 +40,11 @@ const valid = await form.validate(); // Promise<boolean>，失败时聚焦首个
 | validate 事件     | `{ valid, errors }`                                                 |
 | valid-submit 事件 | `{ values }`；只有成功校验才发出                                    |
 
-异步校验遇到编辑、重置、卸载或新一次校验会丢弃旧结果；validator 抛错视为校验失败。禁用字段不校验、不包含于 values。推荐一个 name 对应一个自定义控件；多个同名字段会合并 values。
+异步校验遇到编辑、重置、卸载或新一次校验会丢弃旧结果；校验期间通过代码修改值、禁用状态、字段集合或规则，也会让本次结果失效。`validate()` 对失效结果返回 false，提交时再次确认字段仍与通过校验时一致。validator 抛错视为校验失败。
+
+编辑字段只清除该字段的规则错误，其他字段的错误继续保留。原生控件由业务设置的 `setCustomValidity()` 错误会保留，FormItem 原有帮助文案在规则错误清除后恢复。业务修改其他依赖字段后，可主动调用 `validate()` 重检跨字段规则。
+
+禁用字段不校验、不包含于 values。推荐一个 name 对应一个自定义控件；多个同名字段的成功提交值合并为扁平数组，每组规则只执行一次。未勾选的复选框/单选按钮、提交按钮及空 name 不进入 values；原生文件输入提供 File 数组。原生 input 等字段的约束错误只在其参与原生校验时生效。
 
 共享 `FormValueController` 现在把内部原生约束桥接到 `ElementInternals.setValidity`。Input 支持 `required`、`pattern`，Textarea/Select 支持 `required`。FormItem 的 label/message 会同步为自定义控件内部输入元素的可访问名称/描述，错误通过同一 Shadow DOM 内的隐藏文案关联，而不是无效的跨 Shadow DOM ID 引用。原生 input 等直接插槽使用者应自行提供原生 label/描述。
 
@@ -52,7 +56,11 @@ const valid = await form.validate(); // Promise<boolean>，失败时聚焦首个
 
 本地搜索不区分大小写，已选项始终保留，避免搜索导致误取消。多选保持原生列表交互，桌面端可使用 Ctrl/Command 或 Shift 选择。`change.detail.value` 在多选时是数组，单选时仍是字符串。
 
+搜索只更新候选项并发出 `search`，不视为字段值编辑，因此不会清除已有规则错误或取消正在执行的字段校验。禁用时不会发出搜索事件。选项必须包含字符串 label 与字符串或有限数值 value；非法项会忽略，序列化后相同的 value 只保留第一项。禁用选项不写入提交数据。
+
 `remote` 模式只发出 `search` 事件 `{ query }`，不执行本地过滤；调用方负责请求、防抖、过期响应保护和更新 options/loading。loading 阻止选择和清空，但允许继续搜索。
+
+远程响应替换 options 后，组件会保留已选项的标签与值，继续选择新选项不会丢失之前的选择。只缓存当前已选项，取消选择后即可清理缓存；尚未加载标签的预设值暂以 value 显示。
 
 ## 日期范围 `su-date-range`
 
@@ -65,6 +73,8 @@ const valid = await form.validate(); // Promise<boolean>，失败时聚焦首个
 `MenuItem` 新增 `children`、`disabled`、`iconName`；旧 `icon` 文本兼容保留。`expandedKeys`（仅 property）控制展开。
 
 点击父节点只展开/收起，并发出 `expand` `{ key, expanded }`；点击叶子保留原 `select` 事件结构。上下/Home/End 在可见可用项间移动，左右键展开或返回上级。收起模式保持内联层级展开和标题提示，暂不提供悬浮子菜单。
+
+右方向键在已展开父节点上只进入可用的直属子项；没有可用子项或当前为叶子时，焦点保持原位。
 
 ## Table 列筛选
 

@@ -32,11 +32,19 @@ export class SuSelect extends LitElement {
 
   private defaultValue = '';
   private defaultValues: string[] = [];
+  private selectedOptions = new Map<string, SelectOption>();
   private readonly formValue: FormValueController = new FormValueController(this, () => {
     if (this.formValue.disabled) return null;
-    if (!this.multiple) return this.value;
+    if (!this.multiple)
+      return this.mergedOptions.find((option) => String(option.value) === this.value)?.disabled
+        ? null
+        : this.value;
     const data = new FormData();
-    if (this.name) this.values.forEach((value) => data.append(this.name, value));
+    if (this.name)
+      this.values.forEach((value) => {
+        if (!this.mergedOptions.find((option) => String(option.value) === value)?.disabled)
+          data.append(this.name, value);
+      });
     return data;
   });
 
@@ -87,9 +95,52 @@ export class SuSelect extends LitElement {
     `,
   ];
 
+  private get sourceOptions(): SelectOption[] {
+    const source =
+      Array.isArray(this.options) && this.options.length
+        ? this.options
+        : parseJsonArray<unknown>(this.optionsJson, []);
+    const seen = new Set<string>();
+    return source.filter((option): option is SelectOption => {
+      if (
+        !option ||
+        typeof option !== 'object' ||
+        !('label' in option) ||
+        typeof option.label !== 'string' ||
+        !('value' in option) ||
+        (typeof option.value !== 'string' &&
+          (typeof option.value !== 'number' || !Number.isFinite(option.value)))
+      )
+        return false;
+      const key = String(option.value);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   private get mergedOptions(): SelectOption[] {
-    if (this.options.length > 0) return this.options;
-    return parseJsonArray<SelectOption>(this.optionsJson, []);
+    const options = this.sourceOptions;
+    const keys = new Set(options.map((option) => String(option.value)));
+    return [
+      ...options,
+      ...Array.from(this.selectedOptions.values()).filter(
+        (option) => !keys.has(String(option.value))
+      ),
+    ];
+  }
+
+  /** Retain only selected labels when a remote response replaces the current option page. */
+  protected willUpdate() {
+    const options = this.sourceOptions;
+    const selected = this.multiple ? this.values : this.value ? [this.value] : [];
+    this.selectedOptions = new Map(
+      selected.map((value) => [
+        value,
+        options.find((option) => String(option.value) === value) ??
+          this.selectedOptions.get(value) ?? { value, label: value },
+      ])
+    );
   }
 
   private handleChange(event: Event) {
@@ -98,6 +149,16 @@ export class SuSelect extends LitElement {
     this.value = target.value;
     if (this.multiple) this.values = Array.from(target.selectedOptions, (option) => option.value);
     this.emitChange();
+  }
+
+  private handleSearch(event: Event) {
+    // Search edits options, not the field value; do not invalidate form rules for a selection that is unchanged.
+    event.stopPropagation();
+    if (this.formValue.disabled) return;
+    this.query = (event.target as HTMLInputElement).value;
+    this.dispatchEvent(
+      new CustomEvent('search', { detail: { query: this.query }, bubbles: true, composed: true })
+    );
   }
 
   private emitChange() {
@@ -160,16 +221,8 @@ export class SuSelect extends LitElement {
               aria-label=${`搜索${this.label || '选项'}`}
               .value=${this.query}
               ?disabled=${this.formValue.disabled}
-              @input=${(event: Event) => {
-                this.query = (event.target as HTMLInputElement).value;
-                this.dispatchEvent(
-                  new CustomEvent('search', {
-                    detail: { query: this.query },
-                    bubbles: true,
-                    composed: true,
-                  })
-                );
-              }}
+              @input=${this.handleSearch}
+              @change=${(event: Event) => event.stopPropagation()}
             />`
           : nothing}
         <select

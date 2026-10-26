@@ -151,7 +151,12 @@ export class SuMenu extends LitElement {
       if (event.key === 'ArrowRight') {
         if (entry.item.children?.length && !this.expandedKeys.includes(entry.item.key))
           this.toggle(entry.item);
-        else items[currentIndex + 1]?.focus();
+        else if (entry.item.children?.length) {
+          const child = this.visibleItems.find(
+            ({ item, parent }) => parent === entry.item.key && !item.disabled
+          );
+          if (child) items.find((item) => item.dataset.key === child.item.key)?.focus();
+        }
       } else if (this.expandedKeys.includes(entry.item.key)) this.toggle(entry.item);
       else items.find((item) => item.dataset.key === entry.parent)?.focus();
       return;
