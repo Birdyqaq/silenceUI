@@ -24,6 +24,7 @@ export class FormValueController implements ReactiveController {
   private readonly internals: ElementInternals | null;
   private inheritedDisabled = false;
   private customError = '';
+  private itemLabels = new WeakMap<HTMLElement, { original: string | null; applied: string }>();
 
   constructor(
     private readonly host: FormControlHost,
@@ -41,6 +42,12 @@ export class FormValueController implements ReactiveController {
 
   hostUpdated() {
     this.sync();
+  }
+
+  hostConnected() {
+    void this.host.updateComplete.then(() => {
+      if (this.host.isConnected) this.sync();
+    });
   }
 
   sync() {
@@ -92,7 +99,19 @@ export class FormValueController implements ReactiveController {
     }
     if (hint) hint.textContent = description;
     controls.forEach((control) => {
-      if (item?.label && !control.labels?.length) control.setAttribute('aria-label', item.label);
+      const previous = this.itemLabels.get(control);
+      if (item?.label && !control.labels?.length) {
+        const current = control.getAttribute('aria-label');
+        const original = previous && current === previous.applied ? previous.original : current;
+        this.itemLabels.set(control, { original, applied: item.label });
+        control.setAttribute('aria-label', item.label);
+      } else if (previous) {
+        if (control.getAttribute('aria-label') === previous.applied) {
+          if (previous.original == null) control.removeAttribute('aria-label');
+          else control.setAttribute('aria-label', previous.original);
+        }
+        this.itemLabels.delete(control);
+      }
       const ids = (control.getAttribute('aria-describedby') ?? '')
         .split(' ')
         .filter((id) => id && id !== 'su-form-description');

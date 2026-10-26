@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { FormValueController, formNameConverter } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
+import { isValidDateValue } from '../../_shared/date';
 
 @customElement('su-date-range')
 export class SuDateRange extends LitElement {
@@ -18,8 +19,7 @@ export class SuDateRange extends LitElement {
   private readonly formValue = new FormValueController(this, () => {
     const data = new FormData();
     if (this.name && !this.formValue.disabled) {
-      data.append(this.name, this.value[0] || '');
-      data.append(this.name, this.value[1] || '');
+      this.dates.forEach((value) => data.append(this.name, value));
     }
     return data;
   });
@@ -53,8 +53,14 @@ export class SuDateRange extends LitElement {
       }
     `,
   ];
+  /** Keep rendering safe for untyped consumers; invalid input is reported rather than silently accepted. */
+  private get dates(): [string, string] {
+    return [0, 1].map((index) =>
+      Array.isArray(this.value) && typeof this.value[index] === 'string' ? this.value[index] : ''
+    ) as [string, string];
+  }
   firstUpdated() {
-    this.initial = [...this.value];
+    this.initial = [...this.dates];
   }
   formDisabledCallback(disabled: boolean) {
     this.formValue.setDisabled(disabled);
@@ -65,15 +71,23 @@ export class SuDateRange extends LitElement {
   formStateRestoreCallback(state: string | File | FormData | null) {
     if (state instanceof FormData) {
       const values = state.getAll(this.name);
-      this.value = [String(values[0] ?? ''), String(values[1] ?? '')];
+      this.value = [
+        typeof values[0] === 'string' ? values[0] : '',
+        typeof values[1] === 'string' ? values[1] : '',
+      ];
     }
   }
   focus(options?: FocusOptions) {
-    this.shadowRoot?.querySelector('input')?.focus(options);
+    const controls = Array.from(this.shadowRoot?.querySelectorAll('input') ?? []).filter(
+      (control) => !control.disabled
+    );
+    (
+      controls.find((control) => control.willValidate && !control.validity.valid) ?? controls[0]
+    )?.focus(options);
   }
   private change(event: Event, index: number) {
     if (this.formValue.disabled || this.readonly) return;
-    const value: [string, string] = [...this.value];
+    const value: [string, string] = [...this.dates];
     value[index] = (event.target as HTMLInputElement).value;
     this.value = value;
     this.dispatchEvent(
@@ -81,12 +95,21 @@ export class SuDateRange extends LitElement {
     );
   }
   protected updated() {
-    const end = this.shadowRoot?.querySelector<HTMLInputElement>('#end');
-    end?.setCustomValidity(
-      this.value[0] && this.value[1] && this.value[0] > this.value[1]
-        ? '结束日期不能早于开始日期'
-        : ''
-    );
+    const dates = this.dates;
+    const validShape =
+      Array.isArray(this.value) &&
+      this.value.length === 2 &&
+      this.value.every((value) => typeof value === 'string');
+    this.shadowRoot?.querySelectorAll('input').forEach((control, index) => {
+      let message = !validShape
+        ? '日期范围必须是包含两个日期字符串的数组'
+        : dates[index] && !isValidDateValue(dates[index])
+          ? `${index ? '结束' : '开始'}日期格式无效，请使用 YYYY-MM-DD`
+          : '';
+      if (!message && index === 1 && dates.every(isValidDateValue) && dates[0] > dates[1])
+        message = '结束日期不能早于开始日期';
+      control.setCustomValidity(message);
+    });
     this.formValue.sync();
   }
   render() {
@@ -98,7 +121,7 @@ export class SuDateRange extends LitElement {
             <input
               id=${index ? 'end' : 'start'}
               type="date"
-              .value=${this.value[index] || ''}
+              .value=${isValidDateValue(this.dates[index]) ? this.dates[index] : ''}
               min=${this.min || nothing}
               max=${this.max || nothing}
               ?required=${this.required}

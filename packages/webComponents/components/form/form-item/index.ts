@@ -55,9 +55,9 @@ export class SuFormItem extends LitElement {
   ];
 
   updated() {
-    this.querySelectorAll<HTMLElement>('[name]').forEach((field) =>
-      getFormController(field)?.sync()
-    );
+    this.querySelectorAll<HTMLElement>('*').forEach((field) => {
+      if (field.closest('su-form-item') === this) getFormController(field)?.sync();
+    });
   }
 
   render() {

@@ -48,6 +48,8 @@ const valid = await form.validate(); // Promise<boolean>，失败时聚焦首个
 
 共享 `FormValueController` 现在把内部原生约束桥接到 `ElementInternals.setValidity`。Input 支持 `required`、`pattern`，Textarea/Select 支持 `required`。FormItem 的 label/message 会同步为自定义控件内部输入元素的可访问名称/描述，错误通过同一 Shadow DOM 内的隐藏文案关联，而不是无效的跨 Shadow DOM ID 引用。原生 input 等直接插槽使用者应自行提供原生 label/描述。
 
+FormItem 的动态标签与帮助文案同步也适用于未设置 name 的控件。清空 FormItem 标签或把控件移到其他位置时，会移除旧的继承名称/描述，恢复控件原有的标签或占位名称；控件自己的标签和业务显式设置的名称会保留。
+
 这不代表所有控件已经提供所有 HTML 约束属性：级联选择、单选组等复杂控件应通过 rules 定义业务规则。无 ElementInternals 的环境可显式调用 validate，但原生提交行为仍需遵循兼容性说明。
 
 ## Select 搜索和多选
@@ -67,6 +69,8 @@ const valid = await form.validate(); // Promise<boolean>，失败时聚焦首个
 新增独立组件，保留 `su-date-picker` 的单日期行为。`value` 为仅 property 的 `[开始日期, 结束日期]`，格式 `YYYY-MM-DD`；支持 `name`、`label`、`min`、`max`、`required`、`disabled`、`readonly`，`change.detail.value` 为新数组。
 
 同一 name 顺序提交两项，使用 `formData.getAll(name)` 获取。结束早于开始会校验失败，不会偷偷交换输入。支持原生表单重置和继承 fieldset 禁用；暂不含时间、快捷范围和自定义日历弹层。
+
+代码赋值也会校验真实日历日期（包括闰年），例如 `2026-02-29`、`2026-04-31` 或缺少起止两项的值都会使校验失败。浏览器清空无效日期输入的显示时，组件仍保留原始 value 并报告错误，避免静默提交无效数据。更正 value 后会清除这些错误；整表校验失败或调用 focus() 时，优先聚焦范围内实际出错的可用日期输入框。
 
 ## 多级 Menu
 
