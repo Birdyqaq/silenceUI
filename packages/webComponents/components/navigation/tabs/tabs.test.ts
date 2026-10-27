@@ -33,6 +33,7 @@ it('closes active tabs and focuses an enabled neighbor', async () => {
   const tabs = await setup();
   const change = vi.fn();
   tabs.addEventListener('change', change);
+  tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!.focus();
   tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!.click();
   await tabs.updateComplete;
   expect(tabs.items.map((item) => item.key)).toEqual(['b', 'c']);
@@ -122,4 +123,63 @@ it('navigates relative to focus rather than selection', async () => {
   last.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
   await tabs.updateComplete;
   expect((tabs.shadowRoot!.activeElement as HTMLElement).dataset.key).toBe('a');
+});
+
+it('does not emit close for a tab removed before the next render', async () => {
+  const tabs = await setup();
+  const button = tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!;
+  const close = vi.fn();
+  tabs.addEventListener('close', close);
+  tabs.items = tabs.items.slice(1);
+  button.click();
+  expect(close).not.toHaveBeenCalled();
+  await tabs.updateComplete;
+});
+
+it('does not steal focus from a dialog opened by a change listener', async () => {
+  const tabs = await setup();
+  const external = document.createElement('button');
+  document.body.append(external);
+  tabs.addEventListener('change', () => external.focus());
+  tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!.focus();
+  tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!.click();
+  await tabs.updateComplete;
+  expect(document.activeElement).toBe(external);
+});
+
+it('preserves tab and panel identity when items reorder', async () => {
+  const tabs = await setup();
+  const tab = tabs.shadowRoot!.querySelector('.tab[data-key="a"]')!;
+  const panel = tabs.shadowRoot!.getElementById(tab.getAttribute('aria-controls')!)!;
+  tabs.items = [...tabs.items].reverse();
+  await tabs.updateComplete;
+  const reordered = tabs.shadowRoot!.querySelector('.tab[data-key="a"]')!;
+  expect(reordered).toBe(tab);
+  expect(tabs.shadowRoot!.getElementById(reordered.getAttribute('aria-controls')!)!).toBe(panel);
+});
+
+it('does not override focus moved by a keyboard change listener', async () => {
+  const tabs = await setup();
+  const external = document.createElement('button');
+  document.body.append(external);
+  tabs.addEventListener('change', () => external.focus());
+  const first = tabs.shadowRoot!.querySelector<HTMLButtonElement>('.tab')!;
+  first.focus();
+  first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  await tabs.updateComplete;
+  expect(tabs.activeKey).toBe('c');
+  expect(document.activeElement).toBe(external);
+});
+
+it('restores focus after closing a tab inside another shadow host', async () => {
+  const tabs = await setup();
+  const wrapper = document.createElement('div');
+  wrapper.attachShadow({ mode: 'open' }).append(tabs);
+  document.body.append(wrapper);
+  await tabs.updateComplete;
+  const close = tabs.shadowRoot!.querySelector<HTMLButtonElement>('.close')!;
+  close.focus();
+  close.click();
+  await tabs.updateComplete;
+  expect((tabs.shadowRoot!.activeElement as HTMLElement)?.dataset.key).toBe('c');
 });

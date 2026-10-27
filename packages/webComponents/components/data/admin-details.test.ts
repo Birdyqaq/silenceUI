@@ -111,6 +111,35 @@ describe('Collapse', () => {
   });
 });
 
+describe('Collapse dynamic state', () => {
+  it('ignores stale clicks after removal or disabling before rendering', async () => {
+    const element = await collapse();
+    const button = element.shadowRoot!.querySelector<HTMLButtonElement>('button')!;
+    const change = vi.fn();
+    element.addEventListener('change', change);
+    element.items = element.items.map((item) => ({ ...item, disabled: true }));
+    button.click();
+    expect(change).not.toHaveBeenCalled();
+    element.items = [];
+    button.click();
+    expect(change).not.toHaveBeenCalled();
+    await element.updateComplete;
+  });
+
+  it('keeps heading and panel nodes associated with their key on reorder', async () => {
+    const element = await collapse();
+    const button = element.shadowRoot!.querySelector<HTMLButtonElement>('button')!;
+    const panel = element.shadowRoot!.getElementById(button.getAttribute('aria-controls')!)!;
+    element.items = [...element.items].reverse();
+    await element.updateComplete;
+    const moved = [...element.shadowRoot!.querySelectorAll('button')].find((entry) =>
+      entry.textContent!.includes('账号信息')
+    )!;
+    expect(moved).toBe(button);
+    expect(element.shadowRoot!.getElementById(moved.getAttribute('aria-controls')!)!).toBe(panel);
+  });
+});
+
 describe('Timeline', () => {
   it('renders an accessible ordered log with optional details and statuses', async () => {
     const element = document.createElement('su-timeline');

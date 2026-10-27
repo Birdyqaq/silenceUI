@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 import { parseJsonArray } from '../../_shared/utils';
 
@@ -120,12 +121,34 @@ export class SuTabs extends LitElement {
     return !item.disabled && (item.closable ?? this.closable);
   }
 
+  /** 穿透开放 Shadow DOM 检查焦点，避免嵌套宿主误判或抢走业务弹层焦点。 */
+  private canRestoreFocus() {
+    let active = this.ownerDocument.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    if (
+      active === this.ownerDocument.body ||
+      active === this ||
+      (active && this.renderRoot.contains(active))
+    )
+      return true;
+    let root = this.getRootNode();
+    while (root instanceof ShadowRoot) {
+      if (active === root.host) return true;
+      root = root.host.getRootNode();
+    }
+    return false;
+  }
+
   /** 允许宿主取消关闭；关闭当前页优先选择右侧可用页，再选择左侧。 */
   private onClose(item: TabItem) {
-    if (!this.canClose(item)) return;
+    const key = item.key;
+    const latest = this.mergedItems.find((entry) => entry.key === key);
+    if (!latest || !this.canClose(latest)) return;
+    item = latest;
+    const restoreFocus = Boolean(this.shadowRoot?.activeElement?.closest('.nav'));
     const allowed = this.dispatchEvent(
       new CustomEvent('close', {
-        detail: { key: item.key, item },
+        detail: { key, item },
         cancelable: true,
         bubbles: true,
         composed: true,
@@ -133,12 +156,12 @@ export class SuTabs extends LitElement {
     );
     if (!allowed) return;
     const items = this.mergedItems;
-    const index = items.findIndex((entry) => entry.key === item.key);
+    const index = items.findIndex((entry) => entry.key === key);
     if (index < 0 || !this.canClose(items[index])) return;
     const previous = this.currentKey;
-    const remaining = items.filter((entry) => entry.key !== item.key);
+    const remaining = items.filter((entry) => entry.key !== key);
     const next =
-      previous === item.key
+      previous === key
         ? (items.slice(index + 1).find((entry) => !entry.disabled) ??
           items
             .slice(0, index)
@@ -158,7 +181,8 @@ export class SuTabs extends LitElement {
         })
       );
     void this.updateComplete.then(() => {
-      if (this.isConnected)
+      // 业务回调可能打开对话框；只有焦点仍在本组件或因移除回到 body 时才恢复。
+      if (this.isConnected && restoreFocus && this.canRestoreFocus())
         this.renderRoot.querySelector<HTMLButtonElement>('.tab[tabindex="0"]')?.focus();
     });
   }
@@ -220,7 +244,7 @@ export class SuTabs extends LitElement {
       const button = Array.from(
         this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.tab') ?? []
       ).find((item) => item.dataset.key === nextItem.key);
-      if (this.isConnected && this.currentKey === nextItem.key) {
+      if (this.isConnected && this.currentKey === nextItem.key && this.canRestoreFocus()) {
         button?.focus();
         button?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
       }
@@ -233,7 +257,9 @@ export class SuTabs extends LitElement {
 
     return html`
       <div class="nav" role="tablist" aria-label=${this.label} @keydown=${this.onKeyDown}>
-        ${items.map(
+        ${repeat(
+          items,
+          (item) => item.key,
           (item, index) => html`
             <div class="tab-wrap" role="presentation">
               <button
@@ -265,7 +291,9 @@ export class SuTabs extends LitElement {
           `
         )}
       </div>
-      ${items.map(
+      ${repeat(
+        items,
+        (item) => item.key,
         (item, index) =>
           html`<div
             id=${`${this.idPrefix}-panel-${index}`}

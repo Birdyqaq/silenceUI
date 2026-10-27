@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 export interface CollapseItem {
@@ -85,7 +86,9 @@ export class SuCollapse extends LitElement {
   }
 
   private toggle(item: CollapseItem) {
-    if (item.disabled) return;
+    const latest = this.entries.find((entry) => entry.key === item.key);
+    if (!latest || latest.disabled) return;
+    item = latest;
     const keys = this.opened;
     this.activeKeys = keys.includes(item.key)
       ? keys.filter((key) => key !== item.key)
@@ -131,7 +134,9 @@ export class SuCollapse extends LitElement {
 
   render() {
     const opened = this.opened;
-    return html`${this.entries.map(
+    return html`${repeat(
+      this.entries,
+      (item) => item.key,
       (item, index) => html`
         <section>
           <button
