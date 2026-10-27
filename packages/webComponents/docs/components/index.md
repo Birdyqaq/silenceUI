@@ -29,6 +29,8 @@ SilenceUI 组件围绕后台管理系统组织。应用入口加载 `silenceui/s
 
 ## 数据展示
 
+[Collapse 折叠面板与 Timeline 时间线](./admin-details) 支持配置分组和审批记录；其余后台缺口及优先级见[后台扩展清单](/guide/admin-roadmap)。
+
 [Typewriter 打字机](./typewriter)：`su-typewriter` 提供五种文字效果、删除轮播、暂停重播和主题色适配；支持 `text-complete`、`complete` 事件。
 
 | 组件         | 标签              | 说明                                                                   | 主要事件                                                                                                     |

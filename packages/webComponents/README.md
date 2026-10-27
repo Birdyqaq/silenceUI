@@ -8,6 +8,8 @@
 
 ## 安装
 
+后台详情新增：`su-collapse` 折叠面板（多开/手风琴、键盘导航、富内容插槽）、`su-timeline` 时间线（状态、说明与反序）。按需路径为 `silenceui/components/data/collapse` 和 `silenceui/components/data/timeline`。
+
 ```bash
 pnpm add silenceui
 ```

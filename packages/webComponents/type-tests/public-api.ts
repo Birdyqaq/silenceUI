@@ -1,4 +1,8 @@
 import type {
+  SuCollapse,
+  CollapseItem,
+  SuTimeline,
+  TimelineItem,
   SuIcon,
   SuForm,
   SuDateRange,
@@ -50,6 +54,14 @@ import type {
   seTable,
 } from '../dist/index';
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
+import type { SuCollapse as DirectCollapse } from '../dist/components/data/collapse/index';
+import type { SuTimeline as DirectTimeline } from '../dist/components/data/timeline/index';
+const detailPanels: CollapseItem[] = [{ key: 'account', label: '账号' }];
+const detailCollapse: SuCollapse & DirectCollapse = document.createElement('su-collapse');
+detailCollapse.items = detailPanels;
+const logItems: TimelineItem[] = [{ label: '已通过', status: 'success' }];
+const detailTimeline: SuTimeline & DirectTimeline = document.createElement('su-timeline');
+detailTimeline.items = logItems;
 const iconName: IconName = 'search';
 const adminIcon: SuIcon = document.createElement('su-icon');
 adminIcon.name = iconName;

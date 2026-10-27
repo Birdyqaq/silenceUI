@@ -2,6 +2,8 @@ import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
 export * from './types';
+export * from './components/data/collapse';
+export * from './components/data/timeline';
 export * from './components/icon';
 export * from './components/form/form';
 export * from './components/form/date-range';
