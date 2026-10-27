@@ -26,8 +26,7 @@ async function check(control: HTMLElementTagNameMap['su-transfer'], side: string
   const input = control.shadowRoot!.querySelector<HTMLInputElement>(
     `.${side} .row [data-key="${key}"]`
   )!;
-  input.checked = true;
-  input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  if (!input.checked) input.click();
   await control.updateComplete;
 }
 async function search(control: HTMLElementTagNameMap['su-transfer'], side: string, query: string) {
@@ -269,4 +268,47 @@ it('removes both stale filters when searching is disabled', async () => {
   expect(control.shadowRoot!.querySelectorAll('.left .row')).toHaveLength(2);
   expect(control.shadowRoot!.querySelectorAll('.right .row')).toHaveLength(1);
   expect(control.targetKeys).toEqual(['b']);
+});
+
+it('preserves form rule errors until checked items are actually moved', async () => {
+  const form = document.createElement('su-form');
+  form.innerHTML = '<form novalidate><su-transfer name="members"></su-transfer></form>';
+  form.rules = { members: [{ required: true, message: '请先移动人员' }] };
+  document.body.append(form);
+  await form.updateComplete;
+  const control = form.querySelector('su-transfer')!;
+  control.items = items;
+  await control.updateComplete;
+  expect(await form.validate()).toBe(false);
+  control
+    .shadowRoot!.querySelector<HTMLInputElement>('.left .row input')!
+    .dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+  expect(form.errors.members).toBe('请先移动人员');
+  await check(control, 'left', 'a');
+  expect(form.errors.members).toBe('请先移动人员');
+  const all = control.shadowRoot!.querySelector<HTMLInputElement>('.left .all input')!;
+  all.click();
+  await control.updateComplete;
+  expect(form.errors.members).toBe('请先移动人员');
+  await move(control, 'right');
+  expect(await form.validate()).toBe(true);
+});
+
+it('does not repeatedly normalize the source for every checked row', async () => {
+  const control = await mount();
+  let reads = 0;
+  control.items = Array.from({ length: 200 }, (_, index) => ({
+    key: String(index),
+    get label() {
+      reads++;
+      return `成员 ${index}`;
+    },
+  }));
+  await control.updateComplete;
+  reads = 0;
+  control.shadowRoot!.querySelector<HTMLInputElement>('.left .all input')!.click();
+  await control.updateComplete;
+  expect(control.shadowRoot!.querySelectorAll('.row input:checked')).toHaveLength(200);
+  // 固定渲染开销允许多次线性遍历，但不能按每个已勾选 key 重建全列表。
+  expect(reads).toBeLessThan(20000);
 });

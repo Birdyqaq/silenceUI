@@ -178,12 +178,19 @@ export class SuTransfer extends LitElement {
       this.leftQuery = '';
       this.rightQuery = '';
     }
-    this.leftChecked = this.leftChecked.filter((key) =>
-      this.rows('left', false).some((item) => item.key === key && !item.disabled)
+    // 每侧只归一化一次，避免全选后按每个 key 重建整个源列表。
+    const left = new Set(
+      this.rows('left', false)
+        .filter((item) => !item.disabled)
+        .map((item) => item.key)
     );
-    this.rightChecked = this.rightChecked.filter((key) =>
-      this.rows('right', false).some((item) => item.key === key && !item.disabled)
+    const right = new Set(
+      this.rows('right', false)
+        .filter((item) => !item.disabled)
+        .map((item) => item.key)
     );
+    this.leftChecked = this.leftChecked.filter((key) => left.has(key));
+    this.rightChecked = this.rightChecked.filter((key) => right.has(key));
     if (this.formValue.disabled) {
       this.leftChecked = [];
       this.rightChecked = [];
@@ -236,20 +243,23 @@ export class SuTransfer extends LitElement {
   }
   private toggleAll(side: Direction, checked: boolean) {
     if (this.formValue.disabled) return;
-    const visible = this.rows(side)
-      .filter((item) => !item.disabled)
-      .map((item) => item.key);
+    const visible = new Set(
+      this.rows(side)
+        .filter((item) => !item.disabled)
+        .map((item) => item.key)
+    );
     this.setChecked(
       side,
       checked
         ? choiceKeys([...this.checked(side), ...visible])
-        : this.checked(side).filter((key) => !visible.includes(key))
+        : this.checked(side).filter((key) => !visible.has(key))
     );
   }
   private movable(direction: Direction) {
     const side = direction === 'right' ? 'left' : 'right';
+    const checked = new Set(this.checked(side));
     return this.rows(side)
-      .filter((item) => !item.disabled && this.checked(side).includes(item.key))
+      .filter((item) => !item.disabled && checked.has(item.key))
       .map((item) => item.key);
   }
 
@@ -257,15 +267,16 @@ export class SuTransfer extends LitElement {
     if (this.formValue.disabled) return;
     const movedKeys = this.movable(direction);
     if (!movedKeys.length) return;
+    const moved = new Set(movedKeys);
     const restoreFocus = Boolean(this.shadowRoot?.activeElement?.matches('.move'));
     this.targetKeys =
       direction === 'right'
         ? choiceKeys([...this.keys, ...movedKeys])
-        : this.keys.filter((key) => !movedKeys.includes(key));
+        : this.keys.filter((key) => !moved.has(key));
     const side = direction === 'right' ? 'left' : 'right';
     this.setChecked(
       side,
-      this.checked(side).filter((key) => !movedKeys.includes(key))
+      this.checked(side).filter((key) => !moved.has(key))
     );
     this.dispatchEvent(
       new CustomEvent('change', {
@@ -290,7 +301,8 @@ export class SuTransfer extends LitElement {
     const title = side === 'left' ? '可选项' : '已选项';
     const rows = this.rows(side);
     const enabled = rows.filter((item) => !item.disabled);
-    const count = enabled.filter((item) => this.checked(side).includes(item.key)).length;
+    const checked = new Set(this.checked(side));
+    const count = enabled.filter((item) => checked.has(item.key)).length;
     const disabled = this.formValue.disabled;
     return html`<section class="panel ${side}" aria-label=${title}>
       ${side === 'left'
@@ -351,7 +363,7 @@ export class SuTransfer extends LitElement {
                 ><input
                   type="checkbox"
                   data-key=${item.key}
-                  .checked=${this.checked(side).includes(item.key)}
+                  .checked=${checked.has(item.key)}
                   ?disabled=${disabled || item.disabled}
                   @change=${(event: Event) => {
                     event.stopPropagation();
@@ -371,7 +383,7 @@ export class SuTransfer extends LitElement {
     return html`${this.label
         ? html`<label class="field-label" for="transfer-anchor">${this.label}</label>`
         : nothing}
-      <div class="transfer">
+      <div class="transfer" @input=${(event: Event) => event.stopPropagation()}>
         ${this.renderPanel('left')}
         <div class="actions">
           <button
