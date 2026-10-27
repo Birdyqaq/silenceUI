@@ -166,6 +166,8 @@
 
 `current` 为当前步骤下标，从 0 开始；之前的步骤显示为已完成。
 
+非法步骤项会被忽略，current 按有效步骤列表计算。负数按 0、小数向下取整，NaN/Infinity 按 0 展示；current 大于等于有效步骤数时，所有步骤标记为已完成且没有当前项。归一化只影响展示，不修改传入属性；代码更新 items/current 后自动刷新样式和可访问状态。
+
 | 属性        | 说明                            | 类型         | 默认值 |
 | ----------- | ------------------------------- | ------------ | ------ |
 | `items`     | 步骤项，需通过 JS property 设置 | `StepItem[]` | `[]`   |
@@ -174,9 +176,9 @@
 
 ## 类型汇总
 
-| 类型             | 字段                                                                   |
-| ---------------- | ---------------------------------------------------------------------- |
-| `BreadcrumbItem` | `{ label: string; key?: string }`                                      |
-| `TabItem`        | `{ key: string; label: string; disabled?: boolean }`                   |
-| `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }` |
-| `StepItem`       | `{ title: string; description?: string }`                              |
+| 类型             | 字段                                                                     |
+| ---------------- | ------------------------------------------------------------------------ |
+| `BreadcrumbItem` | `{ label: string; key?: string }`                                        |
+| `TabItem`        | `{ key: string; label: string; disabled?: boolean; closable?: boolean }` |
+| `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }`   |
+| `StepItem`       | `{ title: string; description?: string }`                                |

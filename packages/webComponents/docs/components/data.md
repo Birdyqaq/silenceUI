@@ -115,16 +115,20 @@ Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./a
 
 `loading` 为 `false` 时会渲染默认插槽中的真实内容。
 
-| 属性       | 说明                    | 类型      | 默认值  |
-| ---------- | ----------------------- | --------- | ------- |
-| `rows`     | 骨架行数，最少渲染 1 行 | `number`  | `3`     |
-| `avatar`   | 是否显示头像占位        | `boolean` | `false` |
-| `animated` | 是否显示 shimmer 动画   | `boolean` | `true`  |
-| `loading`  | 是否显示骨架屏          | `boolean` | `true`  |
+| 属性       | 说明                                                | 类型      | 默认值  |
+| ---------- | --------------------------------------------------- | --------- | ------- |
+| `rows`     | 骨架行数，向下取整并限制在 1–100；非有限值按 3 处理 | `number`  | `3`     |
+| `avatar`   | 是否显示头像占位                                    | `boolean` | `false` |
+| `animated` | 是否显示 shimmer 动画                               | `boolean` | `true`  |
+| `loading`  | 是否显示骨架屏                                      | `boolean` | `true`  |
+
+骨架屏尊重系统 `prefers-reduced-motion` 设置，开启减少动态效果时关闭 shimmer 动画。
 
 ## Descriptions 描述列表 `su-descriptions`
 
 详情页字段展示：
+
+使用原生 `dl / dt / dd` 描述列表语义。只展示 label 和 value 均为字符串的有效项；非法项忽略，不解释 HTML 字符串。items 非数组时可回退到 itemsJson，纯空数据展示空列表。
 
 ```html
 <su-descriptions id="detail" header="订单信息" column="2" bordered></su-descriptions>
@@ -150,13 +154,13 @@ Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./a
 </su-descriptions>
 ```
 
-| 属性        | 说明                            | 类型                | 默认值  |
-| ----------- | ------------------------------- | ------------------- | ------- |
-| `items`     | 描述项，需通过 JS property 设置 | `DescriptionItem[]` | `[]`    |
-| `itemsJson` | 描述项 JSON 字符串              | `string`            | `''`    |
-| `header`    | 标题                            | `string`            | `''`    |
-| `column`    | 列数，小于 1 时按 1 处理        | `number`            | `2`     |
-| `bordered`  | 是否显示边框                    | `boolean`           | `false` |
+| 属性        | 说明                                         | 类型                | 默认值  |
+| ----------- | -------------------------------------------- | ------------------- | ------- |
+| `items`     | 描述项，需通过 JS property 设置              | `DescriptionItem[]` | `[]`    |
+| `itemsJson` | 描述项 JSON 字符串                           | `string`            | `''`    |
+| `header`    | 标题                                         | `string`            | `''`    |
+| `column`    | 列数向下取整并限制在 1–12；非有限值按 2 处理 | `number`            | `2`     |
+| `bordered`  | 是否显示边框                                 | `boolean`           | `false` |
 
 `DescriptionItem`：
 
