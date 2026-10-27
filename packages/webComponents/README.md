@@ -8,9 +8,11 @@
 
 > 联系邮箱：[wuzheng011@gmail.com](mailto:wuzheng011@gmail.com) · [仓库介绍](https://github.com/Birdyqaq/silenceUI#readme) · [贡献指南](https://github.com/Birdyqaq/silenceUI/blob/dev/CONTRIBUTING.md)
 
-当前提供 51 个自定义元素，覆盖后台表单、数据展示、导航与反馈。Tabs 已支持可关闭页签、固定项、关闭拦截及相邻回退；路由和页面缓存仍由宿主负责。
+当前提供 52 个自定义元素，覆盖后台表单、数据展示、导航与反馈。Tabs 已支持可关闭页签、固定项、关闭拦截及相邻回退；路由和页面缓存仍由宿主负责。
 
 ## 安装
+
+新增 `su-transfer`：双侧搜索、当前结果全选、双向移动及表单校验；按需入口 `silenceui/components/form/transfer`。只提交右侧可用的 key，不包含后端授权保存。
 
 新增 `su-tree-select`：树形单多选、搜索、清空及原生表单/规则校验；按需入口 `silenceui/components/form/tree-select`。禁用节点的子树同样禁用，不做父子级联。
 

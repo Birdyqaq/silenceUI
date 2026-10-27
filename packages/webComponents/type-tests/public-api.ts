@@ -1,4 +1,6 @@
 import type {
+  SuTransfer,
+  TransferItem,
   SuTreeSelect,
   SuCollapse,
   CollapseItem,
@@ -55,6 +57,11 @@ import type {
   seTable,
 } from '../dist/index';
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
+import type { SuTransfer as DirectTransfer } from '../dist/components/form/transfer/index';
+const transferItems: TransferItem[] = [{ key: 'alice', label: 'Alice' }];
+const memberControl: SuTransfer & DirectTransfer = document.createElement('su-transfer');
+memberControl.items = transferItems;
+memberControl.targetKeys = ['alice'];
 import type { SuTreeSelect as DirectTreeSelect } from '../dist/components/form/tree-select/index';
 const departmentControl: SuTreeSelect & DirectTreeSelect = document.createElement('su-tree-select');
 departmentControl.nodes = [{ key: 'dev', label: '研发部' }];

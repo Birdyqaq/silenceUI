@@ -130,6 +130,7 @@ export class SuTreeSelect extends LitElement {
 
   protected willUpdate() {
     this.selected = selectedChoices(this.keys, this.available, this.selected);
+    if (!this.searchable) this.query = '';
     if (this.formValue.disabled) {
       this.open = false;
       this.query = '';

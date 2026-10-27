@@ -81,6 +81,7 @@ export default defineConfig({
           items: [
             { text: 'Form 表单组件', link: '/components/form' },
             { text: 'TreeSelect 树选择', link: '/components/tree-select' },
+            { text: 'Transfer 穿梭框', link: '/components/transfer' },
           ],
         },
         {

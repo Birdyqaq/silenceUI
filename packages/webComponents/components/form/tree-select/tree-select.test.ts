@@ -241,3 +241,18 @@ it('validates through su-form and clears a selection through user action only', 
   expect(change.mock.calls[0][0].detail.value).toBe('');
   expect(await wrapper.validate()).toBe(false);
 });
+
+it('clears hidden filters when the search UI is disabled', async () => {
+  const control = await mount();
+  control.searchable = true;
+  await control.updateComplete;
+  await open(control);
+  const input = control.shadowRoot!.querySelector<HTMLInputElement>('.search')!;
+  input.value = 'missing';
+  input.dispatchEvent(new Event('input'));
+  await control.updateComplete;
+  expect(control.shadowRoot!.querySelector('su-tree')).toBeNull();
+  control.searchable = false;
+  await control.updateComplete;
+  expect(control.shadowRoot!.querySelector('su-tree')).toBeTruthy();
+});
