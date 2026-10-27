@@ -59,8 +59,8 @@ export class FormValueController implements ReactiveController {
   private syncValidity() {
     const controls = Array.from(
       this.host.shadowRoot?.querySelectorAll<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >('input:not([type="search"]), select, textarea') ?? []
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement
+      >('input:not([type="search"]), select, textarea, button[data-form-anchor]') ?? []
     );
     const invalid = controls.find((control) => !control.validity.valid && control.willValidate);
     const message = this.disabled ? '' : this.customError || invalid?.validationMessage || '';
@@ -83,7 +83,8 @@ export class FormValueController implements ReactiveController {
           if (invalid.validity[key]) flags[key] = true;
       }
     }
-    this.internals?.setValidity?.(flags, message, invalid ?? controls[0]);
+    const anchor = this.host.shadowRoot?.querySelector<HTMLElement>('[data-form-anchor]');
+    this.internals?.setValidity?.(flags, message, anchor ?? invalid ?? controls[0]);
     const item = this.host.closest?.('su-form-item') as
       | (HTMLElement & { label?: string; message?: string; status?: string })
       | null;

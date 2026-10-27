@@ -8,9 +8,11 @@
 
 > 联系邮箱：[wuzheng011@gmail.com](mailto:wuzheng011@gmail.com) · [仓库介绍](https://github.com/Birdyqaq/silenceUI#readme) · [贡献指南](https://github.com/Birdyqaq/silenceUI/blob/dev/CONTRIBUTING.md)
 
-当前提供 50 个自定义元素，覆盖后台表单、数据展示、导航与反馈。Tabs 已支持可关闭页签、固定项、关闭拦截及相邻回退；路由和页面缓存仍由宿主负责。
+当前提供 51 个自定义元素，覆盖后台表单、数据展示、导航与反馈。Tabs 已支持可关闭页签、固定项、关闭拦截及相邻回退；路由和页面缓存仍由宿主负责。
 
 ## 安装
+
+新增 `su-tree-select`：树形单多选、搜索、清空及原生表单/规则校验；按需入口 `silenceui/components/form/tree-select`。禁用节点的子树同样禁用，不做父子级联。
 
 当前版本为 `0.0.0`，尚未发布到 npm。以下包名用于发布后的接入；当前请先执行 `pnpm pack --pack-destination /tmp`，再在应用内安装 `/tmp/silenceui-0.0.0.tgz`。
 

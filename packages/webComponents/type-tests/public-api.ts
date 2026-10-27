@@ -1,4 +1,5 @@
 import type {
+  SuTreeSelect,
   SuCollapse,
   CollapseItem,
   SuTimeline,
@@ -54,6 +55,10 @@ import type {
   seTable,
 } from '../dist/index';
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
+import type { SuTreeSelect as DirectTreeSelect } from '../dist/components/form/tree-select/index';
+const departmentControl: SuTreeSelect & DirectTreeSelect = document.createElement('su-tree-select');
+departmentControl.nodes = [{ key: 'dev', label: '研发部' }];
+departmentControl.values = ['dev'];
 import type { SuCollapse as DirectCollapse } from '../dist/components/data/collapse/index';
 import type { SuTimeline as DirectTimeline } from '../dist/components/data/timeline/index';
 const detailPanels: CollapseItem[] = [{ key: 'account', label: '账号' }];

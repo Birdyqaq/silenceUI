@@ -78,7 +78,10 @@ export default defineConfig({
         },
         {
           text: '表单',
-          items: [{ text: 'Form 表单组件', link: '/components/form' }],
+          items: [
+            { text: 'Form 表单组件', link: '/components/form' },
+            { text: 'TreeSelect 树选择', link: '/components/tree-select' },
+          ],
         },
         {
           text: '数据展示',

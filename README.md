@@ -7,7 +7,7 @@
 ## 项目亮点
 
 - **跨框架接入**：标准自定义元素，可接入原生页面、Vue、React 等；复杂数据通过 DOM property 传递，自定义事件通过 DOM 监听。
-- **后台常用能力**：50 个自定义元素，覆盖表单、表格、导航、反馈与布局；包含权限树勾选、表格文本筛选、可关闭 Tabs、折叠面板和时间线。
+- **后台常用能力**：51 个自定义元素，覆盖表单、表格、导航、反馈与布局；包含 TreeSelect、权限树勾选、表格文本筛选、可关闭 Tabs、折叠面板和时间线。
 - **统一主题**：明暗切换、自定义主色与语义色，组件内部使用 Lit CSS 与共享变量，不要求业务项目安装 UnoCSS。
 - **本地图标**：统一 `su-icon`，按需打包常用 Lucide 图标，不依赖在线图标服务。
 - **表单协作**：原生表单值同步、约束校验桥接、同步/异步规则、错误关联与过期校验结果保护。
@@ -95,7 +95,7 @@ Vue 需要配置 `isCustomElement`，React 应通过 ref 给组件赋复杂属�
 - Tabs 提供页签交互，不接管应用路由、页面缓存或持久化。
 - Tree 的勾选是前端交互，不替代服务端权限校验。
 - 组件使用 Shadow DOM；SSR 时应避免在服务端直接执行浏览器组件注册，主题变量和受支持的 CSS Parts 用于样式定制。
-- 后续优先补齐 TreeSelect、Transfer、时间选择、表格编辑和 PageHeader。详见[后台扩展计划](packages/webComponents/docs/guide/admin-roadmap.md)。
+- 后续优先补齐 Transfer、时间选择、表格编辑和 PageHeader。详见[后台扩展计划](packages/webComponents/docs/guide/admin-roadmap.md)。
 
 ## 仓库结构
 

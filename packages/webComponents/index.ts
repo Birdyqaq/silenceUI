@@ -2,6 +2,7 @@ import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
 export * from './types';
+export * from './components/form/tree-select';
 export * from './components/data/collapse';
 export * from './components/data/timeline';
 export * from './components/icon';
