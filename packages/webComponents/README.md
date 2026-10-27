@@ -6,7 +6,13 @@
 
 > Maintainer: [Birdyqaq](https://github.com/Birdyqaq)
 
+> 联系邮箱：[wuzheng011@gmail.com](mailto:wuzheng011@gmail.com) · [仓库介绍](https://github.com/Birdyqaq/silenceUI#readme) · [贡献指南](https://github.com/Birdyqaq/silenceUI/blob/dev/CONTRIBUTING.md)
+
+当前提供 50 个自定义元素，覆盖后台表单、数据展示、导航与反馈。Tabs 已支持可关闭页签、固定项、关闭拦截及相邻回退；路由和页面缓存仍由宿主负责。
+
 ## 安装
+
+当前版本为 `0.0.0`，尚未发布到 npm。以下包名用于发布后的接入；当前请先执行 `pnpm pack --pack-destination /tmp`，再在应用内安装 `/tmp/silenceui-0.0.0.tgz`。
 
 后台详情新增：`su-collapse` 折叠面板（多开/手风琴、键盘导航、富内容插槽）、`su-timeline` 时间线（状态、说明与反序）。按需路径为 `silenceui/components/data/collapse` 和 `silenceui/components/data/timeline`。
 

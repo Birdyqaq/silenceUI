@@ -67,6 +67,7 @@
 
 <ClientOnly>
   <su-tabs
+    closable label="后台工作台"
     activeKey="basic"
     itemsJson='[{"key":"basic","label":"基本信息"},{"key":"logs","label":"操作日志"},{"key":"other","label":"其他","disabled":true}]'>
     <div slot="basic">基本信息面板</div>
@@ -98,6 +99,12 @@
 | `activeKey` | 当前激活 key；为空时默认第一项  | `string`    | `''`   |
 
 事件：`change`，detail 为 `{ key: string, item: TabItem }`。
+
+新增 `closable: boolean`（默认 false）控制关闭按钮，`label: string`（默认「标签页」）提供标签栏名称。单项 `{ key, label, disabled?, closable? }` 中 `closable: false` 可固定首页。key 必须是唯一非空字符串，非法/重复项会忽略。
+
+关闭前派发可取消的 `close`（detail `{ key, item }`）；调用 `event.preventDefault()` 可阻止关闭，例如业务需要确认未保存内容时。允许关闭后组件更新 items；JSON 输入转为 property 数据并清空 itemsJson。关闭当前页优先选择右侧可用页，再选择左侧；无可用页时 change 为 `{ key: '', item: undefined }`。关闭非当前页不触发 change，禁用项不可关闭。
+
+`Delete` 关闭聚焦的可关闭标签。标签栏可横向滚动，方向键切换时滚动到目标页签。每项关联独立 tabpanel，切换只隐藏非当前面板，保留插槽 DOM 状态；全部禁用时不显示面板。关闭页签不会删除调用方 light DOM。路由、页面缓存、关闭确认和历史持久化由宿主管理，不是组件内置业务。
 
 键盘操作：`ArrowLeft` / `ArrowRight` 循环切换可用标签，`Home` / `End` 跳到首个 / 最后一个可用标签。组件使用 roving tabindex，并为 tab 与 panel 建立 ARIA 关联。
 
