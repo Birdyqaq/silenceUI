@@ -4,6 +4,8 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { baseControlStyles, focusRingStyles } from '../_shared/styles';
 import './preview';
 
+export * from './preview';
+
 export type ImageFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 
 @customElement('se-image')

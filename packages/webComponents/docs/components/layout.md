@@ -1,5 +1,7 @@
 # 布局组件
 
+<ClientOnly><ComponentDemo category="layout" /></ClientOnly>
+
 布局组件提供后台页面骨架、分割线和主题切换入口。
 
 ## Container 后台布局容器 `su-container`

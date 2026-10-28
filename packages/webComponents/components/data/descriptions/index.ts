@@ -31,8 +31,9 @@ export class SuDescriptions extends LitElement {
 
       .grid {
         display: grid;
-        grid-template-columns: repeat(var(--desc-column, 2), 1fr);
+        grid-template-columns: repeat(var(--desc-column, 2), minmax(0, 1fr));
         gap: 12px 24px;
+        margin: 0;
       }
 
       .item {
@@ -45,9 +46,12 @@ export class SuDescriptions extends LitElement {
       .label {
         color: var(--su-text-3);
         flex: none;
+        overflow-wrap: anywhere;
+        max-width: 50%;
       }
 
       .value {
+        margin: 0;
         color: var(--su-text-1);
         word-break: break-all;
       }
@@ -68,31 +72,42 @@ export class SuDescriptions extends LitElement {
       .grid.bordered .label {
         min-width: 72px;
       }
-    `
+    `,
   ];
 
   willUpdate() {
-    this.style.setProperty('--desc-column', String(Math.max(1, this.column)));
+    const column = Number.isFinite(this.column) ? Math.floor(this.column) : 2;
+    this.style.setProperty('--desc-column', String(Math.min(12, Math.max(1, column))));
   }
 
   private get mergedItems() {
-    if (this.items.length > 0) return this.items;
-    return parseJsonArray<DescriptionItem>(this.itemsJson, []);
+    const items =
+      Array.isArray(this.items) && this.items.length > 0
+        ? this.items
+        : parseJsonArray<DescriptionItem>(this.itemsJson, []);
+    return items.filter(
+      (item) => item && typeof item.label === 'string' && typeof item.value === 'string'
+    );
   }
 
   render() {
     return html`
-      ${this.header ? html`<div class="title">${this.header}</div>` : nothing}
-      <div class="grid ${this.bordered ? 'bordered' : ''}">
+      ${this.header
+        ? html`<div class="title" id="description-title">${this.header}</div>`
+        : nothing}
+      <dl
+        class="grid ${this.bordered ? 'bordered' : ''}"
+        aria-labelledby=${this.header ? 'description-title' : nothing}
+      >
         ${this.mergedItems.map(
           (item) => html`
             <div class="item">
-              <span class="label">${item.label}</span>
-              <span class="value">${item.value}</span>
+              <dt class="label">${item.label}</dt>
+              <dd class="value">${item.value}</dd>
             </div>
           `
         )}
-      </div>
+      </dl>
     `;
   }
 }

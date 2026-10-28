@@ -1,5 +1,5 @@
 {
-  "name": "webcomponents",
+  "name": "silenceui",
   "version": "0.0.0",
   "description": "基于 Lit 的跨框架 Web Components UI 组件库",
   "author": "wuzheng001 <1962443189@qq.com>",
@@ -16,15 +16,33 @@
   "type": "module",
   "files": [
     "dist",
+    "CHANGELOG.md",
+    "THIRD_PARTY_NOTICES.md",
     "README.md"
   ],
-  "sideEffects": true,
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/index.cjs",
+    "./dist/index.umd.cjs",
+    "./dist/components/**/*.js",
+    "./dist/style.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "import": "./dist/components/*/index.js",
+      "default": "./dist/components/*/index.js"
+    },
+    "./theme": {
+      "types": "./dist/utils/theme.d.ts",
+      "import": "./dist/components/theme/index.js",
+      "default": "./dist/components/theme/index.js"
     },
     "./style.css": "./dist/style.css",
     "./dist/style.css": "./dist/style.css",
@@ -41,17 +59,19 @@
     "test:run": "vitest --run",
     "test:ui": "vitest --ui",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.entries.config.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "docs:inventory": "node scripts/generate-component-inventory.mjs",
     "docs:inventory:check": "node scripts/generate-component-inventory.mjs --check",
+    "docs:verify": "node scripts/verify-docs.mjs",
+    "package:verify": "node scripts/verify-package.mjs",
     "lint": "eslint . --ext .ts,.js,.mjs,.vue",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "typecheck:dist": "vite build && tsc -p type-tests/tsconfig.json --noEmit",
-    "check": "tsc -p tsconfig.json --noEmit && eslint . --ext .ts,.js,.mjs,.vue && vitest --run && vite build && tsc -p type-tests/tsconfig.json --noEmit && node scripts/generate-component-inventory.mjs --check && vitepress build docs",
-    "prepack": "vite build",
+    "typecheck:dist": "pnpm build && tsc -p type-tests/tsconfig.json --noEmit",
+    "check": "tsc -p tsconfig.json --noEmit && eslint . --ext .ts,.js,.mjs,.vue && vitest --run && pnpm build && tsc -p type-tests/tsconfig.json --noEmit && node scripts/generate-component-inventory.mjs --check && node scripts/verify-docs.mjs && node scripts/verify-package.mjs && vitepress build docs",
+    "prepack": "pnpm build",
     "format": "prettier --write \"**/*.{js,ts,vue,json,md}\""
   },
   "bugs": {
@@ -87,6 +107,7 @@
     "vue": "^3.4.0"
   },
   "dependencies": {
+    "@iconify-icons/lucide": "^2.0.22",
     "lit": "^3.1.3"
   }
 }

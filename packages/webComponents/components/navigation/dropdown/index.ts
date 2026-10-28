@@ -207,7 +207,7 @@ export class SuDropdown extends LitElement {
   }
 
   private onSelect(item: DropdownItem) {
-    if (item.disabled) return;
+    if (this.disabled || item.disabled) return;
     this.open = false;
     this.dispatchEvent(
       new CustomEvent('select', {
@@ -217,6 +217,10 @@ export class SuDropdown extends LitElement {
       })
     );
     this.focusTrigger();
+  }
+
+  protected willUpdate() {
+    if (this.disabled) this.open = false;
   }
 
   updated(changedProperties: Map<PropertyKey, unknown>) {
@@ -232,6 +236,7 @@ export class SuDropdown extends LitElement {
         aria-haspopup=${this.triggerNeedsTabStop ? 'menu' : nothing}
         aria-expanded=${this.triggerNeedsTabStop ? String(this.open) : nothing}
         aria-controls=${this.triggerNeedsTabStop ? this.menuId : nothing}
+        aria-disabled=${String(this.disabled)}
         @click=${this.toggle}
         @keydown=${this.onTriggerKeyDown}
       >

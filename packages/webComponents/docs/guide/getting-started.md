@@ -2,12 +2,14 @@
 
 ## 安装
 
+npm 包名为小写 `silenceui`，项目展示名称为 SilenceUI。以下安装命令用于正式发布后；仓库源码改名不等于已经发布到 npm，发布前请使用本地打包接入，见[安装指南](./installation)。
+
 ```bash
-npm install webcomponents
+npm install silenceui
 # 或
-yarn add webcomponents
+yarn add silenceui
 # 或
-pnpm add webcomponents
+pnpm add silenceui
 ```
 
 ## 注册组件
@@ -15,15 +17,32 @@ pnpm add webcomponents
 在应用入口引入样式并注册全部组件：
 
 ```ts
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 ```
 
 ```html
 <su-button type="primary">保存</su-button> <su-input placeholder="请输入关键词"></su-input>
 ```
 
-当前包入口是整包注册模式，会自动恢复本地持久化的主题配置。组件级按需入口尚未发布，不要使用 `webcomponents/lib/button` 这类路径。
+根入口会注册全部组件，并自动恢复本地持久化的主题配置。
+
+只使用部分组件时，推荐按需引入：
+
+```ts
+import 'silenceui/style.css';
+import 'silenceui/components/button';
+import 'silenceui/components/input';
+import 'silenceui/components/data/card';
+```
+
+按需入口不会自动初始化主题持久化。如需主题 API，请显式调用：
+
+```ts
+import { initTheme } from 'silenceui/theme';
+
+initTheme();
+```
 
 ## 基础页面
 
@@ -44,8 +63,8 @@ import 'webcomponents';
 </su-container>
 
 <script type="module">
-  import 'webcomponents/style.css';
-  import 'webcomponents';
+  import 'silenceui/style.css';
+  import 'silenceui';
 
   const menu = document.querySelector('#menu');
   menu.items = [
@@ -105,8 +124,8 @@ export default defineConfig({
 
 ```vue
 <script setup lang="ts">
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 
 const handleInput = (event: CustomEvent<{ value: string }>) => {
   console.log(event.detail.value);
@@ -119,21 +138,25 @@ const handleInput = (event: CustomEvent<{ value: string }>) => {
 </template>
 ```
 
+Vue 原生表单可以直接使用 `<su-input name="nickname" />`。表单控件会将 name property 同步到 attribute，动态改名同样生效；fieldset 禁用与浏览器降级说明见[兼容性](./compatibility)。
+
 ## React
 
 React 19 之前，复杂属性建议通过 ref 赋值，自定义事件建议用 `addEventListener`：
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import 'webcomponents/style.css';
-import 'webcomponents';
+import type { seTable } from 'silenceui';
+import 'silenceui/style.css';
+import 'silenceui';
 
-export function DemoTable({ rows }) {
-  const tableRef = useRef(null);
+export function DemoTable({ rows }: { rows: Record<string, unknown>[] }) {
+  const tableRef = useRef<seTable>(null);
 
   useEffect(() => {
     const table = tableRef.current;
     if (!table) return;
+    table.pagination = false;
 
     table.columns = [
       { key: 'name', label: '姓名' },
@@ -141,24 +164,29 @@ export function DemoTable({ rows }) {
     ];
     table.data = rows;
 
-    const onRowClick = (event) => console.log(event.detail.row);
+    const onRowClick = (event: Event) => console.log((event as CustomEvent).detail.row);
     table.addEventListener('row-click', onRowClick);
     return () => table.removeEventListener('row-click', onRowClick);
   }, [rows]);
 
-  return <se-table ref={tableRef} pagination={false}></se-table>;
+  return <se-table ref={tableRef}></se-table>;
 }
 ```
 
 TypeScript 项目可按需补充 JSX 标签声明：
 
+布尔值也通过 property 赋值，避免旧版 React 将 `false` 序列化为仍然存在的 HTML attribute。下面声明文件需要保存为模块（含 import），示例以 React 的模块级 JSX 命名空间为准：
+
 ```ts
+import type * as React from 'react';
+import type { SuButton, SuInput, seTable } from 'silenceui';
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
-      'su-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-      'su-input': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-      'se-table': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      'su-button': React.DetailedHTMLProps<React.HTMLAttributes<SuButton>, SuButton>;
+      'su-input': React.DetailedHTMLProps<React.HTMLAttributes<SuInput>, SuInput>;
+      'se-table': React.DetailedHTMLProps<React.HTMLAttributes<seTable>, seTable>;
     }
   }
 }
@@ -170,8 +198,8 @@ declare module 'react' {
 
 ```ts
 import { CUSTOM_ELEMENTS_SCHEMA, Component } from '@angular/core';
-import 'webcomponents/style.css';
-import 'webcomponents';
+import 'silenceui/style.css';
+import 'silenceui';
 
 @Component({
   selector: 'app-root',

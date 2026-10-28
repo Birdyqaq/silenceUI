@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300" viewBox="0 0 480 300" role="img" aria-label="SilenceUI local landscape sample">
+  <rect width="480" height="300" fill="#dbeafe"/>
+  <circle cx="370" cy="65" r="30" fill="#fbbf24"/>
+  <path d="M0 260 140 65 290 260Z" fill="#60a5fa"/>
+  <path d="M150 300 330 100 480 300Z" fill="#2563eb"/>
+  <path d="m105 115 35-50 38 50-37-17Z" fill="#fff"/>
+  <text x="20" y="282" font-family="sans-serif" font-size="20" fill="#fff">SilenceUI · Local demo</text>
+</svg>

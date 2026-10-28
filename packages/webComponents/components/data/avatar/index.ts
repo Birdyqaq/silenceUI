@@ -61,13 +61,25 @@ export class SuAvatar extends LitElement {
         height: 100%;
         object-fit: cover;
       }
-    `
+    `,
   ];
 
-  updated(changed: Map<string, unknown>) {
+  willUpdate(changed: Map<string, unknown>) {
     if (changed.has('src')) {
       this.loadError = false;
     }
+  }
+
+  /** 按字素提取占位，避免拆开 emoji 或组合音标。 */
+  private get initial() {
+    const first =
+      typeof Intl.Segmenter === 'function'
+        ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+            .segment(this.name)
+            [Symbol.iterator]()
+            .next().value?.segment
+        : Array.from(this.name)[0];
+    return (first ?? '').toUpperCase();
   }
 
   render() {
@@ -76,7 +88,7 @@ export class SuAvatar extends LitElement {
       <span class="avatar ${this.shape} ${this.size}">
         ${showImage
           ? html`<img src=${this.src} alt=${this.name} @error=${() => (this.loadError = true)} />`
-          : html`${this.name.slice(0, 1).toUpperCase()}`}
+          : html`${this.initial}`}
       </span>
     `;
   }

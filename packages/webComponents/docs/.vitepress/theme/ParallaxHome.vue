@@ -22,8 +22,7 @@
         <div class="hero-text-container">
           <p class="hero-text">
             一次编写，到处
-            <span class="typewriter-text">{{ currentTech }}</span>
-            <span class="cursor">|</span>
+            <su-typewriter ref="headline" class="typewriter-text" text="Vue" speed="200" delete-speed="100" hold-delay="2000" loop />
             使用
           </p>
         </div>
@@ -32,11 +31,11 @@
         </p>
 
         <div class="hero-actions" ref="heroActions">
-          <a href="/guide/getting-started" class="action-button primary">
+          <a :href="withBase('/guide/getting-started')" class="action-button primary">
             <span>快速开始</span>
             <div class="button-bg"></div>
           </a>
-          <a href="/components/" class="action-button secondary">
+          <a :href="withBase('/components/')" class="action-button secondary">
             <span>查看组件</span>
             <div class="button-bg"></div>
           </a>
@@ -99,6 +98,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { withBase } from 'vitepress'
 
 // 响应式引用
 const parallaxBg = ref(null)
@@ -116,12 +116,10 @@ const techSection = ref(null)
 const techItems = ref([])
 
 // 打字机效果
-const techs = ['Vue', 'React', 'Angular', 'Svelte']
-const currentTech = ref('Vue')
-let techIndex = 0
-let charIndex = 0
-let isDeleting = false
-let typeTimer = null
+const headline = ref(null)
+const animationTimers = []
+let observer = null
+let disposed = false
 
 // 数据
 const features = [
@@ -194,33 +192,6 @@ const getParticleStyle = (index) => {
   }
 }
 
-// 打字机效果
-const typeWriter = () => {
-  const targetText = techs[techIndex]
-
-  if (!isDeleting) {
-    currentTech.value = targetText.slice(0, charIndex + 1)
-    charIndex++
-
-    if (charIndex === targetText.length) {
-      setTimeout(() => {
-        isDeleting = true
-      }, 2000)
-    }
-  } else {
-    currentTech.value = targetText.slice(0, charIndex - 1)
-    charIndex--
-
-    if (charIndex === 0) {
-      isDeleting = false
-      techIndex = (techIndex + 1) % techs.length
-    }
-  }
-
-  const speed = isDeleting ? 100 : 200
-  typeTimer = setTimeout(typeWriter, speed)
-}
-
 // 滚动视差效果
 const handleScroll = () => {
   const scrolled = window.pageYOffset
@@ -253,7 +224,7 @@ const handleScroll = () => {
 
 // Intersection Observer 动画
 const observeElements = () => {
-  const observer = new IntersectionObserver((entries) => {
+  observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('animate-in')
@@ -284,9 +255,12 @@ const observeElements = () => {
 
 onMounted(async () => {
   await nextTick()
+  if (disposed) return
 
-  // 启动打字机效果
-  typeWriter()
+  // 注册完成后再设置数组，避免自定义元素升级前的 property 遮蔽。
+  customElements.whenDefined('su-typewriter').then(() => {
+    if (headline.value) headline.value.texts = ['Vue', 'React', 'Angular', 'Svelte']
+  })
 
   // 绑定滚动事件
   window.addEventListener('scroll', handleScroll)
@@ -295,22 +269,24 @@ onMounted(async () => {
   observeElements()
 
   // 初始动画
-  setTimeout(() => {
+  animationTimers.push(setTimeout(() => {
     if (heroTitle.value) heroTitle.value.classList.add('animate-in')
-  }, 500)
+  }, 500))
 
-  setTimeout(() => {
+  animationTimers.push(setTimeout(() => {
     if (heroTagline.value) heroTagline.value.classList.add('animate-in')
-  }, 800)
+  }, 800))
 
-  setTimeout(() => {
+  animationTimers.push(setTimeout(() => {
     if (heroActions.value) heroActions.value.classList.add('animate-in')
-  }, 1100)
+  }, 1100))
 })
 
 onUnmounted(() => {
+  disposed = true
   window.removeEventListener('scroll', handleScroll)
-  if (typeTimer) clearTimeout(typeTimer)
+  animationTimers.forEach(clearTimeout)
+  observer?.disconnect()
 })
 </script>
 
@@ -455,27 +431,10 @@ onUnmounted(() => {
 }
 
 .typewriter-text {
-  color: #ffd700;
+  --su-typewriter-color: var(--su-color-primary);
+  --su-typewriter-cursor-color: var(--su-color-primary);
   min-width: 120px;
   display: inline-block;
-}
-
-.cursor {
-  color: #ffd700;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  51%,
-  100% {
-    opacity: 0;
-  }
 }
 
 .hero-tagline {

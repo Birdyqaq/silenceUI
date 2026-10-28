@@ -9,7 +9,8 @@ export default defineConfig({
   vue: {
     template: {
       compilerOptions: {
-        isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+        isCustomElement: (tag) =>
+          tag.startsWith('su-') || tag.startsWith('se-') || tag === 'line-component',
       },
     },
   },
@@ -42,6 +43,8 @@ export default defineConfig({
             { text: '快速开始', link: '/guide/getting-started' },
             { text: '安装', link: '/guide/installation' },
             { text: 'API 约定', link: '/guide/api-conventions' },
+            { text: '兼容性与降级', link: '/guide/compatibility' },
+            { text: '文档验收', link: '/guide/docs-validation' },
             { text: '组件 API 基线', link: '/guide/component-inventory' },
           ],
         },
@@ -51,6 +54,8 @@ export default defineConfig({
             { text: '设计方案', link: '/guide/design' },
             { text: '主题定制', link: '/guide/theme' },
             { text: '开发规范', link: '/guide/development' },
+            { text: '执行计划', link: '/guide/execution-plan' },
+            { text: '后台扩展清单', link: '/guide/admin-roadmap' },
           ],
         },
       ],
@@ -62,6 +67,8 @@ export default defineConfig({
         {
           text: '基础组件',
           items: [
+            { text: 'Icon 图标', link: '/components/icon' },
+            { text: '后台管理增强', link: '/components/admin' },
             { text: 'Button 按钮', link: '/components/button' },
             { text: 'Input 输入框', link: '/components/input' },
             { text: 'Image 图片', link: '/components/image' },
@@ -71,13 +78,19 @@ export default defineConfig({
         },
         {
           text: '表单',
-          items: [{ text: 'Form 表单组件', link: '/components/form' }],
+          items: [
+            { text: 'Form 表单组件', link: '/components/form' },
+            { text: 'TreeSelect 树选择', link: '/components/tree-select' },
+            { text: 'Transfer 穿梭框', link: '/components/transfer' },
+          ],
         },
         {
           text: '数据展示',
           items: [
             { text: 'Table 表格', link: '/components/table' },
+            { text: 'Typewriter 打字机', link: '/components/typewriter' },
             { text: 'Data 数据组件', link: '/components/data' },
+            { text: 'Collapse / Timeline', link: '/components/admin-details' },
           ],
         },
         {

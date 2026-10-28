@@ -1,5 +1,7 @@
 # 导航组件
 
+<ClientOnly><ComponentDemo category="navigation" /></ClientOnly>
+
 导航组件用于后台侧边栏、路径导航、标签页、下拉操作与流程展示。列表型数据均支持 JS property 与 `itemsJson` 两种传法。
 
 ## Menu 菜单 `su-menu`
@@ -26,6 +28,8 @@
 | `collapsed` | 是否收起，仅显示 icon           | `boolean`    | `false` |
 
 事件：`select`，detail 直接是当前 `MenuItem`。
+
+收起时保留每项的可访问名称及原生悬停标题。未设置 `activeKey` 或指定的 key 不存在时，首项作为当前项，高亮和 `aria-current` 保持一致。
 
 `MenuItem`：
 
@@ -63,6 +67,7 @@
 
 <ClientOnly>
   <su-tabs
+    closable label="后台工作台"
     activeKey="basic"
     itemsJson='[{"key":"basic","label":"基本信息"},{"key":"logs","label":"操作日志"},{"key":"other","label":"其他","disabled":true}]'>
     <div slot="basic">基本信息面板</div>
@@ -95,6 +100,14 @@
 
 事件：`change`，detail 为 `{ key: string, item: TabItem }`。
 
+新增 `closable: boolean`（默认 false）控制关闭按钮，`label: string`（默认「标签页」）提供标签栏名称。单项 `{ key, label, disabled?, closable? }` 中 `closable: false` 可固定首页。key 必须是唯一非空字符串，非法/重复项会忽略。
+
+关闭前派发可取消的 `close`（detail `{ key, item }`）；调用 `event.preventDefault()` 可阻止关闭，例如业务需要确认未保存内容时。允许关闭后组件更新 items；JSON 输入转为 property 数据并清空 itemsJson。关闭当前页优先选择右侧可用页，再选择左侧；无可用页时 change 为 `{ key: '', item: undefined }`。关闭非当前页不触发 change，禁用项不可关闭。
+
+`Delete` 关闭聚焦的可关闭标签。标签栏可横向滚动，方向键切换时滚动到目标页签。每项关联独立 tabpanel，切换只隐藏非当前面板，保留插槽 DOM 状态；全部禁用时不显示面板。关闭页签不会删除调用方 light DOM。路由、页面缓存、关闭确认和历史持久化由宿主管理，不是组件内置业务。
+
+相同 key 的标题与面板节点在重排后保持身份。数据已替换但 DOM 尚未重绘时，旧关闭按钮不会操作已删除/禁用项；change 回调若把焦点移到业务对话框，组件不会在更新后抢回焦点。
+
 键盘操作：`ArrowLeft` / `ArrowRight` 循环切换可用标签，`Home` / `End` 跳到首个 / 最后一个可用标签。组件使用 roving tabindex，并为 tab 与 panel 建立 ARIA 关联。
 
 ## Dropdown 下拉菜单 `su-dropdown`
@@ -124,6 +137,8 @@
 
 点击触发器展开，点击外部区域自动收起。触发器应是可聚焦元素；若传入纯文本，组件会自动为触发区域补充键盘焦点。
 
+动态设置 `disabled` 会收起已展开的菜单并阻止选择；解除禁用不会自动重新展开。禁用期间设置 `open = true` 同样不会打开菜单。
+
 | 属性        | 说明                            | 类型             | 默认值  |
 | ----------- | ------------------------------- | ---------------- | ------- |
 | `items`     | 下拉项，需通过 JS property 设置 | `DropdownItem[]` | `[]`    |
@@ -151,6 +166,8 @@
 
 `current` 为当前步骤下标，从 0 开始；之前的步骤显示为已完成。
 
+非法步骤项会被忽略，current 按有效步骤列表计算。负数按 0、小数向下取整，NaN/Infinity 按 0 展示；current 大于等于有效步骤数时，所有步骤标记为已完成且没有当前项。归一化只影响展示，不修改传入属性；代码更新 items/current 后自动刷新样式和可访问状态。
+
 | 属性        | 说明                            | 类型         | 默认值 |
 | ----------- | ------------------------------- | ------------ | ------ |
 | `items`     | 步骤项，需通过 JS property 设置 | `StepItem[]` | `[]`   |
@@ -159,9 +176,9 @@
 
 ## 类型汇总
 
-| 类型             | 字段                                                                   |
-| ---------------- | ---------------------------------------------------------------------- |
-| `BreadcrumbItem` | `{ label: string; key?: string }`                                      |
-| `TabItem`        | `{ key: string; label: string; disabled?: boolean }`                   |
-| `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }` |
-| `StepItem`       | `{ title: string; description?: string }`                              |
+| 类型             | 字段                                                                     |
+| ---------------- | ------------------------------------------------------------------------ |
+| `BreadcrumbItem` | `{ label: string; key?: string }`                                        |
+| `TabItem`        | `{ key: string; label: string; disabled?: boolean; closable?: boolean }` |
+| `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }`   |
+| `StepItem`       | `{ title: string; description?: string }`                                |

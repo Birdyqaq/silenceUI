@@ -62,8 +62,16 @@ export class SePagination extends LitElement {
     return Math.max(1, Math.ceil(this.total / this.pageSize));
   }
 
+  /** 数据变化时校正页码，避免无效页数及被删除的末页残留。 */
+  protected willUpdate() {
+    this.pageSize =
+      Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
+    this.total = Number.isFinite(this.total) ? Math.max(0, Math.floor(this.total)) : 0;
+    this.currentPage = this.clampPage(this.currentPage);
+  }
+
   private clampPage(page: number) {
-    return Math.min(this.totalPages, Math.max(1, Number.isFinite(page) ? page : 1));
+    return Math.min(this.totalPages, Math.max(1, Number.isFinite(page) ? Math.floor(page) : 1));
   }
 
   private emitChange(page: number) {
@@ -74,7 +82,7 @@ export class SePagination extends LitElement {
       new CustomEvent('page-change', {
         detail: { currentPage: next },
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
@@ -82,6 +90,7 @@ export class SePagination extends LitElement {
   private handlePageInput(event: Event) {
     const target = event.target as HTMLInputElement;
     this.emitChange(Number(target.value));
+    target.value = String(this.currentPage);
   }
 
   private handlePrevPage() {
@@ -106,12 +115,14 @@ export class SePagination extends LitElement {
           min="1"
           max="${this.totalPages}"
           .value="${String(this.currentPage)}"
-          @input="${this.handlePageInput}" />
+          @input="${this.handlePageInput}"
+        />
         <span>页 / 共 ${this.totalPages} 页</span>
         <button
           type="button"
           @click="${this.handleNextPage}"
-          ?disabled="${this.currentPage >= this.totalPages}">
+          ?disabled="${this.currentPage >= this.totalPages}"
+        >
           下一页
         </button>
       </div>

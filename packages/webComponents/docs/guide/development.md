@@ -88,11 +88,15 @@ export class SuExample extends LitElement {
 
 发布到 npm 时仍通过 `package.json` 的 `files: ["dist", ...]` 带上 `dist`，`prepack` 会在打包前自动执行构建。文档站点应在 CI 中 `docs:build` 后再部署，不要把 `docs/.vitepress/dist` 提交进仓库。
 
+`pnpm package:verify` 会实际运行 `pnpm pack`，检查发布包包含 JS、CJS、类型声明、主题 CSS 和 README，并确认测试、文档与依赖目录没有被打包进去。
+
 ## 提交前检查
 
 ```bash
 pnpm check
 ```
+
+`pnpm check` 包含文档约定验证；单独检查页面示例、组件目录和属性传参约定可运行 `pnpm docs:verify`，范围见[文档验收](./docs-validation)。
 
 组件的标签、properties、事件、slots 与直接测试覆盖清单由脚本维护。新增或调整公开 API 后同步执行：
 

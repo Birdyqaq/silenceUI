@@ -65,6 +65,7 @@ export class SuSteps extends LitElement {
       }
 
       .title {
+        overflow-wrap: anywhere;
         font-size: var(--su-font-size-sm);
         font-weight: 600;
         color: var(--su-text-3);
@@ -76,6 +77,7 @@ export class SuSteps extends LitElement {
       }
 
       .description {
+        overflow-wrap: anywhere;
         margin-top: 2px;
         font-size: var(--su-font-size-xs);
         color: var(--su-text-3);
@@ -91,26 +93,46 @@ export class SuSteps extends LitElement {
       .step.finished .connector {
         background: var(--su-color-primary);
       }
-    `
+    `,
   ];
 
   private get mergedItems() {
-    if (this.items.length > 0) return this.items;
-    return parseJsonArray<StepItem>(this.itemsJson, []);
+    const items =
+      Array.isArray(this.items) && this.items.length > 0
+        ? this.items
+        : parseJsonArray<StepItem>(this.itemsJson, []);
+    return items
+      .filter((item) => item && typeof item.title === 'string')
+      .map((item) => ({
+        title: item.title,
+        description: typeof item.description === 'string' ? item.description : '',
+      }));
   }
 
   render() {
     const list = this.mergedItems;
+    // current === length 表示流程结束；非法数值回到起点，不修改调用方属性。
+    const current = Math.min(
+      list.length,
+      Math.max(0, Number.isFinite(this.current) ? Math.floor(this.current) : 0)
+    );
     return html`
-      <div class="steps">
+      <div class="steps" role="list" aria-label="流程步骤">
         ${list.map((item, index) => {
-          const state = index < this.current ? 'finished' : index === this.current ? 'active' : '';
+          const state = index < current ? 'finished' : index === current ? 'active' : '';
           return html`
-            <div class="step ${state}">
-              <span class="indicator">${index < this.current ? '✓' : index + 1}</span>
+            <div
+              class="step ${state}"
+              role="listitem"
+              aria-current=${index === current ? 'step' : 'false'}
+              aria-label=${`${item.title}${index < current ? '，已完成' : index === current ? '，当前步骤' : '，未开始'}`}
+            >
+              <span class="indicator" aria-hidden="true">${index < current ? '✓' : index + 1}</span>
               <div class="content">
                 <div class="title">${item.title}</div>
-                ${item.description ? html`<div class="description">${item.description}</div>` : nothing}
+                ${item.description
+                  ? html`<div class="description">${item.description}</div>`
+                  : nothing}
               </div>
               ${index < list.length - 1 ? html`<span class="connector"></span>` : nothing}
             </div>

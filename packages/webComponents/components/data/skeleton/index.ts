@@ -71,16 +71,23 @@ export class SuSkeleton extends LitElement {
           background-position: -200% 0;
         }
       }
-    `
+      @media (prefers-reduced-motion: reduce) {
+        .animated .avatar,
+        .animated .row {
+          animation: none;
+        }
+      }
+    `,
   ];
 
   render() {
     if (!this.loading) return html`<slot></slot>`;
+    const rows = Math.min(100, Math.max(1, Number.isFinite(this.rows) ? Math.floor(this.rows) : 3));
     return html`
       <div class="skeleton ${this.animated ? 'animated' : ''}" aria-busy="true">
         ${this.avatar ? html`<span class="avatar"></span>` : nothing}
         <div class="lines">
-          ${Array.from({ length: Math.max(1, this.rows) }, () => html`<div class="row"></div>`)}
+          ${Array.from({ length: rows }, () => html`<div class="row"></div>`)}
         </div>
       </div>
     `;

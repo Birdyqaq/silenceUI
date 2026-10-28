@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { FormValueController } from '../../_shared/form';
+import { formNameConverter, FormValueController } from '../../_shared/form';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
 
 @customElement('su-input-number')
@@ -8,15 +8,15 @@ export class SuInputNumber extends LitElement {
   static formAssociated = true;
 
   @property({ type: Number }) value = 0;
-  @property({ type: String }) name = '';
+  @property({ type: String, reflect: true, converter: formNameConverter }) name = '';
   @property({ type: Number }) min = Number.MIN_SAFE_INTEGER;
   @property({ type: Number }) max = Number.MAX_SAFE_INTEGER;
   @property({ type: Number }) step = 1;
   @property({ type: Boolean, reflect: true }) disabled = false;
 
   private defaultValue = 0;
-  private readonly formValue = new FormValueController(this, () =>
-    this.disabled ? null : String(this.value)
+  private readonly formValue: FormValueController = new FormValueController(this, () =>
+    this.formValue.disabled ? null : String(this.value)
   );
 
   static styles = [
@@ -90,7 +90,35 @@ export class SuInputNumber extends LitElement {
   ];
 
   private clamp(value: number) {
-    return Math.min(this.max, Math.max(this.min, value));
+    return Math.min(this.max, Math.max(this.min, Number.isFinite(value) ? value : 0));
+  }
+
+  /** 外部赋值与边界更新同样归一化，不派发用户交互事件。 */
+  protected willUpdate() {
+    if (!Number.isFinite(this.min)) this.min = Number.MIN_SAFE_INTEGER;
+    if (!Number.isFinite(this.max)) this.max = Number.MAX_SAFE_INTEGER;
+    if (this.max < this.min) this.max = this.min;
+    this.value = this.clamp(this.value);
+  }
+
+  /** 使用输入值的小数位精度消除常见十进制步进浮点尾数。 */
+  private stepValue(direction: number) {
+    const precision = (value: number) => {
+      const [coefficient, exponent = '0'] = String(value).toLowerCase().split('e');
+      return Math.max(0, (coefficient.split('.')[1]?.length ?? 0) - Number(exponent));
+    };
+    const digits = Math.max(precision(this.value), precision(this.safeStep));
+    const sum = this.value + direction * this.safeStep;
+    // 超出有限数范围时到达边界；极小步长不经过 toFixed，避免被舍入成零。
+    this.emitChange(
+      !Number.isFinite(sum)
+        ? direction > 0
+          ? this.max
+          : this.min
+        : digits > 100
+          ? sum
+          : Number(sum.toFixed(digits))
+    );
   }
 
   private get safeStep() {
@@ -98,6 +126,7 @@ export class SuInputNumber extends LitElement {
   }
 
   private emitChange(next: number) {
+    if (this.formValue.disabled) return;
     const clamped = this.clamp(next);
     if (clamped === this.value) {
       this.requestUpdate();
@@ -129,6 +158,11 @@ export class SuInputNumber extends LitElement {
     this.defaultValue = this.value;
   }
 
+  /** 原生 fieldset 禁用变化同步到内部控件，保留自身 disabled。 */
+  formDisabledCallback(disabled: boolean) {
+    this.formValue.setDisabled(disabled);
+  }
+
   formResetCallback() {
     this.value = this.defaultValue;
   }
@@ -149,8 +183,8 @@ export class SuInputNumber extends LitElement {
         <button
           type="button"
           aria-label="减少"
-          ?disabled=${this.disabled || this.value <= this.min}
-          @click=${() => this.emitChange(this.value - this.safeStep)}
+          ?disabled=${this.formValue.disabled || this.value <= this.min}
+          @click=${() => this.stepValue(-1)}
         >
           −
         </button>
@@ -160,15 +194,15 @@ export class SuInputNumber extends LitElement {
           .min=${String(this.min)}
           .max=${String(this.max)}
           .step=${String(this.safeStep)}
-          ?disabled=${this.disabled}
+          ?disabled=${this.formValue.disabled}
           @change=${this.onInput}
           @blur=${this.onBlur}
         />
         <button
           type="button"
           aria-label="增加"
-          ?disabled=${this.disabled || this.value >= this.max}
-          @click=${() => this.emitChange(this.value + this.safeStep)}
+          ?disabled=${this.formValue.disabled || this.value >= this.max}
+          @click=${() => this.stepValue(1)}
         >
           +
         </button>

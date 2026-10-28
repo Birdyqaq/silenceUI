@@ -12,12 +12,9 @@ SilenceUI 是一套面向后台管理系统的 Web Components 组件库，基于
 
 ## 兼容性
 
-支持所有现代浏览器：
+面向持续更新的 Chrome、Edge、Firefox 与 Safari。当前尚未建立各浏览器最低版本的自动化矩阵，因此不承诺未经验证的具体最低版本。基础要求包括 Custom Elements、Shadow DOM 和构建产物使用的现代 JavaScript 语法。
 
-- Chrome >= 60
-- Firefox >= 63
-- Safari >= 11
-- Edge >= 79
+表单、原生日期面板、Tooltip 顶层显示及字素动画还依赖额外能力；降级行为、SSR 和验证范围见[兼容性与验证范围](./compatibility)。
 
 ## 为什么选择 SilenceUI？
 
