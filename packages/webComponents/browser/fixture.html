@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SilenceUI browser smoke fixture</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 16px; background: var(--su-bg-page); color: var(--su-text-1); font: 16px system-ui; }
+      main { max-width: 860px; margin: auto; display: grid; gap: 16px; }
+      form, fieldset { min-width: 0; display: grid; gap: 12px; }
+      fieldset { margin: 0; border: 1px solid var(--su-border-color); }
+      su-transfer, su-tree-select { display: block; min-width: 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>原生表单与焦点冒烟</h1>
+      <button id="outside" type="button">外部焦点</button>
+      <su-form id="rules">
+        <form id="native" novalidate>
+          <fieldset id="fields">
+            <legend>测试字段</legend>
+            <su-form-item label="用户名"><su-input id="username" name="username" value="initial" required></su-input></su-form-item>
+            <su-input id="locked" name="locked" value="secret" disabled></su-input>
+            <su-tree-select id="department" name="department" label="部门" required></su-tree-select>
+            <su-transfer id="roles" name="role" label="角色" searchable required></su-transfer>
+          </fieldset>
+          <button type="submit">校验提交</button>
+          <button type="reset">重置表单</button>
+        </form>
+      </su-form>
+      <button id="after" type="button">表单之后</button>
+      <output id="submitted"></output>
+      <div id="nested"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

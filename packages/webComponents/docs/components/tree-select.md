@@ -63,4 +63,6 @@ control.addEventListener('change', (event) => console.log((event as CustomEvent)
 
 触发器 Enter/Space 打开；ArrowDown 进入树，树内方向键展开/移动、Enter 选择、Space 独立勾选；Escape 关闭并返回触发器。单选后关闭、多选保持打开，外部点击关闭。搜索框 ArrowDown 进入结果。支持明暗模式和自定义主色。
 
+关闭或卸载后的旧树事件不会修改当前值。搜索期间的临时展开不覆盖搜索前的展开状态；异步打开时若焦点已移至外部，组件不再抢回。单选后的焦点恢复支持嵌套 Shadow DOM，同时尊重业务 change 回调主动转移的焦点。
+
 不包含远程请求、虚拟滚动、父子级联或权限保存；节点数组通过 DOM property 赋值，不提供 JSON attribute。

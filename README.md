@@ -96,6 +96,7 @@ Vue 需要配置 `isCustomElement`，React 应通过 ref 给组件赋复杂属�
 - Tree 的勾选是前端交互，不替代服务端权限校验。
 - 组件使用 Shadow DOM；SSR 时应避免在服务端直接执行浏览器组件注册，主题变量和受支持的 CSS Parts 用于样式定制。
 - 后续优先补齐时间选择、表格编辑和 PageHeader。详见[后台扩展计划](packages/webComponents/docs/guide/admin-roadmap.md)。
+- 当前执行路线见 [30 天完善计划](packages/webComponents/docs/guide/30-day-plan.md)，按质量基线、时间组件、Table、后台页面与联动验收推进。
 
 ## 仓库结构
 

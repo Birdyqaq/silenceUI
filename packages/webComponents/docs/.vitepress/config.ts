@@ -55,6 +55,7 @@ export default defineConfig({
             { text: '主题定制', link: '/guide/theme' },
             { text: '开发规范', link: '/guide/development' },
             { text: '执行计划', link: '/guide/execution-plan' },
+            { text: '30 天完善计划', link: '/guide/30-day-plan' },
             { text: '后台扩展清单', link: '/guide/admin-roadmap' },
           ],
         },

@@ -1,0 +1,66 @@
+name: Web Components quality
+
+on:
+  pull_request:
+    paths: ['packages/webComponents/**', '.github/workflows/web-components.yml', '.npmrc']
+  push:
+    branches: [dev, main]
+    paths: ['packages/webComponents/**', '.github/workflows/web-components.yml', '.npmrc']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-components-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: packages/webComponents
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.9
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.1
+          cache: pnpm
+          cache-dependency-path: packages/webComponents/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --ignore-workspace
+      - run: pnpm check
+      - run: pnpm typecheck:browser
+
+  chromium:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.15.9
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.1
+          cache: pnpm
+          cache-dependency-path: packages/webComponents/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --ignore-workspace
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:browser
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: chromium-report
+          path: |
+            packages/webComponents/playwright-report/
+            packages/webComponents/test-results/
+          retention-days: 7
