@@ -58,6 +58,9 @@
     "test": "vitest",
     "test:run": "vitest --run",
     "test:ui": "vitest --ui",
+    "test:browser": "playwright test",
+    "test:browser:report": "playwright show-report",
+    "typecheck:browser": "tsc -p browser/tsconfig.json --noEmit",
     "dev": "vite",
     "build": "vite build && vite build --config vite.entries.config.ts",
     "docs:dev": "vitepress dev docs",
@@ -78,6 +81,7 @@
     "url": "https://github.com/Birdyqaq/silenceUI/issues"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@rollup/plugin-typescript": "^11.1.6",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",

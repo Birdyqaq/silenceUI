@@ -58,6 +58,93 @@ it('selects a node, emits once and closes the single-select popup', async () => 
   expect(control.shadowRoot!.querySelector('.trigger')!.textContent).toContain('研发');
 });
 
+it('ignores delayed selections from a closed or detached popup', async () => {
+  const control = await mount();
+  const change = vi.fn();
+  control.addEventListener('change', change);
+  const oldTree = await open(control);
+  control.shadowRoot!.querySelector<HTMLButtonElement>('.trigger')!.click();
+  oldTree.dispatchEvent(new CustomEvent('select', { detail: { key: 'a' } }));
+  expect(control.value).toBe('');
+  await control.updateComplete;
+  await open(control);
+  oldTree.dispatchEvent(new CustomEvent('select', { detail: { key: 'b' } }));
+  expect(control.value).toBe('');
+  expect(change).not.toHaveBeenCalled();
+});
+
+it('does not persist temporary search expansion after clearing the query', async () => {
+  const control = await mount();
+  control.searchable = true;
+  await control.updateComplete;
+  const tree = await open(control);
+  const search = control.shadowRoot!.querySelector<HTMLInputElement>('.search')!;
+  search.value = '研发';
+  search.dispatchEvent(new Event('input', { bubbles: true }));
+  await control.updateComplete;
+  await tree.updateComplete;
+  tree.expandedKeys = ['root'];
+  tree.dispatchEvent(new CustomEvent('expand'));
+  search.value = '';
+  search.dispatchEvent(new Event('input', { bubbles: true }));
+  await control.updateComplete;
+  expect(tree.expandedKeys).toEqual([]);
+});
+
+it.each([false, true])(
+  'does not steal focus moved outside while opening (searchable: %s)',
+  async (searchable) => {
+    const control = await mount();
+    control.searchable = searchable;
+    await control.updateComplete;
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const trigger = control.shadowRoot!.querySelector<HTMLButtonElement>('.trigger')!;
+    trigger.focus();
+    trigger.click();
+    outside.focus();
+    await control.updateComplete;
+    await control.shadowRoot!.querySelector('su-tree')!.updateComplete;
+    await Promise.resolve();
+    expect(document.activeElement).toBe(outside);
+  }
+);
+
+it('restores focus after selection when mounted inside another shadow root', async () => {
+  const host = document.createElement('div');
+  const shadow = host.attachShadow({ mode: 'open' });
+  document.body.append(host);
+  const control = await mount();
+  shadow.append(control);
+  await control.updateComplete;
+  const tree = await open(control);
+  const option = tree.shadowRoot!.querySelector<HTMLButtonElement>('[data-key="a"]')!;
+  option.focus();
+  option.click();
+  await control.updateComplete;
+  expect(control.value).toBe('a');
+  expect(control.shadowRoot!.activeElement).toBe(control.shadowRoot!.querySelector('.trigger'));
+});
+
+it('respects change handlers moving focus within the same outer shadow root', async () => {
+  const host = document.createElement('div');
+  const shadow = host.attachShadow({ mode: 'open' });
+  document.body.append(host);
+  const control = await mount();
+  const outside = document.createElement('button');
+  shadow.append(control, outside);
+  await control.updateComplete;
+  control.addEventListener('change', () => outside.focus());
+  const tree = await open(control);
+  const option = tree.shadowRoot!.querySelector<HTMLButtonElement>('[data-key="a"]')!;
+  option.focus();
+  option.click();
+  await control.updateComplete;
+  expect(control.value).toBe('a');
+  expect(shadow.activeElement).toBe(outside);
+  expect(control.shadowRoot!.activeElement).toBeNull();
+});
+
 it('keeps independent checked keys and selection across searches', async () => {
   const control = await mount(true);
   control.searchable = true;

@@ -2,6 +2,8 @@
 
 ## 自动检查
 
+2026-10-31 新增 `pnpm typecheck:browser` 与 `pnpm test:browser`。首次运行先执行 `pnpm exec playwright install chromium`。18 项真实 Chromium 测试覆盖原生表单、键盘焦点、异步规则与卸载、明暗/品牌色及宽窄屏；报告和失败诊断文件不提交。GitHub Actions 远端结果需另行确认，不等于本地通过。
+
 ```bash
 pnpm docs:verify
 pnpm docs:inventory:check
@@ -9,7 +11,7 @@ pnpm docs:build
 pnpm check
 ```
 
-`docs:verify` 检查 12 个组件使用页面均有客户端演示入口、公开组件均出现在 README 与演示源文件中、Button 属性名和 React 布尔传值约定正确，以及在线媒体不依赖远程地址。`se-image-preview` 通过图片点击打开，不独立常驻展示。Table 设计说明和组件总览是说明/索引页面，不计入交互页面。
+`docs:verify` 根据 `docs/components` 自动枚举组件使用页面（2026-10-28 为 17 页），检查它们均有客户端演示入口、公开组件均出现在 README 与可达演示源文件中、Button 属性名和 React 布尔传值约定正确，以及在线媒体不依赖远程地址。实际数量以命令输出为准。`se-image-preview` 通过图片点击打开，不独立常驻展示。Table 设计说明和组件总览是说明/索引页面，不计入交互页面。
 
 这项检查是静态约定验证；它不替代示例运行、React 宿主类型检查或浏览器兼容性测试。VitePress 构建负责页面与站内链接，组件 API 清单来自源码。
 
@@ -25,6 +27,10 @@ pnpm check
 | Feedback                   | Modal、Drawer、消息、通知、警告、确认气泡、Tooltip、加载与进度     |
 | Layout                     | 页面骨架、分割线及主题切换                                         |
 | Typewriter                 | 五种效果、光标、速度和播放控制                                     |
+| Icon                       | 本地图标名称、大小与可访问标签                                     |
+| 后台管理增强               | Form 规则、Select 搜索、多级 Menu、文本筛选、权限树及日期范围      |
+| Collapse / Timeline        | 分组展开、手风琴、时间线顺序与详情展示                             |
+| TreeSelect / Transfer      | 部门选择、独立多选、搜索与批量移动，含原生 FormData 联动表单       |
 | Image / AssetViewer / Line | 本地图片、预览与缩略图、历史分割线                                 |
 
 交互演示等待组件注册后再传 property，事件结果直接显示在页面上。消息和通知在离开示例页面时清理；表单按钮通过原生 submit/reset 触发，避免点击与表单事件重复调用。

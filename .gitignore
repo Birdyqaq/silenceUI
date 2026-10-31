@@ -15,4 +15,6 @@ packages/webComponents/docs/.vitepress/cache/
 packages/webComponents/docs/.vitepress/dist/
 
 *.log
+packages/webComponents/playwright-report/
+packages/webComponents/test-results/
 *storybook.log

@@ -9,6 +9,7 @@ import {
   type ChoiceEntry,
 } from '../../_shared/choice';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
+import { getDeepActiveElement } from '../../_shared/overlay';
 import '../../data/tree';
 import type { SuTree, TreeNode } from '../../data/tree';
 
@@ -174,15 +175,27 @@ export class SuTreeSelect extends LitElement {
 
   private async show(treeFocus = false) {
     if (this.formValue.disabled) return;
+    const previousFocus = getDeepActiveElement();
     this.open = true;
     await this.updateComplete;
-    if (!this.isConnected || !this.open || this.formValue.disabled) return;
+    if (
+      !this.isConnected ||
+      !this.open ||
+      this.formValue.disabled ||
+      getDeepActiveElement() !== previousFocus
+    )
+      return;
     const tree = this.renderRoot.querySelector<SuTree>('su-tree');
     if (!treeFocus && this.searchable)
       this.renderRoot.querySelector<HTMLInputElement>('.search')?.focus();
     else if (tree) {
       await tree.updateComplete;
-      if (this.isConnected && this.open && !this.formValue.disabled)
+      if (
+        this.isConnected &&
+        this.open &&
+        !this.formValue.disabled &&
+        getDeepActiveElement() === previousFocus
+      )
         tree.shadowRoot?.querySelector<HTMLButtonElement>('.label[tabindex="0"]')?.focus();
     }
   }
@@ -204,6 +217,8 @@ export class SuTreeSelect extends LitElement {
 
   private choose(event: CustomEvent) {
     event.stopPropagation();
+    // 关闭后的旧树和已经卸载的弹层不能继续修改当前选择。
+    if (!this.open || event.target !== this.renderRoot.querySelector('su-tree')) return;
     const key = event.detail.key;
     const node = this.available.get(key);
     if (this.formValue.disabled || !node || node.disabled) return;
@@ -216,12 +231,7 @@ export class SuTreeSelect extends LitElement {
       this.open = false;
     }
     this.emitChange();
-    if (
-      !this.multiple &&
-      this.open === false &&
-      this.isConnected &&
-      this.ownerDocument.activeElement === this
-    )
+    if (!this.multiple && this.open === false && this.isConnected && this.shadowRoot?.activeElement)
       this.focus();
   }
   private emitChange() {
@@ -314,6 +324,12 @@ export class SuTreeSelect extends LitElement {
                   @check=${this.choose}
                   @expand=${(event: CustomEvent) => {
                     event.stopPropagation();
+                    if (
+                      !this.open ||
+                      this.query.trim() ||
+                      event.target !== this.renderRoot.querySelector('su-tree')
+                    )
+                      return;
                     const tree = event.target as SuTree;
                     this.expandedKeys = [...tree.expandedKeys];
                   }}
