@@ -1,5 +1,7 @@
 # SilenceUI Web Components
 
+新增 `su-time-picker` / `su-time-range`：本地 HH:mm、分钟精度、required/min/max/step、原生 FormData、reset 与错误关联；按需入口 `silenceui/components/form/time-picker`、`silenceui/components/form/time-range`。不支持跨日、秒或时区转换。
+
 基于 Lit 与 CSS 主题变量的跨框架 Web Components 组件库，适用于后台管理系统场景。UnoCSS 为历史构建配置，并非组件内部样式依赖。
 
 后台新增：`su-icon` 本地图标、`su-form` 规则校验、`su-date-range` 日期范围。Select、多级 Menu、Table 筛选与 Tree 权限勾选见文档「后台管理增强」。

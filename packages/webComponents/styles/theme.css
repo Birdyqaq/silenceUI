@@ -1,4 +1,5 @@
 :root {
+  --su-native-color-scheme: light;
   --su-color-primary: #3b82f6;
   --su-color-primary-hover: #2563eb;
   /* -rgb 为颜色的 RGB 三元组，用于生成浅色背景/聚焦光圈等衍生色；
@@ -49,6 +50,7 @@
   --su-text-3: #9ca3af;
   --su-bg-page: #0f172a;
   --su-bg-card: #111827;
+  --su-native-color-scheme: dark;
   --su-bg-hover: #1e293b;
   --su-bg-muted: #1f2937;
   --su-overlay: rgba(15, 23, 42, 0.65);
