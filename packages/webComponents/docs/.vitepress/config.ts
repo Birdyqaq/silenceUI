@@ -83,6 +83,8 @@ export default defineConfig({
             { text: 'Form 表单组件', link: '/components/form' },
             { text: 'TreeSelect 树选择', link: '/components/tree-select' },
             { text: 'Transfer 穿梭框', link: '/components/transfer' },
+            { text: '时间选择与排班', link: '/components/time' },
+            { text: 'Table 增强接口约定', link: '/guide/table-contract' },
           ],
         },
         {

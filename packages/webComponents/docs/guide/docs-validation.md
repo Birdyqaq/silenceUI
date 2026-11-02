@@ -2,6 +2,8 @@
 
 ## 自动检查
 
+2026-11-02：时间组件纳入验收，32 个单元测试文件 / 318 项测试，Chromium 27 项（新增 9 项时间组件场景）通过。18 个组件交互页面、54 元素、53 按需入口通过文档/包校验；时间组件覆盖 FormData、reset、fieldset、恢复、错误焦点、原生分段 Tab、明暗/品牌色及 390px/1440px。Firefox/WebKit、真机和读屏仍未验证。
+
 2026-10-31 新增 `pnpm typecheck:browser` 与 `pnpm test:browser`。首次运行先执行 `pnpm exec playwright install chromium`。18 项真实 Chromium 测试覆盖原生表单、键盘焦点、异步规则与卸载、明暗/品牌色及宽窄屏；报告和失败诊断文件不提交。GitHub Actions 远端结果需另行确认，不等于本地通过。
 
 ```bash

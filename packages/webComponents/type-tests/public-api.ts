@@ -1,4 +1,7 @@
 import type {
+  SuTimePicker,
+  SuTimeRange,
+  TimeRangeValue,
   SuTransfer,
   TransferItem,
   SuTreeSelect,
@@ -56,6 +59,15 @@ import type {
   SuUpload,
   seTable,
 } from '../dist/index';
+import type { SuTimePicker as DirectTimePicker } from '../dist/components/form/time-picker/index';
+import type { SuTimeRange as DirectTimeRange } from '../dist/components/form/time-range/index';
+const time: SuTimePicker & DirectTimePicker = document.createElement('su-time-picker');
+time.value = '09:00';
+time.step = 900;
+time.required = true;
+const shift: SuTimeRange & DirectTimeRange = document.createElement('su-time-range');
+const shiftValue: TimeRangeValue = ['09:00', '18:00'];
+shift.value = shiftValue;
 import type { SuButton as DirectSuButton } from '../dist/components/button/index';
 import type { SuTransfer as DirectTransfer } from '../dist/components/form/transfer/index';
 const transferItems: TransferItem[] = [{ key: 'alice', label: 'Alice' }];

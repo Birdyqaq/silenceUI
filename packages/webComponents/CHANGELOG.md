@@ -2,6 +2,10 @@
 
 ## 未发布
 
+- 新增 su-time-picker / su-time-range：本地 HH:mm、分钟精度、min/max/step、required、只读/禁用、原生 FormData/reset/恢复、FormItem 错误与焦点关联；范围重复字段提交且不修改调用方数组，不支持秒/跨日/时区转换。
+- 完成交互活例、根/按需公开类型、组件清单及时间协议，新增时间组件单元与真实 Chromium 回归；冻结后续 Table 列状态、筛选与编辑协议（尚未实现运行时 API）。
+- 忽略 Playwright 生成报告，避免失败诊断文件被 ESLint 当源码扫描。
+
 - 增加固定工具链、冻结依赖锁文件的 GitHub Actions 质量与 Chromium 作业；新增 18 项原生表单、焦点、异步校验及主题/布局浏览器回归，失败保留诊断报告。
 
 - 新增基于源码盘点的 30 天完善计划，修正文档验收清单并建立导航入口；TreeSelect 异步打开尊重外部焦点，单选焦点恢复支持嵌套 Shadow DOM。
