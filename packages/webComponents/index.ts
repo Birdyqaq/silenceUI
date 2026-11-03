@@ -2,6 +2,12 @@ import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
 export * from './types';
+export type {
+  TableColumnState,
+  TableColumnStateSnapshot,
+  TableFilterModel,
+  TableFilterModels,
+} from './components/table';
 export * from './components/form/time-picker';
 export * from './components/form/time-range';
 export * from './components/form/transfer';

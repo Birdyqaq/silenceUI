@@ -3,12 +3,30 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { tableStyles } from './seTable';
 import '../pagination/index';
+import {
+  normalizeColumnState,
+  validColumnKeys,
+  normalizeFilters,
+  matchesModel,
+  type TableColumnState,
+  type TableColumnStateSnapshot,
+  type TableFilterModels,
+  type TableFilterModel,
+} from './state';
+export type {
+  TableColumnState,
+  TableColumnStateSnapshot,
+  TableFilterModels,
+  TableFilterModel,
+} from './state';
 
 interface Column {
   key: string;
   label: string;
   sortable?: boolean;
   filterable?: boolean;
+  filterType?: 'text' | 'enum' | 'number';
+  filterOptions?: { label: string; value: string }[];
   width?: string;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
@@ -35,6 +53,97 @@ type CellSpan = { rowspan: number; colspan: number };
 
 @customElement('se-table')
 export class seTable extends LitElement {
+  @property({ attribute: false }) columnState: TableColumnState[] = [];
+  @property({ type: Boolean }) columnSettings = false;
+  @property({ attribute: false }) filterModels: TableFilterModels = {};
+  private get normalizedState() {
+    return normalizeColumnState(this.columns, this.columnState);
+  }
+  exportColumnState(): TableColumnStateSnapshot {
+    return {
+      version: 1,
+      columns: this.normalizedState.map((s) => ({
+        ...s,
+        ...(Object.prototype.hasOwnProperty.call(this.columnWidths, s.key)
+          ? { width: this.columnWidths[s.key] }
+          : {}),
+      })),
+    };
+  }
+  importColumnState(value: unknown): boolean {
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('version' in value) ||
+      value.version !== 1 ||
+      !('columns' in value) ||
+      !Array.isArray(value.columns) ||
+      !validColumnKeys(this.columns)
+    )
+      return false;
+    this.columnState = normalizeColumnState(this.columns, value.columns);
+    this.columnWidths = {};
+    return true;
+  }
+  private emitColumnState() {
+    this.dispatchEvent(
+      new CustomEvent('column-state-change', {
+        detail: { columnState: this.exportColumnState().columns },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+  private changeColumn(key: string, hidden?: boolean, delta = 0) {
+    if (!this.isConnected) return;
+    if (!validColumnKeys(this.columns)) return;
+    const states = this.exportColumnState().columns;
+    const index = states.findIndex((s) => s.key === key);
+    if (index < 0) return;
+    if (hidden !== undefined) states[index].hidden = hidden;
+    if (delta) {
+      const other = index + delta;
+      if (
+        other < 0 ||
+        other >= states.length ||
+        this.columns.find((c) => c.key === states[other].key)?.fixed !==
+          this.columns.find((c) => c.key === key)?.fixed
+      )
+        return;
+      [states[index], states[other]] = [states[other], states[index]];
+    }
+    this.columnState = states;
+    this.emitColumnState();
+  }
+  private changeModel(key: string, model: TableFilterModel) {
+    if (!this.isConnected || !this.columns.some((c) => c.key === key && c.filterable)) return;
+    const next = { ...this.filterModels, [key]: model };
+    const result = normalizeFilters(next);
+    if (result.invalid.length) {
+      this.dispatchEvent(
+        new CustomEvent('filter-invalid', {
+          detail: { keys: result.invalid },
+          bubbles: true,
+          composed: true,
+        })
+      );
+      return;
+    }
+    this.filterModels = result.models;
+    this.currentPage = 1;
+    this.scrollTop = 0;
+    this.resetViewportScroll();
+    this.dispatchEvent(
+      new CustomEvent('filter-model-change', {
+        detail: {
+          filters: { ...this.filters },
+          filterModels: normalizeFilters(this.filterModels).models,
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
   @property({ type: Object, attribute: false }) filters: Record<string, string> = {};
   @property({ type: Array })
 
@@ -385,7 +494,43 @@ export class seTable extends LitElement {
         outline: 2px solid var(--su-color-primary);
         outline-offset: -2px;
       }
+      details {
+        padding: 8px;
+        border: 1px solid var(--su-border-color);
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+      }
+      details [role='group'] > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 4px;
+      }
+      details button,
+      select,
+      input[type='number'] {
+        max-width: 100%;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        font: inherit;
+        padding: 4px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        color-scheme: var(--su-native-color-scheme, light);
+      }
+      details button:disabled {
+        opacity: 0.5;
+      }
+      summary:focus-visible,
+      details button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: 2px;
+      }
       .column-filter {
+        color-scheme: var(--su-native-color-scheme, light);
         display: block;
         width: 100%;
         min-width: 70px;
@@ -432,7 +577,13 @@ export class seTable extends LitElement {
 
       this.dispatchEvent(
         new CustomEvent('sort-change', {
-          detail: { column: col.key, direction: nextDirection },
+          detail: {
+            column: col.key,
+            direction: nextDirection,
+            ...(Object.keys(this.filterModels ?? {}).length
+              ? { filterModels: normalizeFilters(this.filterModels).models }
+              : {}),
+          },
           bubbles: true,
           composed: true,
         })
@@ -452,8 +603,11 @@ export class seTable extends LitElement {
 
   private get filteredData() {
     if (this.remote) return this.data;
+    const models = normalizeFilters(this.filterModels).models;
     return this.data.filter((row) =>
       this.columns.every((column) => {
+        if (Object.prototype.hasOwnProperty.call(models, column.key))
+          return matchesModel(row[column.key], models[column.key]);
         const query = this.filterValue(column.key);
         return (
           !column.filterable ||
@@ -481,6 +635,7 @@ export class seTable extends LitElement {
   }
 
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
+    if (changedProperties.has('columns') || changedProperties.has('columnState')) this.resizeCleanup?.();
     // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
     this.pageSize =
       Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
@@ -538,6 +693,8 @@ export class seTable extends LitElement {
       changedProperties.has('columns') ||
       changedProperties.has('data') ||
       changedProperties.has('filters') ||
+      changedProperties.has('filterModels') ||
+      changedProperties.has('columnState') ||
       changedProperties.has('remote')
     ) {
       for (const row of this.data) {
@@ -547,8 +704,17 @@ export class seTable extends LitElement {
       const directions = new Map(
         this.sortedColumns.map((column) => [column.key, column.sortDirection])
       );
-      this.sortedColumns = this.columns.map((c) => ({ ...c, sortDirection: '' }));
-      if (this.remote || changedProperties.has('filters'))
+      const states = this.normalizedState;
+      const ordered = validColumnKeys(this.columns)
+        ? states.filter((s) => !s.hidden).map((s) => this.columns.find((c) => c.key === s.key)!)
+        : this.columns;
+      this.sortedColumns = ordered.map((c) => ({ ...c, sortDirection: '' }));
+      if (
+        this.remote ||
+        changedProperties.has('filters') ||
+        changedProperties.has('filterModels') ||
+        changedProperties.has('columnState')
+      )
         this.sortedColumns = this.sortedColumns.map((column) => ({
           ...column,
           sortDirection: directions.get(column.key) ?? '',
@@ -561,6 +727,21 @@ export class seTable extends LitElement {
             this.compareValues(a[sort.key], b[sort.key]) * (sort.sortDirection === 'asc' ? 1 : -1)
         );
       if (!this.remote) this.currentPage = 1;
+      if (changedProperties.has('columns') || changedProperties.has('columnState'))
+        this.columnWidths = Object.fromEntries(
+          states.filter((s) => s.width !== undefined).map((s) => [s.key, s.width!])
+        );
+      if (changedProperties.has('filterModels')) {
+        const { invalid } = normalizeFilters(this.filterModels);
+        if (invalid.length)
+          this.dispatchEvent(
+            new CustomEvent('filter-invalid', {
+              detail: { keys: invalid },
+              bubbles: true,
+              composed: true,
+            })
+          );
+      }
     }
 
     if (
@@ -596,14 +777,18 @@ export class seTable extends LitElement {
 
   /** 返回列的当前像素宽度；未拖拽时优先使用列配置。 */
   private getColumnWidth(column: ColumnState) {
-    const resized = this.columnWidths[column.key];
+    const resized = Object.prototype.hasOwnProperty.call(this.columnWidths, column.key)
+      ? this.columnWidths[column.key]
+      : undefined;
     if (resized != null) return `${resized}px`;
     return column.width || 'auto';
   }
 
   /** 将 CSS 宽度转换为固定列偏移使用的像素值。 */
   private getColumnPixelWidth(column: ColumnState) {
-    const resized = this.columnWidths[column.key];
+    const resized = Object.prototype.hasOwnProperty.call(this.columnWidths, column.key)
+      ? this.columnWidths[column.key]
+      : undefined;
     if (resized != null) return resized;
     const parsed = Number.parseFloat(column.width || '');
     return Number.isFinite(parsed) ? parsed : 120;
@@ -657,6 +842,8 @@ export class seTable extends LitElement {
     };
     const stop = () => {
       this.resizeCleanup?.();
+      this.columnState = this.exportColumnState().columns;
+      this.emitColumnState();
       this.dispatchEvent(
         new CustomEvent('column-resize', {
           detail: { column: column.key, width: Math.round(currentWidth) },
@@ -686,6 +873,8 @@ export class seTable extends LitElement {
     const delta = event.key === 'ArrowRight' ? 10 : -10;
     const width = Math.min(max, Math.max(min, this.getColumnPixelWidth(column) + delta));
     this.columnWidths = { ...this.columnWidths, [column.key]: width };
+    this.columnState = this.exportColumnState().columns;
+    this.emitColumnState();
     this.dispatchEvent(
       new CustomEvent('column-resize', {
         detail: { column: column.key, width },
@@ -879,7 +1068,12 @@ export class seTable extends LitElement {
     this.resetViewportScroll();
     this.dispatchEvent(
       new CustomEvent('page-change', {
-        detail: { currentPage: bounded },
+        detail: {
+          currentPage: bounded,
+          ...(Object.keys(this.filterModels ?? {}).length
+            ? { filterModels: normalizeFilters(this.filterModels).models }
+            : {}),
+        },
         bubbles: true,
         composed: true,
       })
@@ -1111,8 +1305,119 @@ export class seTable extends LitElement {
 
   render() {
     const scrollable = this.infiniteScroll || this.shouldUseVirtualScroll;
+    const all = this.normalizedState;
     return html`
       <div class="table-wrapper">
+        ${this.columnSettings
+          ? html`<details>
+              <summary>列设置</summary>
+              <div role="group" aria-label="列设置">
+                ${!validColumnKeys(this.columns)
+                  ? html`<p role="status">列 key 必须非空且唯一</p>`
+                  : repeat(
+                      all,
+                      (s) => s.key,
+                      (s, i) =>
+                        html`<div>
+                          <label
+                            ><input
+                              type="checkbox"
+                              .checked=${!s.hidden}
+                              @change=${(e: Event) =>
+                                this.changeColumn(s.key, !(e.target as HTMLInputElement).checked)}
+                            />${this.columns.find((c) => c.key === s.key)?.label}</label
+                          ><button
+                            type="button"
+                            aria-label=${`前移${s.key}`}
+                            ?disabled=${i === 0 ||
+                            this.columns.find((c) => c.key === all[i - 1].key)?.fixed !==
+                              this.columns.find((c) => c.key === s.key)?.fixed}
+                            @click=${() => this.changeColumn(s.key, undefined, -1)}
+                          >
+                            前移</button
+                          ><button
+                            type="button"
+                            aria-label=${`后移${s.key}`}
+                            ?disabled=${i === all.length - 1 ||
+                            this.columns.find((c) => c.key === all[i + 1].key)?.fixed !==
+                              this.columns.find((c) => c.key === s.key)?.fixed}
+                            @click=${() => this.changeColumn(s.key, undefined, 1)}
+                          >
+                            后移
+                          </button>
+                        </div>`
+                    )}
+              </div>
+            </details>`
+          : nothing}
+        ${this.columns
+          .filter((c) => c.filterable && c.filterType && c.filterType !== 'text')
+          .map((c) => {
+            const model = normalizeFilters(this.filterModels).models[c.key];
+            return c.filterType === 'enum'
+              ? html`<label
+                    >${c.label}筛选<select
+                      multiple
+                      aria-label=${`枚举筛选${c.label}`}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'enum',
+                          values: Array.from(
+                            (e.target as HTMLSelectElement).selectedOptions,
+                            (o) => o.value
+                          ),
+                        })}
+                    >
+                      ${(c.filterOptions ?? []).map(
+                        (o) =>
+                          html`<option
+                            value=${o.value}
+                            .selected=${model?.type === 'enum' && model.values.includes(o.value)}
+                          >
+                            ${o.label}
+                          </option>`
+                      )}
+                    </select></label
+                  ><button
+                    type="button"
+                    @click=${() => this.changeModel(c.key, { type: 'enum', values: [] })}
+                  >
+                    清空${c.label}筛选
+                  </button>`
+              : html`<label
+                    >${c.label}下限<input
+                      type="number"
+                      aria-label=${`数值下限${c.label}`}
+                      .value=${model?.type === 'number' && model.min !== undefined
+                        ? String(model.min)
+                        : ''}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'number',
+                          ...(model?.type === 'number' ? model : {}),
+                          min:
+                            (e.target as HTMLInputElement).value === ''
+                              ? undefined
+                              : (e.target as HTMLInputElement).valueAsNumber,
+                        })} /></label
+                  ><label
+                    >${c.label}上限<input
+                      type="number"
+                      aria-label=${`数值上限${c.label}`}
+                      .value=${model?.type === 'number' && model.max !== undefined
+                        ? String(model.max)
+                        : ''}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'number',
+                          ...(model?.type === 'number' ? model : {}),
+                          max:
+                            (e.target as HTMLInputElement).value === ''
+                              ? undefined
+                              : (e.target as HTMLInputElement).valueAsNumber,
+                        })}
+                  /></label>`;
+          })}
         <div
           class="table-viewport ${scrollable ? 'scrollable' : ''}"
           style="${scrollable ? `height: ${this.effectiveHeight};` : ''}"
@@ -1161,7 +1466,7 @@ export class seTable extends LitElement {
                             >
                           </button>`
                         : col.label}
-                      ${col.filterable
+                      ${col.filterable && (!col.filterType || col.filterType === 'text')
                         ? html`<input
                             type="search"
                             class="column-filter"

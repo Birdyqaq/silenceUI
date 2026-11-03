@@ -1,4 +1,6 @@
 import type {
+  TableColumnStateSnapshot,
+  TableFilterModels,
   SuTimePicker,
   SuTimeRange,
   TimeRangeValue,
@@ -59,6 +61,19 @@ import type {
   SuUpload,
   seTable,
 } from '../dist/index';
+const tableState: TableColumnStateSnapshot = {
+  version: 1,
+  columns: [{ key: 'name', hidden: false, width: 120 }],
+};
+const tableModels: TableFilterModels = {
+  age: { type: 'number', min: 18 },
+  city: { type: 'enum', values: ['sh'] },
+};
+const enhancedTable = document.createElement('se-table');
+enhancedTable.columnSettings = true;
+enhancedTable.filterModels = tableModels;
+enhancedTable.importColumnState(tableState);
+enhancedTable.exportColumnState();
 import type { SuTimePicker as DirectTimePicker } from '../dist/components/form/time-picker/index';
 import type { SuTimeRange as DirectTimeRange } from '../dist/components/form/time-range/index';
 const time: SuTimePicker & DirectTimePicker = document.createElement('su-time-picker');
