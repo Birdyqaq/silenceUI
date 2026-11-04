@@ -20,10 +20,28 @@ export type {
   TableFilterModel,
 } from './state';
 
+export interface TableCellEditRequest {
+  requestId: number;
+  rowKey: string;
+  columnKey: string;
+  originalValue: unknown;
+  value: string | number;
+  signal: AbortSignal;
+  resolve: () => boolean;
+  reject: (message?: string) => void;
+}
+
+export interface TableCellEditor {
+  type: 'text' | 'number';
+  disabled?: boolean;
+  validate?: (value: string | number) => string | void | Promise<string | void>;
+}
+
 interface Column {
   key: string;
   label: string;
   sortable?: boolean;
+  editable?: TableCellEditor;
   filterable?: boolean;
   filterType?: 'text' | 'enum' | 'number';
   filterOptions?: { label: string; value: string }[];
@@ -53,6 +71,203 @@ type CellSpan = { rowspan: number; colspan: number };
 
 @customElement('se-table')
 export class seTable extends LitElement {
+  @state() private draft?: {
+    row: TableRow;
+    key: string;
+    column: Column;
+    original: unknown;
+    value: string;
+    pending: boolean;
+    error: string;
+    attempt: number;
+    controller?: AbortController;
+  };
+  private editSequence = 0;
+  private editKeys = new Map<string, number>();
+  private editColumnKeys = new Map<string, number>();
+
+  private editableKey(row: TableRow) {
+    const value = row[this.rowKey];
+    const key =
+      typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value))
+        ? String(value)
+        : '';
+    return key.trim() && this.editKeys.get(key) === 1 ? key : '';
+  }
+
+  private editIsCurrent(draft: NonNullable<seTable['draft']>) {
+    return (
+      this.isConnected &&
+      this.draft === draft &&
+      this.data.includes(draft.row) &&
+      this.editableKey(draft.row) === draft.key &&
+      this.editColumnKeys.get(draft.column.key) === 1 &&
+      !draft.column.editable?.disabled &&
+      this.columns.find((c) => c.key === draft.column.key)?.editable === draft.column.editable &&
+      this.sortedColumns.some((c) => c.key === draft.column.key) &&
+      Object.is(draft.row[draft.column.key], draft.original)
+    );
+  }
+
+  private finishEdit(restore: boolean, saved = false) {
+    const draft = this.draft;
+    if (!draft) return;
+    const focusInside = this.shadowRoot?.activeElement?.closest('.cell-editor');
+    this.draft = undefined;
+    if (!saved) draft.controller?.abort();
+    if (!restore || !focusInside) return;
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || this.draft || this.shadowRoot?.activeElement) return;
+      const button = Array.from(
+        this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.edit-cell') ?? []
+      ).find((node) => node.dataset.row === draft.key && node.dataset.column === draft.column.key);
+      if (document.activeElement === document.body || document.activeElement === this)
+        button?.focus();
+    });
+  }
+
+  private async saveEdit() {
+    const draft = this.draft;
+    if (!draft || draft.pending || !this.editIsCurrent(draft)) return;
+    const editor = draft.column.editable!;
+    const value = editor.type === 'number' ? Number(draft.value) : draft.value;
+    if (editor.type === 'number' && (!draft.value.trim() || !Number.isFinite(value))) {
+      draft.error = '请输入有效数字';
+      this.requestUpdate();
+      return;
+    }
+    if (Object.is(value, draft.original)) {
+      this.finishEdit(true);
+      return;
+    }
+    const attempt = ++this.editSequence;
+    const controller = new AbortController();
+    draft.controller = controller;
+    draft.attempt = attempt;
+    draft.pending = true;
+    draft.error = '';
+    this.requestUpdate();
+    const current = () => this.editIsCurrent(draft) && draft.pending && draft.attempt === attempt;
+    const reject = (message = '保存失败，请重试') => {
+      if (!current()) return;
+      draft.pending = false;
+      draft.error = message || '保存失败，请重试';
+      this.requestUpdate();
+    };
+    try {
+      const error = await editor.validate?.(value);
+      if (!current()) return;
+      if (error) {
+        reject(error);
+        return;
+      }
+      const detail: TableCellEditRequest = {
+        requestId: attempt,
+        rowKey: draft.key,
+        columnKey: draft.column.key,
+        originalValue: draft.original,
+        value,
+        signal: controller.signal,
+        resolve: () => {
+          if (!current()) return false;
+          this.finishEdit(true, true);
+          return true;
+        },
+        reject,
+      };
+      this.dispatchEvent(
+        new CustomEvent('cell-edit-request', { detail, bubbles: true, composed: true })
+      );
+    } catch (error) {
+      reject(error instanceof Error ? error.message : undefined);
+    }
+  }
+
+  private renderEditableCell(row: TableRow, col: Column, display: unknown) {
+    const editor = col.editable;
+    if (
+      !editor ||
+      editor.disabled ||
+      !['text', 'number'].includes(editor.type) ||
+      this.editColumnKeys.get(col.key) !== 1
+    )
+      return display;
+    const key = this.editableKey(row);
+    if (!key) return display;
+    const draft = this.draft;
+    if (draft?.row === row && draft.column.key === col.key)
+      return html` <div
+        class="cell-editor"
+        @click=${(e: Event) => e.stopPropagation()}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.isComposing) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.finishEdit(true);
+          }
+          if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            void this.saveEdit();
+          }
+        }}
+      >
+        <input
+          aria-label=${`编辑${col.label}`}
+          inputmode=${editor.type === 'number' ? 'decimal' : 'text'}
+          .value=${draft.value}
+          ?readonly=${draft.pending}
+          aria-invalid=${String(Boolean(draft.error))}
+          aria-describedby=${draft.error ? 'cell-edit-error' : nothing}
+          @input=${(e: Event) => {
+            if (this.draft === draft && !draft.pending) {
+              draft.value = (e.target as HTMLInputElement).value;
+              draft.error = '';
+              this.requestUpdate();
+            }
+          }}
+        />
+        <button type="button" ?disabled=${draft.pending} @click=${() => void this.saveEdit()}>
+          保存
+        </button>
+        <button type="button" @click=${() => this.finishEdit(true)}>取消</button>
+        ${draft.pending ? html`<span role="status">处理中</span>` : nothing}
+        ${draft.error
+          ? html`<span id="cell-edit-error" role="alert">${draft.error}</span>`
+          : nothing}
+      </div>`;
+    return html`<button
+      type="button"
+      class="edit-cell"
+      data-row=${key}
+      data-column=${col.key}
+      aria-label=${`编辑${col.label}（${key}）`}
+      ?disabled=${Boolean(draft)}
+      @click=${async (e: Event) => {
+        e.stopPropagation();
+        if (this.draft || !this.isConnected || !(e.currentTarget as HTMLElement).isConnected)
+          return;
+        const original = row[col.key];
+        this.draft = {
+          row,
+          key,
+          column: col,
+          original,
+          value: String(original ?? ''),
+          pending: false,
+          error: '',
+          attempt: 0,
+        };
+        const active = this.draft;
+        await this.updateComplete;
+        if (this.draft === active && this.editIsCurrent(active))
+          this.shadowRoot?.querySelector<HTMLInputElement>('.cell-editor input')?.focus();
+      }}
+    >
+      ${display}
+    </button>`;
+  }
   @property({ attribute: false }) columnState: TableColumnState[] = [];
   @property({ type: Boolean }) columnSettings = false;
   @property({ attribute: false }) filterModels: TableFilterModels = {};
@@ -542,6 +757,32 @@ export class seTable extends LitElement {
         border-radius: var(--su-radius-sm);
         font: inherit;
       }
+      .cell-editor {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .cell-editor input {
+        min-width: 0;
+        width: 100%;
+      }
+      .cell-editor input,
+      .cell-editor button,
+      .edit-cell {
+        font: inherit;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+      }
+      .cell-editor :focus-visible,
+      .edit-cell:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+      }
+      .cell-editor [role='alert'] {
+        color: var(--su-color-error);
+        overflow-wrap: anywhere;
+      }
     `,
   ];
 
@@ -635,7 +876,20 @@ export class seTable extends LitElement {
   }
 
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
-    if (changedProperties.has('columns') || changedProperties.has('columnState')) this.resizeCleanup?.();
+    if (changedProperties.has('columns')) {
+      this.editColumnKeys.clear();
+      for (const { key } of this.columns)
+        this.editColumnKeys.set(key, (this.editColumnKeys.get(key) ?? 0) + 1);
+    }
+    if (changedProperties.has('data') || changedProperties.has('rowKey')) {
+      this.editKeys.clear();
+      for (const row of this.data) {
+        const key = String(row[this.rowKey] ?? '');
+        this.editKeys.set(key, (this.editKeys.get(key) ?? 0) + 1);
+      }
+    }
+    if (changedProperties.has('columns') || changedProperties.has('columnState'))
+      this.resizeCleanup?.();
     // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
     this.pageSize =
       Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
@@ -768,9 +1022,15 @@ export class seTable extends LitElement {
 
   updated() {
     this.measureViewportHeight();
+    if (
+      this.draft &&
+      (!this.editIsCurrent(this.draft) || !this.shadowRoot?.querySelector('.cell-editor'))
+    )
+      this.finishEdit(false);
   }
 
   disconnectedCallback() {
+    this.finishEdit(false);
     this.resizeCleanup?.();
     super.disconnectedCallback();
   }
@@ -1240,7 +1500,7 @@ export class seTable extends LitElement {
                     col
                   )}; ${presentation.style}"
                 >
-                  ${value}
+                  ${this.renderEditableCell(row, col, value)}
                 </td>
               `;
             })}

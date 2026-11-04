@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type {} from '../types';
+import type { TableCellEditRequest } from '../components/table';
 test.beforeEach(async ({ page }) => {
   await page.goto('/browser/fixture.html');
   await expect(page.locator('html')).toHaveAttribute('data-ready', 'true');
@@ -50,6 +51,104 @@ test('column keyboard visibility, order and width restore', async ({ page }) => 
           .columns.find((c) => c.key === 'age')!.width
     )
   ).toBe(190);
+});
+
+test('edits a fixed cell without selecting its row; remote retry and focus recovery', async ({
+  page,
+}) => {
+  await page.evaluate(async () => {
+    const table = document.querySelector('se-table')!;
+    table.remote = true;
+    table.selectable = true;
+    table.columns = table.columns.map((col) =>
+      col.key === 'name' ? { ...col, editable: { type: 'text' } } : col
+    );
+    let attempts = 0;
+    table.addEventListener('cell-edit-request', (event) => {
+      const request = (event as CustomEvent<TableCellEditRequest>).detail;
+      if (++attempts === 1) request.reject('模拟失败');
+      else {
+        request.resolve();
+        table.data = table.data.map((row) =>
+          String(row.id) === request.rowKey ? { ...row, name: request.value } : row
+        );
+      }
+    });
+    await table.updateComplete;
+  });
+  const button = page.getByRole('button', { name: '编辑姓名（1）', exact: true });
+  await button.press('Enter');
+  const input = page.getByRole('textbox', { name: '编辑姓名', exact: true });
+  await expect(input).toBeFocused();
+  await input.fill('Alicia');
+  await input.press('Enter');
+  await expect(page.getByRole('alert')).toHaveText('模拟失败');
+  await expect(input).toHaveValue('Alicia');
+  await input.press('Enter');
+  await expect(button).toHaveText('Alicia');
+  await expect(button).toBeFocused();
+  expect(await page.evaluate(() => document.querySelector('se-table')!.selectedKeys)).toEqual([]);
+});
+
+test('virtual window, filter, pagination and column visibility invalidate active drafts', async ({
+  page,
+}) => {
+  const start = async () =>
+    page.getByRole('button', { name: '编辑姓名（1）', exact: true }).press('Enter');
+  const editor = page.getByRole('textbox', { name: '编辑姓名', exact: true });
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.columns = t.columns.map((c) =>
+      c.key === 'name' ? { ...c, editable: { type: 'text' }, filterable: true } : c
+    );
+    t.data = Array.from({ length: 2000 }, (_, i) => ({
+      id: i + 1,
+      name: 'Row ' + (i + 1),
+      age: i,
+    }));
+    t.virtualScroll = true;
+    t.height = '240px';
+    await t.updateComplete;
+  });
+  await start();
+  await expect(editor).toBeFocused();
+  await page.locator('.table-viewport').evaluate((el) => (el.scrollTop = 4000));
+  await expect(editor).toHaveCount(0);
+  expect(await page.locator('tbody tr').count()).toBeLessThan(60);
+  await page.locator('.table-viewport').evaluate((el) => (el.scrollTop = 0));
+  await start();
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.filters = { name: 'Row 2000' };
+    await t.updateComplete;
+  });
+  await expect(editor).toHaveCount(0);
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.filters = {};
+    t.pagination = true;
+    t.pageSize = 10;
+    await t.updateComplete;
+  });
+  await start();
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.currentPage = 2;
+    await t.updateComplete;
+  });
+  await expect(editor).toHaveCount(0);
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.currentPage = 1;
+    await t.updateComplete;
+  });
+  await start();
+  await page.evaluate(async () => {
+    const t = document.querySelector('se-table')!;
+    t.columnState = [{ key: 'name', hidden: true }];
+    await t.updateComplete;
+  });
+  await expect(editor).toHaveCount(0);
 });
 test('typed filters combine locally and remain remote conditions', async ({ page }) => {
   await page.getByLabel('数值下限年龄').fill('25');

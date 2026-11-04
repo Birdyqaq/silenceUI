@@ -1,5 +1,13 @@
 # Table 表格
 
+## 单元格编辑
+
+列可设置 `editable: { type: 'text' | 'number', disabled?, validate? }`。同一时刻只编辑一格；行必须有非空唯一的字符串/有限数字 rowKey，列 key 也必须唯一。按 Enter 开启编辑或提交，Escape 取消；保存和取消也有按钮。数字不接受空白或非有限值，validate 可同步或异步返回错误文字。未改动值直接退出，不发送保存请求。
+
+`cell-edit-request.detail` 提供 `requestId, rowKey, columnKey, originalValue, value, signal, resolve, reject`。宿主保存后调用 resolve；仅当返回 true 时用新数组替换已保存的行。失败调用 reject(message) 保留草稿和错误。组件不请求网络、不修改原数据，也不将派发事件当作成功。取消、卸载、行替换或离开可见范围会使 signal 中止，宿主应将 signal 传给支持取消的请求。取消本地草稿不能撤销服务端已处理的写入。
+
+下面的活例使用模拟保存，可切换 remote、模拟一次失败并重试。编辑格离开分页、筛选或虚拟渲染窗口时取消，不跨窗口缓存草稿；固定列仍保留定位。虚拟滚动仍以固定行高估算，不保证包含多行错误文字时的精确像素定位。
+
 ## 列状态与类型筛选（第 11—13 天）
 
 <ClientOnly><TableStateDemo /></ClientOnly>

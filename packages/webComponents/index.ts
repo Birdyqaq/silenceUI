@@ -2,6 +2,7 @@ import './styles/theme.css';
 import { initTheme } from './utils/theme';
 
 export * from './types';
+export type { TableCellEditor, TableCellEditRequest } from './components/table';
 export type {
   TableColumnState,
   TableColumnStateSnapshot,
