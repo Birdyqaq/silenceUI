@@ -7,6 +7,7 @@ import '../components/form/tree-select';
 import '../components/form/transfer';
 import '../components/form/time-picker';
 import '../components/form/time-range';
+import '../components/table';
 import { setThemeColors, setThemeMode } from '../utils/theme';
 
 const department = document.querySelector('su-tree-select')!;

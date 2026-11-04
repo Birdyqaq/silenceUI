@@ -7,6 +7,7 @@ import TypewriterDemo from './TypewriterDemo.vue';
 import ComponentDemo from './ComponentDemo.vue';
 import AdminDemo from './AdminDemo.vue';
 import TimeDemo from './TimeDemo.vue';
+import TableStateDemo from './TableStateDemo.vue';
 import './custom-home.css';
 
 export default {
@@ -23,6 +24,7 @@ export default {
     app.component('ComponentDemo', ComponentDemo);
     app.component('AdminDemo', AdminDemo);
     app.component('TimeDemo', TimeDemo);
+    app.component('TableStateDemo', TableStateDemo);
 
     // 导入并注册 Web Components
     if (typeof window !== 'undefined') {

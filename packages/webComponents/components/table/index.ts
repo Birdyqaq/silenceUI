@@ -3,12 +3,48 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { tableStyles } from './seTable';
 import '../pagination/index';
+import {
+  normalizeColumnState,
+  validColumnKeys,
+  normalizeFilters,
+  matchesModel,
+  type TableColumnState,
+  type TableColumnStateSnapshot,
+  type TableFilterModels,
+  type TableFilterModel,
+} from './state';
+export type {
+  TableColumnState,
+  TableColumnStateSnapshot,
+  TableFilterModels,
+  TableFilterModel,
+} from './state';
+
+export interface TableCellEditRequest {
+  requestId: number;
+  rowKey: string;
+  columnKey: string;
+  originalValue: unknown;
+  value: string | number;
+  signal: AbortSignal;
+  resolve: () => boolean;
+  reject: (message?: string) => void;
+}
+
+export interface TableCellEditor {
+  type: 'text' | 'number';
+  disabled?: boolean;
+  validate?: (value: string | number) => string | void | Promise<string | void>;
+}
 
 interface Column {
   key: string;
   label: string;
   sortable?: boolean;
+  editable?: TableCellEditor;
   filterable?: boolean;
+  filterType?: 'text' | 'enum' | 'number';
+  filterOptions?: { label: string; value: string }[];
   width?: string;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
@@ -35,6 +71,294 @@ type CellSpan = { rowspan: number; colspan: number };
 
 @customElement('se-table')
 export class seTable extends LitElement {
+  @state() private draft?: {
+    row: TableRow;
+    key: string;
+    column: Column;
+    original: unknown;
+    value: string;
+    pending: boolean;
+    error: string;
+    attempt: number;
+    controller?: AbortController;
+  };
+  private editSequence = 0;
+  private editKeys = new Map<string, number>();
+  private editColumnKeys = new Map<string, number>();
+
+  private editableKey(row: TableRow) {
+    const value = row[this.rowKey];
+    const key =
+      typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value))
+        ? String(value)
+        : '';
+    return key.trim() && this.editKeys.get(key) === 1 ? key : '';
+  }
+
+  private editIsCurrent(draft: NonNullable<seTable['draft']>) {
+    return (
+      this.isConnected &&
+      this.draft === draft &&
+      this.data.includes(draft.row) &&
+      this.editableKey(draft.row) === draft.key &&
+      this.editColumnKeys.get(draft.column.key) === 1 &&
+      !draft.column.editable?.disabled &&
+      this.columns.find((c) => c.key === draft.column.key)?.editable === draft.column.editable &&
+      this.sortedColumns.some((c) => c.key === draft.column.key) &&
+      Object.is(draft.row[draft.column.key], draft.original)
+    );
+  }
+
+  private finishEdit(restore: boolean, saved = false) {
+    const draft = this.draft;
+    if (!draft) return;
+    const focusInside = this.shadowRoot?.activeElement?.closest('.cell-editor');
+    this.draft = undefined;
+    if (!saved) draft.controller?.abort();
+    if (!restore || !focusInside) return;
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || this.draft || this.shadowRoot?.activeElement) return;
+      const button = Array.from(
+        this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.edit-cell') ?? []
+      ).find((node) => node.dataset.row === draft.key && node.dataset.column === draft.column.key);
+      if (document.activeElement === document.body || document.activeElement === this)
+        button?.focus();
+    });
+  }
+
+  private async saveEdit() {
+    const draft = this.draft;
+    if (!draft || draft.pending || !this.editIsCurrent(draft)) return;
+    const editor = draft.column.editable!;
+    const value = editor.type === 'number' ? Number(draft.value) : draft.value;
+    if (editor.type === 'number' && (!draft.value.trim() || !Number.isFinite(value))) {
+      draft.error = '请输入有效数字';
+      this.requestUpdate();
+      return;
+    }
+    if (Object.is(value, draft.original)) {
+      this.finishEdit(true);
+      return;
+    }
+    const attempt = ++this.editSequence;
+    const controller = new AbortController();
+    draft.controller = controller;
+    draft.attempt = attempt;
+    draft.pending = true;
+    draft.error = '';
+    this.requestUpdate();
+    const current = () => this.editIsCurrent(draft) && draft.pending && draft.attempt === attempt;
+    const reject = (message = '保存失败，请重试') => {
+      if (!current()) return;
+      draft.pending = false;
+      draft.error = message || '保存失败，请重试';
+      this.requestUpdate();
+    };
+    try {
+      const error = await editor.validate?.(value);
+      if (!current()) return;
+      if (error) {
+        reject(error);
+        return;
+      }
+      const detail: TableCellEditRequest = {
+        requestId: attempt,
+        rowKey: draft.key,
+        columnKey: draft.column.key,
+        originalValue: draft.original,
+        value,
+        signal: controller.signal,
+        resolve: () => {
+          if (!current()) return false;
+          this.finishEdit(true, true);
+          return true;
+        },
+        reject,
+      };
+      this.dispatchEvent(
+        new CustomEvent('cell-edit-request', { detail, bubbles: true, composed: true })
+      );
+    } catch (error) {
+      reject(error instanceof Error ? error.message : undefined);
+    }
+  }
+
+  private renderEditableCell(row: TableRow, col: Column, display: unknown) {
+    const editor = col.editable;
+    if (
+      !editor ||
+      editor.disabled ||
+      !['text', 'number'].includes(editor.type) ||
+      this.editColumnKeys.get(col.key) !== 1
+    )
+      return display;
+    const key = this.editableKey(row);
+    if (!key) return display;
+    const draft = this.draft;
+    if (draft?.row === row && draft.column.key === col.key)
+      return html` <div
+        class="cell-editor"
+        @click=${(e: Event) => e.stopPropagation()}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.isComposing) return;
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            this.finishEdit(true);
+          }
+          if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            void this.saveEdit();
+          }
+        }}
+      >
+        <input
+          aria-label=${`编辑${col.label}`}
+          inputmode=${editor.type === 'number' ? 'decimal' : 'text'}
+          .value=${draft.value}
+          ?readonly=${draft.pending}
+          aria-invalid=${String(Boolean(draft.error))}
+          aria-describedby=${draft.error ? 'cell-edit-error' : nothing}
+          @input=${(e: Event) => {
+            if (this.draft === draft && !draft.pending) {
+              draft.value = (e.target as HTMLInputElement).value;
+              draft.error = '';
+              this.requestUpdate();
+            }
+          }}
+        />
+        <button type="button" ?disabled=${draft.pending} @click=${() => void this.saveEdit()}>
+          保存
+        </button>
+        <button type="button" @click=${() => this.finishEdit(true)}>取消</button>
+        ${draft.pending ? html`<span role="status">处理中</span>` : nothing}
+        ${draft.error
+          ? html`<span id="cell-edit-error" role="alert">${draft.error}</span>`
+          : nothing}
+      </div>`;
+    return html`<button
+      type="button"
+      class="edit-cell"
+      data-row=${key}
+      data-column=${col.key}
+      aria-label=${`编辑${col.label}（${key}）`}
+      ?disabled=${Boolean(draft)}
+      @click=${async (e: Event) => {
+        e.stopPropagation();
+        if (this.draft || !this.isConnected || !(e.currentTarget as HTMLElement).isConnected)
+          return;
+        const original = row[col.key];
+        this.draft = {
+          row,
+          key,
+          column: col,
+          original,
+          value: String(original ?? ''),
+          pending: false,
+          error: '',
+          attempt: 0,
+        };
+        const active = this.draft;
+        await this.updateComplete;
+        if (this.draft === active && this.editIsCurrent(active))
+          this.shadowRoot?.querySelector<HTMLInputElement>('.cell-editor input')?.focus();
+      }}
+    >
+      ${display}
+    </button>`;
+  }
+  @property({ attribute: false }) columnState: TableColumnState[] = [];
+  @property({ type: Boolean }) columnSettings = false;
+  @property({ attribute: false }) filterModels: TableFilterModels = {};
+  private get normalizedState() {
+    return normalizeColumnState(this.columns, this.columnState);
+  }
+  exportColumnState(): TableColumnStateSnapshot {
+    return {
+      version: 1,
+      columns: this.normalizedState.map((s) => ({
+        ...s,
+        ...(Object.prototype.hasOwnProperty.call(this.columnWidths, s.key)
+          ? { width: this.columnWidths[s.key] }
+          : {}),
+      })),
+    };
+  }
+  importColumnState(value: unknown): boolean {
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('version' in value) ||
+      value.version !== 1 ||
+      !('columns' in value) ||
+      !Array.isArray(value.columns) ||
+      !validColumnKeys(this.columns)
+    )
+      return false;
+    this.columnState = normalizeColumnState(this.columns, value.columns);
+    this.columnWidths = {};
+    return true;
+  }
+  private emitColumnState() {
+    this.dispatchEvent(
+      new CustomEvent('column-state-change', {
+        detail: { columnState: this.exportColumnState().columns },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+  private changeColumn(key: string, hidden?: boolean, delta = 0) {
+    if (!this.isConnected) return;
+    if (!validColumnKeys(this.columns)) return;
+    const states = this.exportColumnState().columns;
+    const index = states.findIndex((s) => s.key === key);
+    if (index < 0) return;
+    if (hidden !== undefined) states[index].hidden = hidden;
+    if (delta) {
+      const other = index + delta;
+      if (
+        other < 0 ||
+        other >= states.length ||
+        this.columns.find((c) => c.key === states[other].key)?.fixed !==
+          this.columns.find((c) => c.key === key)?.fixed
+      )
+        return;
+      [states[index], states[other]] = [states[other], states[index]];
+    }
+    this.columnState = states;
+    this.emitColumnState();
+  }
+  private changeModel(key: string, model: TableFilterModel) {
+    if (!this.isConnected || !this.columns.some((c) => c.key === key && c.filterable)) return;
+    const next = { ...this.filterModels, [key]: model };
+    const result = normalizeFilters(next);
+    if (result.invalid.length) {
+      this.dispatchEvent(
+        new CustomEvent('filter-invalid', {
+          detail: { keys: result.invalid },
+          bubbles: true,
+          composed: true,
+        })
+      );
+      return;
+    }
+    this.filterModels = result.models;
+    this.currentPage = 1;
+    this.scrollTop = 0;
+    this.resetViewportScroll();
+    this.dispatchEvent(
+      new CustomEvent('filter-model-change', {
+        detail: {
+          filters: { ...this.filters },
+          filterModels: normalizeFilters(this.filterModels).models,
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
   @property({ type: Object, attribute: false }) filters: Record<string, string> = {};
   @property({ type: Array })
 
@@ -385,7 +709,43 @@ export class seTable extends LitElement {
         outline: 2px solid var(--su-color-primary);
         outline-offset: -2px;
       }
+      details {
+        padding: 8px;
+        border: 1px solid var(--su-border-color);
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+      }
+      details [role='group'] > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 4px;
+      }
+      details button,
+      select,
+      input[type='number'] {
+        max-width: 100%;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        font: inherit;
+        padding: 4px;
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+        color-scheme: var(--su-native-color-scheme, light);
+      }
+      details button:disabled {
+        opacity: 0.5;
+      }
+      summary:focus-visible,
+      details button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+        outline-offset: 2px;
+      }
       .column-filter {
+        color-scheme: var(--su-native-color-scheme, light);
         display: block;
         width: 100%;
         min-width: 70px;
@@ -396,6 +756,32 @@ export class seTable extends LitElement {
         border: 1px solid var(--su-border-color);
         border-radius: var(--su-radius-sm);
         font: inherit;
+      }
+      .cell-editor {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .cell-editor input {
+        min-width: 0;
+        width: 100%;
+      }
+      .cell-editor input,
+      .cell-editor button,
+      .edit-cell {
+        font: inherit;
+        color: var(--su-text-1);
+        background: var(--su-bg-card);
+        border: 1px solid var(--su-border-color);
+        border-radius: var(--su-radius-sm);
+      }
+      .cell-editor :focus-visible,
+      .edit-cell:focus-visible {
+        outline: 2px solid var(--su-color-primary);
+      }
+      .cell-editor [role='alert'] {
+        color: var(--su-color-error);
+        overflow-wrap: anywhere;
       }
     `,
   ];
@@ -432,7 +818,13 @@ export class seTable extends LitElement {
 
       this.dispatchEvent(
         new CustomEvent('sort-change', {
-          detail: { column: col.key, direction: nextDirection },
+          detail: {
+            column: col.key,
+            direction: nextDirection,
+            ...(Object.keys(this.filterModels ?? {}).length
+              ? { filterModels: normalizeFilters(this.filterModels).models }
+              : {}),
+          },
           bubbles: true,
           composed: true,
         })
@@ -452,8 +844,11 @@ export class seTable extends LitElement {
 
   private get filteredData() {
     if (this.remote) return this.data;
+    const models = normalizeFilters(this.filterModels).models;
     return this.data.filter((row) =>
       this.columns.every((column) => {
+        if (Object.prototype.hasOwnProperty.call(models, column.key))
+          return matchesModel(row[column.key], models[column.key]);
         const query = this.filterValue(column.key);
         return (
           !column.filterable ||
@@ -481,6 +876,20 @@ export class seTable extends LitElement {
   }
 
   willUpdate(changedProperties: Map<string | number | symbol, unknown>) {
+    if (changedProperties.has('columns')) {
+      this.editColumnKeys.clear();
+      for (const { key } of this.columns)
+        this.editColumnKeys.set(key, (this.editColumnKeys.get(key) ?? 0) + 1);
+    }
+    if (changedProperties.has('data') || changedProperties.has('rowKey')) {
+      this.editKeys.clear();
+      for (const row of this.data) {
+        const key = String(row[this.rowKey] ?? '');
+        this.editKeys.set(key, (this.editKeys.get(key) ?? 0) + 1);
+      }
+    }
+    if (changedProperties.has('columns') || changedProperties.has('columnState'))
+      this.resizeCleanup?.();
     // 防止非法数值传播到分页切片、虚拟滚动范围与占位高度。
     this.pageSize =
       Number.isFinite(this.pageSize) && this.pageSize >= 1 ? Math.floor(this.pageSize) : 10;
@@ -538,6 +947,8 @@ export class seTable extends LitElement {
       changedProperties.has('columns') ||
       changedProperties.has('data') ||
       changedProperties.has('filters') ||
+      changedProperties.has('filterModels') ||
+      changedProperties.has('columnState') ||
       changedProperties.has('remote')
     ) {
       for (const row of this.data) {
@@ -547,8 +958,17 @@ export class seTable extends LitElement {
       const directions = new Map(
         this.sortedColumns.map((column) => [column.key, column.sortDirection])
       );
-      this.sortedColumns = this.columns.map((c) => ({ ...c, sortDirection: '' }));
-      if (this.remote || changedProperties.has('filters'))
+      const states = this.normalizedState;
+      const ordered = validColumnKeys(this.columns)
+        ? states.filter((s) => !s.hidden).map((s) => this.columns.find((c) => c.key === s.key)!)
+        : this.columns;
+      this.sortedColumns = ordered.map((c) => ({ ...c, sortDirection: '' }));
+      if (
+        this.remote ||
+        changedProperties.has('filters') ||
+        changedProperties.has('filterModels') ||
+        changedProperties.has('columnState')
+      )
         this.sortedColumns = this.sortedColumns.map((column) => ({
           ...column,
           sortDirection: directions.get(column.key) ?? '',
@@ -561,6 +981,21 @@ export class seTable extends LitElement {
             this.compareValues(a[sort.key], b[sort.key]) * (sort.sortDirection === 'asc' ? 1 : -1)
         );
       if (!this.remote) this.currentPage = 1;
+      if (changedProperties.has('columns') || changedProperties.has('columnState'))
+        this.columnWidths = Object.fromEntries(
+          states.filter((s) => s.width !== undefined).map((s) => [s.key, s.width!])
+        );
+      if (changedProperties.has('filterModels')) {
+        const { invalid } = normalizeFilters(this.filterModels);
+        if (invalid.length)
+          this.dispatchEvent(
+            new CustomEvent('filter-invalid', {
+              detail: { keys: invalid },
+              bubbles: true,
+              composed: true,
+            })
+          );
+      }
     }
 
     if (
@@ -587,23 +1022,33 @@ export class seTable extends LitElement {
 
   updated() {
     this.measureViewportHeight();
+    if (
+      this.draft &&
+      (!this.editIsCurrent(this.draft) || !this.shadowRoot?.querySelector('.cell-editor'))
+    )
+      this.finishEdit(false);
   }
 
   disconnectedCallback() {
+    this.finishEdit(false);
     this.resizeCleanup?.();
     super.disconnectedCallback();
   }
 
   /** 返回列的当前像素宽度；未拖拽时优先使用列配置。 */
   private getColumnWidth(column: ColumnState) {
-    const resized = this.columnWidths[column.key];
+    const resized = Object.prototype.hasOwnProperty.call(this.columnWidths, column.key)
+      ? this.columnWidths[column.key]
+      : undefined;
     if (resized != null) return `${resized}px`;
     return column.width || 'auto';
   }
 
   /** 将 CSS 宽度转换为固定列偏移使用的像素值。 */
   private getColumnPixelWidth(column: ColumnState) {
-    const resized = this.columnWidths[column.key];
+    const resized = Object.prototype.hasOwnProperty.call(this.columnWidths, column.key)
+      ? this.columnWidths[column.key]
+      : undefined;
     if (resized != null) return resized;
     const parsed = Number.parseFloat(column.width || '');
     return Number.isFinite(parsed) ? parsed : 120;
@@ -657,6 +1102,8 @@ export class seTable extends LitElement {
     };
     const stop = () => {
       this.resizeCleanup?.();
+      this.columnState = this.exportColumnState().columns;
+      this.emitColumnState();
       this.dispatchEvent(
         new CustomEvent('column-resize', {
           detail: { column: column.key, width: Math.round(currentWidth) },
@@ -686,6 +1133,8 @@ export class seTable extends LitElement {
     const delta = event.key === 'ArrowRight' ? 10 : -10;
     const width = Math.min(max, Math.max(min, this.getColumnPixelWidth(column) + delta));
     this.columnWidths = { ...this.columnWidths, [column.key]: width };
+    this.columnState = this.exportColumnState().columns;
+    this.emitColumnState();
     this.dispatchEvent(
       new CustomEvent('column-resize', {
         detail: { column: column.key, width },
@@ -879,7 +1328,12 @@ export class seTable extends LitElement {
     this.resetViewportScroll();
     this.dispatchEvent(
       new CustomEvent('page-change', {
-        detail: { currentPage: bounded },
+        detail: {
+          currentPage: bounded,
+          ...(Object.keys(this.filterModels ?? {}).length
+            ? { filterModels: normalizeFilters(this.filterModels).models }
+            : {}),
+        },
         bubbles: true,
         composed: true,
       })
@@ -1046,7 +1500,7 @@ export class seTable extends LitElement {
                     col
                   )}; ${presentation.style}"
                 >
-                  ${value}
+                  ${this.renderEditableCell(row, col, value)}
                 </td>
               `;
             })}
@@ -1111,8 +1565,119 @@ export class seTable extends LitElement {
 
   render() {
     const scrollable = this.infiniteScroll || this.shouldUseVirtualScroll;
+    const all = this.normalizedState;
     return html`
       <div class="table-wrapper">
+        ${this.columnSettings
+          ? html`<details>
+              <summary>列设置</summary>
+              <div role="group" aria-label="列设置">
+                ${!validColumnKeys(this.columns)
+                  ? html`<p role="status">列 key 必须非空且唯一</p>`
+                  : repeat(
+                      all,
+                      (s) => s.key,
+                      (s, i) =>
+                        html`<div>
+                          <label
+                            ><input
+                              type="checkbox"
+                              .checked=${!s.hidden}
+                              @change=${(e: Event) =>
+                                this.changeColumn(s.key, !(e.target as HTMLInputElement).checked)}
+                            />${this.columns.find((c) => c.key === s.key)?.label}</label
+                          ><button
+                            type="button"
+                            aria-label=${`前移${s.key}`}
+                            ?disabled=${i === 0 ||
+                            this.columns.find((c) => c.key === all[i - 1].key)?.fixed !==
+                              this.columns.find((c) => c.key === s.key)?.fixed}
+                            @click=${() => this.changeColumn(s.key, undefined, -1)}
+                          >
+                            前移</button
+                          ><button
+                            type="button"
+                            aria-label=${`后移${s.key}`}
+                            ?disabled=${i === all.length - 1 ||
+                            this.columns.find((c) => c.key === all[i + 1].key)?.fixed !==
+                              this.columns.find((c) => c.key === s.key)?.fixed}
+                            @click=${() => this.changeColumn(s.key, undefined, 1)}
+                          >
+                            后移
+                          </button>
+                        </div>`
+                    )}
+              </div>
+            </details>`
+          : nothing}
+        ${this.columns
+          .filter((c) => c.filterable && c.filterType && c.filterType !== 'text')
+          .map((c) => {
+            const model = normalizeFilters(this.filterModels).models[c.key];
+            return c.filterType === 'enum'
+              ? html`<label
+                    >${c.label}筛选<select
+                      multiple
+                      aria-label=${`枚举筛选${c.label}`}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'enum',
+                          values: Array.from(
+                            (e.target as HTMLSelectElement).selectedOptions,
+                            (o) => o.value
+                          ),
+                        })}
+                    >
+                      ${(c.filterOptions ?? []).map(
+                        (o) =>
+                          html`<option
+                            value=${o.value}
+                            .selected=${model?.type === 'enum' && model.values.includes(o.value)}
+                          >
+                            ${o.label}
+                          </option>`
+                      )}
+                    </select></label
+                  ><button
+                    type="button"
+                    @click=${() => this.changeModel(c.key, { type: 'enum', values: [] })}
+                  >
+                    清空${c.label}筛选
+                  </button>`
+              : html`<label
+                    >${c.label}下限<input
+                      type="number"
+                      aria-label=${`数值下限${c.label}`}
+                      .value=${model?.type === 'number' && model.min !== undefined
+                        ? String(model.min)
+                        : ''}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'number',
+                          ...(model?.type === 'number' ? model : {}),
+                          min:
+                            (e.target as HTMLInputElement).value === ''
+                              ? undefined
+                              : (e.target as HTMLInputElement).valueAsNumber,
+                        })} /></label
+                  ><label
+                    >${c.label}上限<input
+                      type="number"
+                      aria-label=${`数值上限${c.label}`}
+                      .value=${model?.type === 'number' && model.max !== undefined
+                        ? String(model.max)
+                        : ''}
+                      @change=${(e: Event) =>
+                        this.changeModel(c.key, {
+                          type: 'number',
+                          ...(model?.type === 'number' ? model : {}),
+                          max:
+                            (e.target as HTMLInputElement).value === ''
+                              ? undefined
+                              : (e.target as HTMLInputElement).valueAsNumber,
+                        })}
+                  /></label>`;
+          })}
         <div
           class="table-viewport ${scrollable ? 'scrollable' : ''}"
           style="${scrollable ? `height: ${this.effectiveHeight};` : ''}"
@@ -1161,7 +1726,7 @@ export class seTable extends LitElement {
                             >
                           </button>`
                         : col.label}
-                      ${col.filterable
+                      ${col.filterable && (!col.filterType || col.filterType === 'text')
                         ? html`<input
                             type="search"
                             class="column-filter"

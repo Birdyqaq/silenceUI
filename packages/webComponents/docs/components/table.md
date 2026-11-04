@@ -1,5 +1,25 @@
 # Table 表格
 
+## 单元格编辑
+
+列可设置 `editable: { type: 'text' | 'number', disabled?, validate? }`。同一时刻只编辑一格；行必须有非空唯一的字符串/有限数字 rowKey，列 key 也必须唯一。按 Enter 开启编辑或提交，Escape 取消；保存和取消也有按钮。数字不接受空白或非有限值，validate 可同步或异步返回错误文字。未改动值直接退出，不发送保存请求。
+
+`cell-edit-request.detail` 提供 `requestId, rowKey, columnKey, originalValue, value, signal, resolve, reject`。宿主保存后调用 resolve；仅当返回 true 时用新数组替换已保存的行。失败调用 reject(message) 保留草稿和错误。组件不请求网络、不修改原数据，也不将派发事件当作成功。取消、卸载、行替换或离开可见范围会使 signal 中止，宿主应将 signal 传给支持取消的请求。取消本地草稿不能撤销服务端已处理的写入。
+
+下面的活例使用模拟保存，可切换 remote、模拟一次失败并重试。编辑格离开分页、筛选或虚拟渲染窗口时取消，不跨窗口缓存草稿；固定列仍保留定位。虚拟滚动仍以固定行高估算，不保证包含多行错误文字时的精确像素定位。
+
+## 列状态与类型筛选（第 11—13 天）
+
+<ClientOnly><TableStateDemo /></ClientOnly>
+
+`columnSettings` 开启原生键盘可达面板；`columnState: {key,hidden?,width?}[]` 控制显隐/顺序/像素宽度。固定列只在 left/normal/right 各组内移动；全部隐藏时设置入口仍保留。列 key 必须非空且唯一。未知配置 key 忽略、重复项退回默认、非法宽度忽略、合法宽度按 minWidth/maxWidth 限制；新增列补到组末尾。不修改调用方 columns。
+
+`exportColumnState()` 返回独立 `{version:1,columns:[...]}`；`importColumnState(value)` 对整包格式/版本错误返回 false 且不应用，对合法结构归一化后返回 true。用户显隐/排序/宽度操作派发 `column-state-change.detail.columnState` 独立副本，原 `column-resize` 保留；程序赋值/导入不派发业务 change。宿主自行持久化，组件不读写业务 localStorage。
+
+`filterModels` 接受 `Record<string, {type:'enum',values:string[]} | {type:'number',min?,max?}>`。列设置 `filterable:true`、`filterType:'enum'|'number'` 显示对应控件，枚举候选为 `filterOptions: {label,value}[]`。不同列 AND、枚举内 OR；有效新模型同列优先于旧文本 filters。空枚举/双空区间清除该新筛选；数值只匹配有限 number，不自动转换空字符串/数字字符串。非法模型不应用并派发 `filter-invalid.detail.keys`，该列仍可回退旧文本 filters。
+
+用户改动派发 `filter-model-change.detail={filters,filterModels}`、页码归 1；程序赋值不派发业务 change。本地先筛选后排序分页；remote 不过滤服务器行、不发网络请求，宿主监听条件事件并处理请求乱序。page-change/sort-change 附带 filterModels 快照。列设置、筛选不代表单元格编辑或异步保存已实现。
+
 列筛选已支持：设置 `Column.filterable = true`，通过 `filters` 与 `filter-change` 管理条件。本地为文本包含匹配，remote 模式交给服务端；详见[后台管理增强](./admin#table-列筛选)。
 
 <ClientOnly><ComponentDemo category="table" /></ClientOnly>

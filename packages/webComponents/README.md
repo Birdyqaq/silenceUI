@@ -1,5 +1,7 @@
 # SilenceUI Web Components
 
+Table 增强：列显隐/顺序/宽度恢复、枚举/数值筛选与文本/数字单元格编辑。宿主通过 `cell-edit-request` 负责保存，组件不发网络请求或修改传入数据。
+
 新增 `su-time-picker` / `su-time-range`：本地 HH:mm、分钟精度、required/min/max/step、原生 FormData、reset 与错误关联；按需入口 `silenceui/components/form/time-picker`、`silenceui/components/form/time-range`。不支持跨日、秒或时区转换。
 
 基于 Lit 与 CSS 主题变量的跨框架 Web Components 组件库，适用于后台管理系统场景。UnoCSS 为历史构建配置，并非组件内部样式依赖。
