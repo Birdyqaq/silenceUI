@@ -54,3 +54,6 @@ import '../components/form/rich-text-field';
 
 import '../components/data/week-schedule';
 import '../components/data/sortable-list';
+import '../components/data/stat-card';
+
+import '../components/form/import-wizard';

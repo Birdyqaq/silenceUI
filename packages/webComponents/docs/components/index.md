@@ -120,3 +120,5 @@ notification.success('发布成功', '版本已上线');
 ```
 
 属性、事件和复杂数据传参规则见 [API 约定](/guide/api-conventions)。
+
+- [ImportWizard 导入向导](./import-wizard)：文件解析、字段映射、校验预览和宿主提交。

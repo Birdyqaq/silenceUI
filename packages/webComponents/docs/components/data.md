@@ -27,7 +27,10 @@ Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./a
 ## StatCard 指标卡片 `su-stat-card`
 
 ```html
-<su-stat-card title="今日订单" value="1,286" trend="+12.5%" trendType="up"></su-stat-card>
+<su-stat-card title="今日营收" value="1,286" trend="+12.5%" trendType="up">
+  <span slot="prefix">¥</span>
+  <span slot="trend">较昨日增长 12.5%</span>
+</su-stat-card>
 ```
 
 | 属性        | 说明     | 类型                       | 默认值 |
@@ -36,6 +39,8 @@ Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./a
 | `value`     | 指标值   | `string`                   | `''`   |
 | `trend`     | 趋势文案 | `string`                   | `''`   |
 | `trendType` | 趋势方向 | `'up' \| 'down' \| 'flat'` | `flat` |
+
+`title`、`prefix`、`suffix` 和 `trend` 均可使用同名插槽替换。趋势属性与插槽均显示带可访问名称的方向符号；无趋势内容时隐藏整行。前后缀为新增内容，标题与趋势插槽替换对应属性文案。非法 `trendType` 回退为 `flat`。`part="card/title/value/trend"` 可用于稳定样式覆盖。卡片只负责呈现，统计口径和数据刷新由宿主维护。
 
 ## Tag 标签 `su-tag`
 
