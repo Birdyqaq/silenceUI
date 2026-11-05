@@ -80,8 +80,11 @@ export class seTable extends LitElement {
     pending: boolean;
     error: string;
     attempt: number;
+    page: number;
     controller?: AbortController;
   };
+  @property({ type: Boolean, attribute: 'preserve-page-drafts' }) preservePageDrafts = false;
+  private pageDrafts = new Map<TableRow, Map<string, NonNullable<seTable['draft']>>>();
   private editSequence = 0;
   private editKeys = new Map<string, number>();
   private editColumnKeys = new Map<string, number>();
@@ -97,8 +100,16 @@ export class seTable extends LitElement {
 
   private editIsCurrent(draft: NonNullable<seTable['draft']>) {
     return (
-      this.isConnected &&
       this.draft === draft &&
+      this.editContextMatches(draft) &&
+      (!this.shouldUsePagination ||
+        (this.remote ? draft.page === this.currentPage : this.paginatedData.includes(draft.row)))
+    );
+  }
+
+  private editContextMatches(draft: NonNullable<seTable['draft']>) {
+    return (
+      this.isConnected &&
       this.data.includes(draft.row) &&
       this.editableKey(draft.row) === draft.key &&
       this.editColumnKeys.get(draft.column.key) === 1 &&
@@ -249,16 +260,24 @@ export class seTable extends LitElement {
         if (this.draft || !this.isConnected || !(e.currentTarget as HTMLElement).isConnected)
           return;
         const original = row[col.key];
-        this.draft = {
-          row,
-          key,
-          column: col,
-          original,
-          value: String(original ?? ''),
-          pending: false,
-          error: '',
-          attempt: 0,
-        };
+        const cached = this.pageDrafts.get(row);
+        const saved = cached?.get(col.key);
+        cached?.delete(col.key);
+        if (cached?.size === 0) this.pageDrafts.delete(row);
+        this.draft =
+          this.canPreservePageDrafts && saved && this.editContextMatches(saved)
+            ? saved
+            : {
+                row,
+                key,
+                column: col,
+                original,
+                value: String(original ?? ''),
+                pending: false,
+                error: '',
+                attempt: 0,
+                page: this.currentPage,
+              };
         const active = this.draft;
         await this.updateComplete;
         if (this.draft === active && this.editIsCurrent(active))
@@ -1020,8 +1039,35 @@ export class seTable extends LitElement {
     this.measureViewportHeight();
   }
 
-  updated() {
+  private get canPreservePageDrafts() {
+    return this.preservePageDrafts && this.shouldUsePagination && !this.remote;
+  }
+
+  updated(changed: Map<PropertyKey, unknown>) {
     this.measureViewportHeight();
+    if (!this.canPreservePageDrafts || changed.has('rowKey')) this.pageDrafts.clear();
+    for (const [row, cells] of this.pageDrafts) {
+      for (const [key, draft] of cells) {
+        if (!this.editContextMatches(draft) || !this.sortedData.includes(row)) cells.delete(key);
+      }
+      if (!cells.size) this.pageDrafts.delete(row);
+    }
+    const draft = this.draft;
+    if (
+      draft &&
+      this.canPreservePageDrafts &&
+      changed.has('currentPage') &&
+      !changed.has('rowKey') &&
+      !draft.pending &&
+      this.editContextMatches(draft) &&
+      this.sortedData.includes(draft.row) &&
+      !this.paginatedData.includes(draft.row) &&
+      draft.value !== String(draft.original ?? '')
+    ) {
+      const cells = this.pageDrafts.get(draft.row) ?? new Map();
+      cells.set(draft.column.key, draft);
+      this.pageDrafts.set(draft.row, cells);
+    }
     if (
       this.draft &&
       (!this.editIsCurrent(this.draft) || !this.shadowRoot?.querySelector('.cell-editor'))
@@ -1030,6 +1076,7 @@ export class seTable extends LitElement {
   }
 
   disconnectedCallback() {
+    this.pageDrafts.clear();
     this.finishEdit(false);
     this.resizeCleanup?.();
     super.disconnectedCallback();

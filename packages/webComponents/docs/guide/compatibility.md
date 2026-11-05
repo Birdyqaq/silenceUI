@@ -10,8 +10,8 @@
 | ---------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- |
 | `ElementInternals.setFormValue`          | 控件仍可交互，但不会自动写入原生 FormData；原生 reset/状态恢复也不能保证 | 提交时通过组件 property 收集值，重置时显式恢复 property |
 | 原生 `input[type=date]` / `showPicker()` | 日期面板取决于浏览器；没有 showPicker 时调用不打开面板                   | 使用手动输入，若产品要求一致面板则由应用提供替代控件    |
-| Popover API                              | Tooltip 退回 fixed 定位，受变换或裁剪祖先影响                            | 避免将触发器放在限制显示的容器中，并测试实际布局        |
-| `ResizeObserver`                         | Tooltip 仍响应滚动和窗口变化；仅尺寸变化时不保证立即重定位               | 使用静态提示内容并测试动态布局                          |
+| Popover API                              | Dropdown 与 Tooltip 退回 fixed 定位，受变换或裁剪祖先影响                            | 避免将触发器放在限制显示的容器中，并测试实际布局        |
+| `ResizeObserver`                         | Dropdown 与 Tooltip 仍响应滚动和窗口变化；仅尺寸变化时不保证立即重定位               | 使用静态提示内容并测试动态布局                          |
 | `Intl.Segmenter`                         | 头像和打字机退回 Unicode 码点，组合 emoji 可能分步显示                   | 需要完整字素效果时由应用提供兼容实现                    |
 | `localStorage` 可用性                    | 主题仍可切换，但不能持久化                                               | 业务可自行保存配置并调用主题 API                        |
 
@@ -38,4 +38,12 @@ if (select) select.options = [{ label: '上海', value: 'sh' }];
 - `pnpm check`：TypeScript、ESLint、jsdom 交互测试、全量与按需构建、公开声明、发布包与文档构建。
 - `pnpm docs:verify`：文档属性示例、组件目录与在线示例覆盖、远程演示资源和文档必需页面的静态检查。
 - 文档在线演示使用本地图片，不依赖第三方图片服务；媒体 URL 示例是接入格式，用户提供资源的可用性、编码、CORS 与 PDF 渲染仍需在目标浏览器验证。
-- 本轮浏览器实测范围记录在[文档验收](./docs-validation)。Chrome、Firefox、Safari 全量矩阵及移动真机测试仍是发布前工作，不能由构建成功推断。
+- 本轮浏览器实测范围记录在[文档验收](./docs-validation)。桌面引擎、Safari 浏览器和移动真机分别记录。
+
+
+本机可用以下命令复跑桌面矩阵。Chrome 项目使用已安装的 Google Chrome，WebKit 项目使用 Playwright 提供的引擎。
+
+```sh
+pnpm exec playwright install chromium firefox webkit
+SU_BROWSER_MATRIX=1 pnpm test:browser
+```

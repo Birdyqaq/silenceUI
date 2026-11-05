@@ -182,3 +182,36 @@
 | `TabItem`        | `{ key: string; label: string; disabled?: boolean; closable?: boolean }` |
 | `DropdownItem`   | `{ key: string; label: string; disabled?: boolean; danger?: boolean }`   |
 | `StepItem`       | `{ title: string; description?: string }`                                |
+
+## PageHeader 页面头部
+
+<ClientOnly>
+  <su-page-header heading="成员管理" description="查看团队成员与权限" level="2" show-back>
+    <su-breadcrumb slot="breadcrumb" itemsJson='[{"label":"后台"},{"label":"成员管理"}]'></su-breadcrumb>
+    <button slot="actions" type="button">新增成员</button>
+  </su-page-header>
+</ClientOnly>
+
+`heading` 为标题文本，`description` 为描述，`level` 支持 1—6（非法值回退到 1）。`show-back` 显示返回按钮，`back-label` 自定义文字。返回派发冒泡、可穿透 Shadow DOM 的 `back`，不会自行调用路由或浏览器历史。动作通过 `actions` 插槽传入，保留原生键盘焦点；面包屑通过 `breadcrumb` 插槽传入。按需入口：`silenceui/components/navigation/page-header`。
+
+## Segmented 视图切换
+
+<ClientOnly>
+  <su-segmented label="成员视图" value="list" :options.prop="[{ value: 'list', label: '列表' }, { value: 'grid', label: '网格' }]"></su-segmented>
+</ClientOnly>
+
+`su-segmented` 通过 JS 属性 `options: SegmentedOption[]` 接收具有唯一 `value` 的选项，每项包含 `label` 和可选的 `disabled`。设置 `value` 指定当前项，`label` 为单选组命名。用户切换时派发 `change`，详情为 `{ value }`。方向键循环切换可用项，Home/End 到达首尾。选中项移除时，首个可用项成为 Tab 入口。宿主根据选值渲染视图。
+
+## Menu 与 Dropdown 的定位和焦点
+
+Menu 的子项随展开状态在导航内联布局。收起模式保留可访问名称和方向键操作，子项仍在导航内部展开。需要浮层操作时可单独使用 Dropdown。
+
+Dropdown 会优先向下展开，空间不足时向上翻转，并在可视视口内限制尺寸。弹层打开期间跟随滚动祖先和可视视口变化。支持原生 Popover 的浏览器会将面板放在顶层，避开普通容器的裁切。ArrowDown 和 ArrowUp 分别打开并聚焦首尾可用项，Escape 返回触发器，Tab 或转移到外部焦点时关闭。选择事件的宿主处理器若已移动焦点，组件保留该焦点。
+
+### 收起菜单浮层与页签路由
+
+设置 `collapsed` 与 `collapsed-flyout` 后，点击父级或按右方向键可打开其浮层。多层子菜单的叶子按路径展示，禁用分支不会展开。选择叶子仍派发 Menu 的 `select`，Escape 返回父级触发器。
+
+<ClientOnly><RouteTabsDemo /></ClientOnly>
+
+示例用 URL 的 `demo-tab` 查询参数模拟路由。切换页签会写入历史，浏览器前进和后退会同步激活页签。关闭页签后清理该页签的备注缓存，关闭当前页签时由 Tabs 选择相邻页。

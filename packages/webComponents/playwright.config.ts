@@ -16,7 +16,16 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    ...(process.env.SU_BROWSER_MATRIX
+      ? [
+          { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
+          { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+          { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+        ]
+      : []),
+  ],
   webServer: {
     command: 'pnpm exec vite --config browser/vite.config.mjs',
     url: 'http://127.0.0.1:4179/browser/fixture.html',

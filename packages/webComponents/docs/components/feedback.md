@@ -188,7 +188,7 @@ Tooltip 在悬停或焦点进入时显示，按 Escape 关闭；离开当前悬�
 
 动态替换触发器或其开放 Shadow DOM 内的控件时，描述关联自动更新；提示内容更新保留现有描述 ID，移除触发器及卸载时清理自己的隐藏描述节点。
 
-首选方向空间不足时自动翻转，并将位置限制在视口边缘内；滚动、窗口变化和内容尺寸变化会重新定位。支持 Popover API 的浏览器使用顶层显示，避免被父容器裁剪；旧浏览器退回 fixed 定位，带 transform 或裁剪的祖先可能仍限制显示。
+首选方向空间不足时自动翻转，并将位置限制在视口边缘内；滚动祖先（包括开放 Shadow DOM 内的容器）、可视视口缩放和内容尺寸变化会重新定位。支持 Popover API 的浏览器使用顶层显示，避免被父容器裁剪；旧浏览器退回 fixed 定位，带 transform 或裁剪的祖先可能仍限制显示。
 
 建议用原生按钮、链接或可聚焦控件作为触发器。组件会添加同一 DOM 树中的 `aria-describedby` 描述并保留已有 ID，卸载时移除自己的关联；开放 Shadow DOM 内的控件也支持，封闭 Shadow DOM 无法自动访问内部焦点元素。普通文字不会被自动加入 Tab 顺序。
 
@@ -230,3 +230,21 @@ Tooltip 在悬停或焦点进入时显示，按 Escape 关闭；离开当前悬�
 | `status`       | 状态               | `'normal' \| 'success' \| 'error'` | `normal` |
 | `showText`     | 是否显示百分比文字 | `boolean`                          | `true`   |
 | `strokeHeight` | 进度条高度         | `string`                           | `8px`    |
+
+## Result 结果展示
+
+<ClientOnly>
+  <su-result status="success" heading="保存成功">
+    <button slot="actions" type="button">返回列表</button>
+  </su-result>
+</ClientOnly>
+
+`su-result` 的 `status` 支持 `success`、`empty`、`forbidden`、`error`。用 `heading` 和 `description` 补充结果说明，通过 `actions` 插槽提供后续操作。权限由业务服务判定，宿主根据结果设置展示状态。
+
+## 通知中心列表
+
+<ClientOnly>
+  <su-notification-center :items.prop="[{ id: 'shift', title: '排班已更新', description: '请查看本周夜班安排' }, { id: 'approval', title: '审批通过', read: true }]"></su-notification-center>
+</ClientOnly>
+
+按需入口为 `silenceui/components/feedback/notification-center`。宿主通过 `items` 传入当前页通知，每项使用唯一 `id`，并提供 `title`、可选的 `description`、`time` 和 `read`。设置 `page`、`total-pages` 和 `loading` 控制分页和加载态。监听 `read-request`（`{ id }`）后更新已读状态，监听 `page-change`（`{ page }`）后加载并替换当前页数据。

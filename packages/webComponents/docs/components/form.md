@@ -134,6 +134,8 @@
 
 ## Upload 文件选择 `su-upload`
 
+可在[上传与附件管理](./upload)直接试用文件类型、大小和数量限制。
+
 禁用（包括继承 `fieldset[disabled]`）时保留已有文件，不接受新文件或触发选择事件；仍拦截拖放默认行为，避免浏览器直接打开被拖入的文件。
 
 支持点击和拖拽选择文件，并在提交原生表单时写入 `File`。组件只负责选择与校验，不会自动发送网络请求：
@@ -299,3 +301,127 @@ Textarea 的 `label` 与内部 textarea 关联，`helperText` 通过 `aria-descr
 | `su-radio-group`  | `change`       | `{ value: string }`    |
 | `su-switch`       | `change`       | `{ checked: boolean }` |
 | `su-textarea`     | `input-change` | `{ value: string }`    |
+
+## AutoComplete 输入建议
+
+<ClientOnly>
+  <su-auto-complete label="搜索城市" :options.prop="[{ value: '上海', label: '上海' }, { value: '杭州', label: '杭州' }]"></su-auto-complete>
+</ClientOnly>
+
+`su-auto-complete` 接受自由输入，`value` 同时是输入值和原生表单提交值。选中建议时，组件把选项的 `value` 写入输入框。建议通过 JS 属性 `options: AutoCompleteOption[]` 传入，每项为 `{ value, label, disabled? }`，其中 `label` 用于列表展示。给输入框设置 `label`，用 `name` 和 `required` 参与表单提交及校验。
+
+- 输入、清空或结束中文输入法组词后，值变化会派发 `change`（`{ value, option: null }`）和 `query`（`{ query }`）。选中建议派发带选项的 `change`。程序化赋值和表单重置静默更新。
+- 默认按输入值匹配选项文本和值。启用 `remote` 后直接展示宿主提供的候选。用 `loading` 和 `errorMessage` 展示请求状态。
+- 方向键移动建议焦点，Enter 选中，Escape 关闭列表。输入框保留 DOM 焦点。离开输入框后关闭列表，候选更新不会重新打开。
+
+远程接入示例。将 `stop` 注册为页面卸载时的清理回调。
+
+```ts
+import 'silenceui/components/form/auto-complete';
+
+const control = document.querySelector('su-auto-complete')!;
+control.remote = true;
+const lifetime = new AbortController();
+let pending: AbortController | undefined;
+
+control.addEventListener('query', async (event) => {
+  const { query } = (event as CustomEvent<{ query: string }>).detail;
+  pending?.abort();
+  const request = new AbortController();
+  pending = request;
+  control.options = [];
+  control.errorMessage = '';
+  control.loading = Boolean(query);
+  if (!query) return;
+
+  const current = () =>
+    !request.signal.aborted && control.isConnected && control.value === query;
+  try {
+    const response = await fetch('/api/suggestions?q=' + encodeURIComponent(query), {
+      signal: request.signal,
+    });
+    if (!response.ok) throw new Error('查询失败');
+    const options = await response.json();
+    if (current()) control.options = options;
+  } catch {
+    if (current()) control.errorMessage = '查询失败，请重试';
+  } finally {
+    if (pending === request && !request.signal.aborted) control.loading = false;
+  }
+}, { signal: lifetime.signal });
+
+function stop() {
+  lifetime.abort();
+  pending?.abort();
+  control.loading = false;
+}
+```
+
+支持原生 Popover 的浏览器将候选面板放在顶层，面板跟随滚动祖先和可视视口变化，空间不足时向上翻转。在抽屉中，第一次 Escape 收起候选，焦点保留在输入框。缺少 Popover 支持时沿用容器内定位，可能受祖先裁切。
+
+### 限定候选值的远程检索
+
+为 AutoComplete 设置 `remote` 和 `selection-only`。输入文字只派发 `query`，宿主取消旧请求并更新 `options`。选中候选后显示其 `label`，提交其 `value`。失焦或按 Escape 会恢复已选值的显示，清空按钮会清除已选值。必填时需要选中候选项。外部赋值可配合当前 `options` 提供显示标签。
+
+### Upload 进度与取消
+
+通过 `uploads: ReadonlyMap<File, UploadProgress>` 传入正在上传的文件及百分比，省略 `progress` 表示总量未知。宿主每次更新时替换 Map。用户取消时派发 `upload-cancel`，详情为 `{ file }`。宿主可以按 File 对象查找请求、调用 AbortController 或 XMLHttpRequest 的 abort，并移除对应 Map 项。上传中禁止手动移除该文件。重新选文件、清空或重置表单后，`uploads` 中的任务仍显示进度与取消入口，只有当前 `files` 参与表单提交。
+
+### 富文本编辑器适配
+
+<ClientOnly>
+  <su-rich-text-field><textarea aria-label="编辑器接入位置" placeholder="第三方编辑器挂载位置" readonly></textarea></su-rich-text-field>
+</ClientOnly>
+
+`su-rich-text-field` 提供原生表单桥接。宿主创建编辑器实例并通过 `adapter` 接入其读写、禁用和订阅能力。编辑器挂载在默认插槽中，内容可以是 HTML 或 JSON 字符串，渲染预览前由宿主按业务规则处理内容。
+
+```ts
+import 'silenceui/components/form/rich-text-field';
+import type { RichTextEditorAdapter } from 'silenceui/components/form/rich-text-field';
+
+// 由宿主实现这四个方法，并在销毁编辑器时释放编辑器实例。
+const adapter: RichTextEditorAdapter = {
+  setValue: (value) => editor.write(value),
+  setDisabled: (disabled) => editor.setEditable(!disabled),
+  subscribe: (change) => editor.onUserChange(change),
+  focus: (options) => editor.focus(options),
+};
+const field = document.querySelector('su-rich-text-field')!;
+field.name = 'body';
+field.value = initialContent;
+field.adapter = adapter;
+```
+
+`subscribe` 返回解绑函数。程序化写入不应触发用户编辑回调。组件派发 `change`（`{ value }`），支持原生 FormData、reset 和 fieldset 禁用。
+
+限定候选值模式下，使用请求身份判断响应是否过期。选中值和搜索词分别存放，`control.value` 表示提交值。
+
+```ts
+let pending: AbortController | undefined;
+
+control.addEventListener('query', async (event) => {
+  const { query } = (event as CustomEvent<{ query: string }>).detail;
+  pending?.abort();
+  const request = new AbortController();
+  pending = request;
+  control.options = [];
+  control.loading = Boolean(query.trim());
+  control.errorMessage = '';
+  if (!query.trim()) return;
+
+  try {
+    const response = await fetch('/api/people?q=' + encodeURIComponent(query), {
+      signal: request.signal,
+    });
+    if (!response.ok) throw new Error('查询失败');
+    const options = await response.json();
+    if (pending === request && !request.signal.aborted) control.options = options;
+  } catch {
+    if (pending === request && !request.signal.aborted) control.errorMessage = '查询失败，请重试';
+  } finally {
+    if (pending === request && !request.signal.aborted) control.loading = false;
+  }
+});
+```
+
+页面卸载时中止 `pending` 并解绑监听。上传取消也遵循相同的宿主责任，宿主接收 `upload-cancel` 后中止该文件的请求，再移除对应的进度记录。

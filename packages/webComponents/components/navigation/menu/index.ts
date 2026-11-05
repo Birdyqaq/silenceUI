@@ -1,3 +1,4 @@
+import '../dropdown';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
@@ -19,6 +20,7 @@ export class SuMenu extends LitElement {
   @property({ type: String }) itemsJson = '';
   @property({ type: String }) activeKey = '';
   @property({ type: Boolean }) collapsed = false;
+  @property({ type: Boolean, attribute: 'collapsed-flyout' }) collapsedFlyout = false;
   @property({ type: Array, attribute: false }) expandedKeys: string[] = [];
   @state() private focusedKey = '';
 
@@ -96,12 +98,39 @@ export class SuMenu extends LitElement {
           return;
         seen.add(item);
         result.push({ item, level, parent });
-        if (!item.disabled && this.expandedKeys.includes(item.key))
+        if (!this.useFlyout && !item.disabled && this.expandedKeys.includes(item.key))
           visit(item.children ?? [], level + 1, item.key);
       });
     };
     visit(this.mergedItems, 0);
     return result;
+  }
+
+  private get useFlyout() {
+    return this.collapsed && this.collapsedFlyout;
+  }
+
+  private flyoutItems(item: MenuItem) {
+    const items: { item: MenuItem; label: string }[] = [];
+    const visited = new Set<MenuItem>([item]);
+    const visit = (children: MenuItem[], prefix = '') => {
+      for (const child of children) {
+        if (
+          !child ||
+          typeof child.key !== 'string' ||
+          typeof child.label !== 'string' ||
+          visited.has(child)
+        )
+          continue;
+        visited.add(child);
+        const label = prefix + child.label;
+        if (child.children?.length) {
+          if (!child.disabled) visit(child.children, label + ' / ');
+        } else items.push({ item: child, label });
+      }
+    };
+    visit(item.children ?? []);
+    return items;
   }
 
   private toggle(item: MenuItem) {
@@ -136,18 +165,25 @@ export class SuMenu extends LitElement {
   }
 
   private onKeyDown(event: KeyboardEvent) {
+    if (event.defaultPrevented) return;
     const items = Array.from(
       this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.item:not(:disabled)') ?? []
     );
     if (items.length === 0) return;
 
-    const currentIndex = Math.max(0, items.indexOf(event.target as HTMLButtonElement));
+    const currentIndex = items.indexOf(event.target as HTMLButtonElement);
+    if (currentIndex === -1) return;
     let nextIndex = currentIndex;
     const entry = this.visibleItems.find(
       ({ item }) => item.key === items[currentIndex].dataset.key
     );
     if (entry && (event.key === 'ArrowRight' || event.key === 'ArrowLeft')) {
       event.preventDefault();
+      event.stopPropagation();
+      if (this.useFlyout) {
+        if (event.key === 'ArrowRight' && entry.item.children?.length) items[currentIndex].click();
+        return;
+      }
       if (event.key === 'ArrowRight') {
         if (entry.item.children?.length && !this.expandedKeys.includes(entry.item.key))
           this.toggle(entry.item);
@@ -169,6 +205,7 @@ export class SuMenu extends LitElement {
     else return;
 
     event.preventDefault();
+    event.stopPropagation();
     items[nextIndex].focus();
   }
 
@@ -179,42 +216,62 @@ export class SuMenu extends LitElement {
       ? this.focusedKey
       : currentKey;
     return html`
-      <div class="menu" role="menu" aria-label="主导航" @keydown=${this.onKeyDown}>
-        ${visible.map(
-          ({ item, level }) => html`
-            <button
-              type="button"
-              role="menuitem"
-              class="item ${item.key === currentKey ? 'active' : ''}"
-              data-key=${item.key}
-              style=${`padding-left: ${10 + level * 16}px`}
-              ?disabled=${Boolean(item.disabled)}
-              aria-expanded=${item.children?.length
-                ? String(this.expandedKeys.includes(item.key))
-                : nothing}
-              aria-label=${item.label}
-              title=${this.collapsed ? item.label : ''}
-              aria-current=${item.key === currentKey ? 'page' : 'false'}
-              tabindex=${item.key === focusKey ? 0 : -1}
-              @focus=${() => {
-                this.focusedKey = item.key;
-              }}
-              @click=${() => this.onSelect(item)}
+      <div class="menu" part="list" role="menu" aria-label="主导航" @keydown=${this.onKeyDown}>
+        ${visible.map(({ item, level }) => {
+          const flyout = this.useFlyout && Boolean(item.children?.length);
+          const children = flyout ? this.flyoutItems(item) : [];
+          const active =
+            item.key === currentKey || children.some((child) => child.item.key === this.activeKey);
+          const button = html` <button
+            type="button"
+            role="menuitem"
+            part="item"
+            class="item ${active ? 'active' : ''}"
+            data-key=${item.key}
+            style=${`padding-left: ${10 + level * 16}px`}
+            ?disabled=${Boolean(item.disabled)}
+            aria-expanded=${!flyout && item.children?.length
+              ? String(this.expandedKeys.includes(item.key))
+              : nothing}
+            aria-label=${item.label}
+            title=${this.collapsed ? item.label : ''}
+            aria-current=${item.key === currentKey ? 'page' : 'false'}
+            tabindex=${item.key === focusKey ? 0 : -1}
+            @focus=${() => {
+              this.focusedKey = item.key;
+            }}
+            @click=${() => {
+              if (!flyout) this.onSelect(item);
+            }}
+          >
+            <span class="icon" aria-hidden="true"
+              >${item.iconName
+                ? html`<su-icon .name=${item.iconName}></su-icon>`
+                : (item.icon ?? (this.collapsed ? item.label.slice(0, 1) : ''))}</span
             >
-              <span class="icon" aria-hidden="true"
-                >${item.iconName
-                  ? html`<su-icon .name=${item.iconName}></su-icon>`
-                  : (item.icon ?? (this.collapsed ? item.label.slice(0, 1) : ''))}</span
-              >
-              ${this.collapsed ? '' : html`<span>${item.label}</span>`}
-              ${item.children?.length
-                ? html`<su-icon
-                    name=${this.expandedKeys.includes(item.key) ? 'chevron-down' : 'chevron-right'}
-                  ></su-icon>`
-                : nothing}
-            </button>
-          `
-        )}
+            ${this.collapsed ? '' : html`<span>${item.label}</span>`}
+            ${item.children?.length
+              ? html`<su-icon
+                  name=${this.expandedKeys.includes(item.key) ? 'chevron-down' : 'chevron-right'}
+                ></su-icon>`
+              : nothing}
+          </button>`;
+          if (!flyout) return button;
+          return html`<su-dropdown
+            .items=${children.map(({ item, label }) => ({
+              key: item.key,
+              disabled: item.disabled,
+              label,
+            }))}
+            ?disabled=${item.disabled}
+            @select=${(event: CustomEvent<{ key: string }>) => {
+              event.stopPropagation();
+              const selected = children.find((child) => child.item.key === event.detail.key);
+              if (selected) this.onSelect(selected.item);
+            }}
+            >${button}</su-dropdown
+          >`;
+        })}
       </div>
     `;
   }

@@ -6,6 +6,8 @@ import ParallaxHome from './ParallaxHome.vue';
 import TypewriterDemo from './TypewriterDemo.vue';
 import ComponentDemo from './ComponentDemo.vue';
 import AdminDemo from './AdminDemo.vue';
+import RouteTabsDemo from './RouteTabsDemo.vue';
+import StaffDemo from './StaffDemo.vue';
 import TimeDemo from './TimeDemo.vue';
 import TableStateDemo from './TableStateDemo.vue';
 import './custom-home.css';
@@ -23,6 +25,8 @@ export default {
     app.component('TypewriterDemo', TypewriterDemo);
     app.component('ComponentDemo', ComponentDemo);
     app.component('AdminDemo', AdminDemo);
+    app.component('RouteTabsDemo', RouteTabsDemo);
+    app.component('StaffDemo', StaffDemo);
     app.component('TimeDemo', TimeDemo);
     app.component('TableStateDemo', TableStateDemo);
 

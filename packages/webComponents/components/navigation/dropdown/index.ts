@@ -1,6 +1,8 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseControlStyles, focusRingStyles } from '../../_shared/styles';
+import { positionFloating, trackFloating } from '../../_shared/floating';
+import { getDeepActiveElement } from '../../_shared/overlay';
 import { parseJsonArray } from '../../_shared/utils';
 
 interface DropdownItem {
@@ -22,6 +24,7 @@ export class SuDropdown extends LitElement {
   @state() private triggerNeedsTabStop = true;
 
   private readonly menuId = `su-dropdown-${++dropdownInstanceId}-menu`;
+  private stopTracking?: () => void;
   private triggerElement: HTMLElement | null = null;
 
   static styles = [
@@ -43,11 +46,15 @@ export class SuDropdown extends LitElement {
       }
 
       .menu {
-        position: absolute;
-        top: calc(100% + 6px);
-        left: 0;
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        width: max-content;
+        max-width: var(--su-floating-max-width, calc(100vw - 16px));
+        max-height: var(--su-floating-max-height, calc(100vh - 16px));
+        overflow: auto;
         z-index: 1050;
-        min-width: 140px;
+        min-width: min(140px, var(--su-floating-max-width, 140px));
         background: var(--su-bg-card);
         border: 1px solid var(--su-border-color);
         border-radius: var(--su-radius-sm);
@@ -56,11 +63,17 @@ export class SuDropdown extends LitElement {
         display: grid;
       }
 
+      .menu[popover]:not(:popover-open) {
+        display: none;
+      }
+
       .item {
         border: none;
         background: transparent;
         cursor: pointer;
         text-align: left;
+        overflow-wrap: anywhere;
+        min-width: 0;
         padding: 8px 10px;
         border-radius: 4px;
         font-size: var(--su-font-size-sm);
@@ -95,14 +108,22 @@ export class SuDropdown extends LitElement {
     this.open = false;
   };
 
+  private onDocumentFocus = (event: FocusEvent) => {
+    if (this.open && !event.composedPath().includes(this)) this.open = false;
+  };
+
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this.onDocumentClick);
+    document.addEventListener('focusin', this.onDocumentFocus);
+    this.requestUpdate();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('click', this.onDocumentClick);
+    document.removeEventListener('focusin', this.onDocumentFocus);
+    this.stopPositioning();
   }
 
   private get mergedItems() {
@@ -137,15 +158,19 @@ export class SuDropdown extends LitElement {
     this.updateTriggerAria();
   }
 
-  private async openMenu() {
-    if (this.disabled || this.open) return;
+  private async openMenu(last = false) {
+    if (this.disabled) return;
+    const active = getDeepActiveElement();
     this.open = true;
     await this.updateComplete;
-    this.shadowRoot?.querySelector<HTMLButtonElement>('.item:not(:disabled)')?.focus();
+    if (!this.isConnected || !this.open || this.disabled || getDeepActiveElement() !== active)
+      return;
+    const items = this.renderRoot.querySelectorAll<HTMLButtonElement>('.item:not(:disabled)');
+    items[last ? items.length - 1 : 0]?.focus({ preventScroll: true });
   }
 
-  private toggle() {
-    if (this.disabled) return;
+  private toggle(event: MouseEvent) {
+    if (this.disabled || this.isNestedTriggerEvent(event)) return;
     if (this.open) {
       this.open = false;
     } else {
@@ -163,21 +188,39 @@ export class SuDropdown extends LitElement {
     target?.focus();
   }
 
+  private isNestedTriggerEvent(event: Event) {
+    const path = event.composedPath();
+    return path
+      .slice(0, path.indexOf(event.currentTarget!))
+      .some((node) => node instanceof SuDropdown);
+  }
+
   private onTriggerKeyDown(event: KeyboardEvent) {
+    if (event.defaultPrevented || this.isNestedTriggerEvent(event)) return;
     const usesWrapper = event.currentTarget === event.target;
     if (
       event.key === 'ArrowDown' ||
+      event.key === 'ArrowUp' ||
       (usesWrapper && (event.key === 'Enter' || event.key === ' '))
     ) {
       event.preventDefault();
-      void this.openMenu();
+      event.stopPropagation();
+      void this.openMenu(event.key === 'ArrowUp');
     } else if (event.key === 'Escape' && this.open) {
       event.preventDefault();
+      event.stopPropagation();
       this.open = false;
     }
   }
 
   private onMenuKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.open = false;
+      this.focusTrigger();
+      return;
+    }
     const items = Array.from(
       this.shadowRoot?.querySelectorAll<HTMLButtonElement>('.item:not(:disabled)') ?? []
     );
@@ -190,12 +233,7 @@ export class SuDropdown extends LitElement {
     else if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + items.length) % items.length;
     else if (event.key === 'Home') nextIndex = 0;
     else if (event.key === 'End') nextIndex = items.length - 1;
-    else if (event.key === 'Escape') {
-      event.preventDefault();
-      this.open = false;
-      this.focusTrigger();
-      return;
-    } else if (event.key === 'Tab') {
+    else if (event.key === 'Tab') {
       this.open = false;
       return;
     } else {
@@ -203,11 +241,13 @@ export class SuDropdown extends LitElement {
     }
 
     event.preventDefault();
+    event.stopPropagation();
     items[nextIndex].focus();
   }
 
   private onSelect(item: DropdownItem) {
-    if (this.disabled || item.disabled) return;
+    if (!this.isConnected || !this.open || this.disabled || item.disabled) return;
+    const active = getDeepActiveElement();
     this.open = false;
     this.dispatchEvent(
       new CustomEvent('select', {
@@ -216,7 +256,7 @@ export class SuDropdown extends LitElement {
         composed: true,
       })
     );
-    this.focusTrigger();
+    if (this.isConnected && getDeepActiveElement() === active) this.focusTrigger();
   }
 
   protected willUpdate() {
@@ -225,12 +265,28 @@ export class SuDropdown extends LitElement {
 
   updated(changedProperties: Map<PropertyKey, unknown>) {
     if (changedProperties.has('open')) this.updateTriggerAria();
+    const menu = this.renderRoot.querySelector<HTMLElement>('.menu');
+    const anchor = this.renderRoot.querySelector<HTMLElement>('.trigger');
+    if (!this.isConnected || !menu || !anchor) {
+      this.stopPositioning();
+      return;
+    }
+    if (menu.showPopover && !menu.matches(':popover-open')) menu.showPopover();
+    const update = () => positionFloating(anchor, menu, 'bottom', true);
+    update();
+    this.stopTracking ??= trackFloating(anchor, menu, update);
+  }
+
+  private stopPositioning() {
+    this.stopTracking?.();
+    this.stopTracking = undefined;
   }
 
   render() {
     return html`
       <div
         class="trigger"
+        part="trigger"
         role=${this.triggerNeedsTabStop ? 'button' : nothing}
         tabindex=${this.triggerNeedsTabStop && !this.disabled ? 0 : -1}
         aria-haspopup=${this.triggerNeedsTabStop ? 'menu' : nothing}
@@ -244,12 +300,21 @@ export class SuDropdown extends LitElement {
       </div>
       ${this.open
         ? html`
-            <div id=${this.menuId} class="menu" role="menu" @keydown=${this.onMenuKeyDown}>
+            <div
+              id=${this.menuId}
+              class="menu"
+              part="panel"
+              popover="manual"
+              role="menu"
+              @keydown=${this.onMenuKeyDown}
+            >
               ${this.mergedItems.map(
                 (item) => html`
                   <button
                     type="button"
                     role="menuitem"
+                    part="item"
+                    tabindex="-1"
                     class="item ${item.danger ? 'danger' : ''}"
                     ?disabled=${Boolean(item.disabled)}
                     @click=${() => this.onSelect(item)}

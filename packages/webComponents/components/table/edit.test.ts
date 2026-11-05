@@ -101,3 +101,54 @@ it('disallows duplicate keys, disabled editors and closes when column is hidden'
   await table.updateComplete;
   expect(root.querySelector('.edit-cell')).toBeNull();
 });
+
+it('restores local page drafts per cell and discards a draft after row replacement', async () => {
+  const { table, root, open, edit, key, requests } = await mount();
+  const first = table.data[0];
+  table.data = [first, { id: 2, name: '第二行' }];
+  table.pageSize = 1;
+  table.preservePageDrafts = true;
+  await table.updateComplete;
+  await edit(await open(), '第一页草稿');
+  table.currentPage = 2;
+  await table.updateComplete;
+  await table.updateComplete;
+  expect(root.querySelector('.cell-editor')).toBeNull();
+  await edit(await open(), '第二页草稿');
+  table.currentPage = 1;
+  await table.updateComplete;
+  await table.updateComplete;
+  const restored = await open();
+  expect(restored.value).toBe('第一页草稿');
+  await key(restored, 'Enter');
+  expect(requests[0].value).toBe('第一页草稿');
+  requests[0].resolve();
+  await table.updateComplete;
+  table.data = [first, { id: 2, name: '更新后的第二行' }];
+  table.currentPage = 2;
+  await table.updateComplete;
+  table.currentPage = 2;
+  await table.updateComplete;
+  expect((await open()).value).toBe('更新后的第二行');
+});
+
+it.each([false, true])(
+  'ignores save responses as soon as the page changes (remote=%s)',
+  async (remote) => {
+    const { table, open, edit, key, requests } = await mount();
+    table.remote = remote;
+    table.total = 2;
+    table.pageSize = 1;
+    if (!remote) table.data = [...table.data, { id: 2, name: '下一页' }];
+    await table.updateComplete;
+    const input = await open();
+    await edit(input, '正在保存');
+    await key(input, 'Enter');
+    expect(requests).toHaveLength(1);
+
+    table.currentPage = 2;
+    expect(requests[0].resolve()).toBe(false);
+    await table.updateComplete;
+    expect(requests[0].signal.aborted).toBe(true);
+  }
+);

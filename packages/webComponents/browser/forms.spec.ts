@@ -174,8 +174,35 @@ for (const boundary of ['edit', 'unmount'] as const) {
 
 test('unmounting an open popup removes outside-click handling and does not steal focus', async ({ page }) => {
   await page.locator('#department .trigger').click();
-  await page.locator('#department').evaluate((el) => el.remove());
-  await page.locator('#outside').click();
-  await expect(page.locator('#outside')).toBeFocused();
+  await page.evaluate(() => {
+    document.querySelector('#department')!.remove();
+    const input = document.createElement('input');
+    input.id = 'outside';
+    input.setAttribute('aria-label', '外部焦点');
+    document.querySelector('#outside')!.replaceWith(input);
+  });
+  const outside = page.locator('#outside');
+  await outside.click();
+  await expect(outside).toBeFocused();
   await expect(page.locator('su-tree')).toHaveCount(0);
+});
+
+test('large option collections can be filtered and moved in one operation', async ({ page }) => {
+  await page.evaluate(() => {
+    const roles = document.querySelector('su-transfer')!;
+    roles.targetKeys = [];
+    roles.items = Array.from({ length: 1000 }, (_, i) => ({ key: String(i), label: `角色 ${i}` }));
+    const department = document.querySelector('su-tree-select')!;
+    department.searchable = true;
+    department.nodes = [{ key: 'root', label: '部门', children: Array.from({ length: 1000 },
+      (_, i) => ({ key: String(i), label: `部门 ${i}` })) }];
+  });
+  const transfer = page.locator('su-transfer');
+  await transfer.getByRole('checkbox', { name: '全选可选项' }).check();
+  await transfer.getByRole('button', { name: '移入已选项' }).click();
+  expect(await page.evaluate(() => document.querySelector('su-transfer')!.targetKeys.length)).toBe(1000);
+  await page.locator('#department .trigger').press('ArrowDown');
+  await page.getByRole('searchbox', { name: '搜索树选项' }).fill('部门 999');
+  await expect(page.getByRole('treeitem', { name: '部门 999' })).toBeVisible();
+  await expect(page.getByRole('treeitem', { name: '部门 998' })).toHaveCount(0);
 });
