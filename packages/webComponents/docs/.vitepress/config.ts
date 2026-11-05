@@ -81,6 +81,7 @@ export default defineConfig({
           text: '表单',
           items: [
             { text: 'Form 表单组件', link: '/components/form' },
+            { text: 'ImportWizard 导入向导', link: '/components/import-wizard' },
             { text: 'FilterPanel 筛选面板', link: '/components/filter-panel' },
             { text: 'Upload 上传与附件', link: '/components/upload' },
             { text: 'TreeSelect 树选择', link: '/components/tree-select' },

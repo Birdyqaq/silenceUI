@@ -308,3 +308,7 @@ const filterPanelDetail: import('../dist/components/form/filter-panel/index').Fi
     expanded: true,
   };
 filterPanel.expanded = filterPanelDetail.expanded;
+
+const importWizard: import("../dist/index").SuImportWizard = document.createElement("su-import-wizard");
+const importAdapter: import("../dist/components/form/import-wizard/index").ImportAdapter | undefined = importWizard.adapter;
+void importAdapter;

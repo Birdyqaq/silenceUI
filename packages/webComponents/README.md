@@ -2,6 +2,8 @@
 
 新增 `su-date-time-range`，支持本地日期时间范围、跨日排班、有效期边界及原生表单。
 
+`su-stat-card` 支持指标标题、数值前后缀、趋势插槽及稳定 CSS Parts，适合与宿主统计数据和图表库组合使用。
+
 `su-segmented` 提供单选视图切换，`su-result` 展示操作结果，`su-auto-complete` 支持本地建议、远程查询和原生表单。
 
 `su-page-header` 提供页面标题、描述、返回按钮，以及面包屑和动作插槽；导航由宿主处理。
@@ -287,3 +289,5 @@ pnpm check
 - `su-bulk-actions` 提供选择计数、批量操作和清空选择。
 
 - `su-filter-panel` 组织常用和高级筛选条件，派发查询及重置事件。
+
+新增 `su-import-wizard` 导入向导，提供文件选择、字段映射、校验预览和结果展示。文件解析及提交由宿主适配器实现。

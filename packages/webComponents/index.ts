@@ -144,3 +144,5 @@ export * from './components/data/attachment-list/index';
 export * from './components/data/bulk-actions/index';
 
 export * from './components/form/filter-panel/index';
+
+export * from './components/form/import-wizard/index';

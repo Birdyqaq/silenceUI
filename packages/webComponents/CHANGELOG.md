@@ -2,6 +2,10 @@
 
 ## 未发布
 
+- 新增 ImportWizard 导入向导：可取消解析、字段映射、校验预览、提交重试与结果展示，通过宿主适配器接入 CSV/XLSX。
+
+- 增强 StatCard：增加标题、前后缀及趋势插槽、趋势方向符号与稳定 CSS Parts，完善窄宽度文本换行。
+
 - 新增 FilterPanel 筛选面板及 Table 查询、重置联动示例。
 
 - 新增 BulkActions 批量操作栏及 Table 行选择联动示例。
