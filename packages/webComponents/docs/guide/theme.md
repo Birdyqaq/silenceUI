@@ -96,3 +96,23 @@ resetThemeColors(); // 恢复默认
 | `--su-radius-sm / md / lg`                              | 圆角                    |
 | `--su-font-size-xs / sm / md / lg`                      | 字号                    |
 | `--su-shadow-sm / md`                                   | 阴影                    |
+
+## 交互状态与 CSS Parts
+
+`--su-focus-ring-color` 默认跟随品牌主色，共享焦点样式使用此变量。Input 的焦点光圈可通过 `--su-focus-halo` 覆盖，错误底色可通过 `--su-error-surface` 覆盖。禁用状态沿用 `--su-bg-muted` 和 `--su-text-3`，错误边框沿用 `--su-color-error`。
+
+| 组件 | CSS Parts |
+| --- | --- |
+| Input | `control`、`clear-button` |
+| Menu | `list`、`item` |
+| Dropdown | `trigger`、`panel`、`item` |
+| Tooltip | `bubble` |
+| AutoComplete | `control`、`clear-button`、`popup`、`option` |
+
+```css
+su-input::part(control) {
+  border-radius: 12px;
+}
+```
+
+主题变量和 Parts 可直接通过 CSS 使用。内部类名属于组件实现。

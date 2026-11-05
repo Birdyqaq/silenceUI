@@ -209,3 +209,19 @@ Tree 新增权限勾选、父子联动和半选态，见[后台管理增强](./a
 焦点与选中状态独立：方向键只移动焦点，`Enter/Space` 确认选择；Tab 再次进入时回到最近聚焦的可用节点。该节点隐藏、禁用或移除后，Tab 入口回退到可见的选中节点或首个可用节点。
 
 `nodes` 与 `nodesJson` 中的节点必须具备字符串 `key`、`label`，同一棵树的 key 应保持唯一。非法成员会被忽略，非数组的 children 视为空；循环引用不会重复遍历。过滤不修改传入数据，`select/expand` 中的 node 仍为合法的原节点对象。
+
+## Calendar 月视图
+
+查看每周的班次与日程见 [WeekSchedule 周排班](./week-schedule)。
+
+<ClientOnly>
+  <su-calendar month="2026-11" value="2026-11-04">
+    <span slot="day-2026-11-04">排班</span>
+  </su-calendar>
+</ClientOnly>
+
+按需入口为 `silenceui/components/data/calendar`。设置 `month`（`YYYY-MM`）控制显示月份，设置 `value`（`YYYY-MM-DD`）指定选中日期。未指定有效月份时，显示选中日期所在月份或本地当前月份。每周从周一开始。
+
+点击日期或用 Enter、空格选择时，组件派发 `change`，详情为 `{ value }`。月份按钮和跨月方向键导航派发 `month-change`，详情为 `{ month }`。方向键只移动焦点。程序赋值不会派发上述事件。
+
+为日期提供 `day-YYYY-MM-DD` 具名插槽，例如 `day-2026-11-04`。通过 `day`、`date-button` Parts 定制样式。

@@ -1,5 +1,11 @@
 # SilenceUI Web Components
 
+新增 `su-date-time-range`，支持本地日期时间范围、跨日排班、有效期边界及原生表单。
+
+`su-segmented` 提供单选视图切换，`su-result` 展示操作结果，`su-auto-complete` 支持本地建议、远程查询和原生表单。
+
+`su-page-header` 提供页面标题、描述、返回按钮，以及面包屑和动作插槽；导航由宿主处理。
+
 Table 增强：列显隐/顺序/宽度恢复、枚举/数值筛选与文本/数字单元格编辑。宿主通过 `cell-edit-request` 负责保存，组件不发网络请求或修改传入数据。
 
 新增 `su-time-picker` / `su-time-range`：本地 HH:mm、分钟精度、required/min/max/step、原生 FormData、reset 与错误关联；按需入口 `silenceui/components/form/time-picker`、`silenceui/components/form/time-range`。不支持跨日、秒或时区转换。
@@ -266,3 +272,18 @@ pnpm check
 ```
 
 `dist/`、`docs/.vitepress/dist/`、`docs/.vitepress/cache/` 均为生成物，已由 `.gitignore` 排除，不要提交进 Git。本地或 CI 需要时再执行 `pnpm build` / `pnpm docs:build`。
+
+`su-calendar` 提供月视图、日期选择和日程插槽。
+
+`su-notification-center` 展示通知、已读状态与分页操作。
+
+`su-rich-text-field` 可将第三方富文本编辑器接入原生表单。
+
+- `su-week-schedule` 提供周排班查看、周切换和条目选择。
+- `su-sortable-list` 提供拖动排序及上移、下移操作。
+
+- `su-attachment-list` 展示已保存附件，提供打开与移除事件。
+
+- `su-bulk-actions` 提供选择计数、批量操作和清空选择。
+
+- `su-filter-panel` 组织常用和高级筛选条件，派发查询及重置事件。

@@ -258,3 +258,53 @@ nativeFormControls.forEach((control) => {
   control.formDisabledCallback(false);
   control.formResetCallback();
 });
+
+const validityWindow: import('../dist/index').SuDateTimeRange =
+  document.createElement('su-date-time-range');
+const validityValue: import('../dist/components/form/date-time-range/index').DateTimeRangeValue = [
+  '2026-11-04T23:00',
+  '2026-11-05T07:00',
+];
+validityWindow.value = validityValue;
+validityWindow.formResetCallback();
+
+const weekSchedule: import('../dist/index').SuWeekSchedule =
+  document.createElement('su-week-schedule');
+const weekItem: import('../dist/components/data/week-schedule/index').WeekScheduleItem = {
+  id: 'shift',
+  date: '2026-11-05',
+  title: '夜班',
+};
+weekSchedule.items = [weekItem];
+const sortable: import('../dist/index').SuSortableList = document.createElement('su-sortable-list');
+const sortDetail: import('../dist/components/data/sortable-list/index').SortableListChangeDetail = {
+  key: 'shift',
+  items: [{ key: 'shift', label: '夜班' }],
+  fromIndex: 1,
+  toIndex: 0,
+};
+sortable.items = sortDetail.items;
+
+const attachments: import('../dist/index').SuAttachmentList =
+  document.createElement('su-attachment-list');
+const attachment: import('../dist/components/data/attachment-list/index').AttachmentListItem = {
+  id: 'manual',
+  name: '值班手册.pdf',
+};
+attachments.items = [attachment];
+
+const bulkActions: import('../dist/index').SuBulkActions =
+  document.createElement('su-bulk-actions');
+const bulkDetail: import('../dist/components/data/bulk-actions/index').BulkActionDetail = {
+  action: 'archive',
+  keys: ['row-1'],
+};
+bulkActions.selectedKeys = bulkDetail.keys;
+
+const filterPanel: import('../dist/index').SuFilterPanel =
+  document.createElement('su-filter-panel');
+const filterPanelDetail: import('../dist/components/form/filter-panel/index').FilterPanelExpandDetail =
+  {
+    expanded: true,
+  };
+filterPanel.expanded = filterPanelDetail.expanded;

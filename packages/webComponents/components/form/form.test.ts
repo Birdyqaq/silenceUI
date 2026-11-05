@@ -358,3 +358,26 @@ describe('form controls', () => {
     expect(cascader.shadowRoot?.activeElement?.classList.contains('trigger')).toBe(true);
   });
 });
+
+it('keeps an in-flight upload cancelable after the form selection changes', async () => {
+  const upload = document.createElement('su-upload');
+  const first = new File(['old'], 'old.txt');
+  const second = new File(['new'], 'new.txt');
+  upload.files = [first];
+  upload.uploads = new Map([[first, { progress: 40 }]]);
+  document.body.append(upload);
+  await upload.updateComplete;
+
+  upload.files = [second];
+  await upload.updateComplete;
+  expect(upload.shadowRoot!.querySelector('progress')?.value).toBe(40);
+  const canceled = vi.fn();
+  upload.addEventListener('upload-cancel', canceled);
+  upload.shadowRoot!.querySelector<HTMLButtonElement>('[aria-label="取消上传 old.txt"]')?.click();
+  expect(canceled.mock.calls[0]?.[0].detail.file).toBe(first);
+  expect(upload.files).toEqual([second]);
+  upload.uploads = new Map();
+  await upload.updateComplete;
+  expect(upload.shadowRoot!.textContent).not.toContain('old.txt');
+  upload.remove();
+});

@@ -81,6 +81,8 @@ export default defineConfig({
           text: '表单',
           items: [
             { text: 'Form 表单组件', link: '/components/form' },
+            { text: 'FilterPanel 筛选面板', link: '/components/filter-panel' },
+            { text: 'Upload 上传与附件', link: '/components/upload' },
             { text: 'TreeSelect 树选择', link: '/components/tree-select' },
             { text: 'Transfer 穿梭框', link: '/components/transfer' },
             { text: '时间选择与排班', link: '/components/time' },
@@ -93,6 +95,9 @@ export default defineConfig({
             { text: 'Table 表格', link: '/components/table' },
             { text: 'Typewriter 打字机', link: '/components/typewriter' },
             { text: 'Data 数据组件', link: '/components/data' },
+            { text: 'WeekSchedule 周排班', link: '/components/week-schedule' },
+            { text: 'SortableList 可排序列表', link: '/components/sortable-list' },
+            { text: 'BulkActions 批量操作栏', link: '/components/bulk-actions' },
             { text: 'Collapse / Timeline', link: '/components/admin-details' },
           ],
         },

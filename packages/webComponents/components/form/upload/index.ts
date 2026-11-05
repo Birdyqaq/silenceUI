@@ -10,6 +10,11 @@ interface UploadRejection {
   reason: UploadRejectReason;
 }
 
+export interface UploadProgress {
+  /** Omit progress while total bytes are unknown. */
+  progress?: number;
+}
+
 @customElement('su-upload')
 export class SuUpload extends LitElement {
   static formAssociated = true;
@@ -23,6 +28,19 @@ export class SuUpload extends LitElement {
   @property({ type: String }) label = '选择文件';
   @property({ type: String }) hint = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
+
+  @property({ attribute: false }) uploads: ReadonlyMap<File, UploadProgress> = new Map();
+
+  private cancelUpload(file: File) {
+    if (this.formValue.disabled || !this.uploads.has(file)) return;
+    this.dispatchEvent(
+      new CustomEvent('upload-cancel', {
+        detail: { file },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
 
   @state() private dragging = false;
 
@@ -126,6 +144,18 @@ export class SuUpload extends LitElement {
       .size {
         color: var(--su-text-3);
         font-size: var(--su-font-size-xs);
+      }
+
+      .transfer {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .transfer progress {
+        max-width: 100%;
       }
 
       .remove {
@@ -233,8 +263,8 @@ export class SuUpload extends LitElement {
     );
   }
 
-  private removeFile(index: number) {
-    if (this.formValue.disabled) return;
+  private removeFile(file: File, index: number) {
+    if (this.formValue.disabled || this.files[index] !== file || this.uploads.has(file)) return;
     this.files = this.files.filter((_, fileIndex) => fileIndex !== index);
     this.emitChange();
   }
@@ -282,6 +312,9 @@ export class SuUpload extends LitElement {
   }
 
   render() {
+    const selected = new Set(this.files);
+    const transfers = [...this.uploads.keys()].filter((file) => !selected.has(file));
+    const visibleFiles = [...this.files, ...transfers];
     return html`
       <div class="upload">
         <div
@@ -303,26 +336,55 @@ export class SuUpload extends LitElement {
             ${this.hint ? html`<div class="hint">${this.hint}</div>` : nothing}
           </div>
         </div>
-        ${this.files.length > 0
+        ${visibleFiles.length > 0
           ? html`
-              <ul class="files" aria-live="polite" aria-label="已选择文件">
-                ${this.files.map(
-                  (file, index) => html`
+              <ul
+                class="files"
+                aria-live="polite"
+                aria-label=${transfers.length ? '文件与上传进度' : '已选择文件'}
+              >
+                ${visibleFiles.map((file, index) => {
+                  const upload = this.uploads.get(file);
+                  const progress = upload?.progress;
+                  return html`
                     <li class="file">
                       <span class="name" title=${file.name}>${file.name}</span>
                       <span class="size">${this.formatSize(file.size)}</span>
-                      <button
-                        class="remove"
-                        type="button"
-                        aria-label=${`移除 ${file.name}`}
-                        ?disabled=${this.formValue.disabled}
-                        @click=${() => this.removeFile(index)}
-                      >
-                        ✕
-                      </button>
+                      ${selected.has(file)
+                        ? html`<button
+                            class="remove"
+                            type="button"
+                            aria-label=${`移除 ${file.name}`}
+                            ?disabled=${this.formValue.disabled || Boolean(upload)}
+                            @click=${() => this.removeFile(file, index)}
+                          >
+                            ✕
+                          </button>`
+                        : nothing}
+                      ${upload
+                        ? html`
+                            <div class="transfer">
+                              <progress
+                                max="100"
+                                value=${typeof progress === 'number' && Number.isFinite(progress)
+                                  ? Math.min(100, Math.max(0, progress))
+                                  : nothing}
+                                aria-label=${`上传进度 ${file.name}`}
+                              ></progress>
+                              <button
+                                type="button"
+                                aria-label=${`取消上传 ${file.name}`}
+                                ?disabled=${this.formValue.disabled}
+                                @click=${() => this.cancelUpload(file)}
+                              >
+                                取消上传
+                              </button>
+                            </div>
+                          `
+                        : nothing}
                     </li>
-                  `
-                )}
+                  `;
+                })}
               </ul>
             `
           : nothing}

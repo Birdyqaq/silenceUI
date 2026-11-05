@@ -16,7 +16,7 @@ export const baseControlStyles = css`
 
 export const focusRingStyles = css`
   :focus-visible {
-    outline: 2px solid var(--su-color-primary);
+    outline: 2px solid var(--su-focus-ring-color, var(--su-color-primary));
     outline-offset: 1px;
   }
 `;

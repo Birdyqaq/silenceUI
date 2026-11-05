@@ -148,3 +148,7 @@ pnpm docs:dev
 ```bash
 pnpm check
 ```
+
+## 用本地 tarball 验证 Vue 和 React
+
+仓库内 `packages/webComponents/examples/vue` 和 `packages/webComponents/examples/react` 是可独立安装的应用。从 Web Components 包目录运行 `bash scripts/verify-consumers.sh` 可打包并构建两个示例，传入 `--browser` 可运行 Chromium 交互验收。示例按需导入已安装 tarball 中的组件、主题 API 和 CSS。详细启动命令见仓库中的 `packages/webComponents/examples/README.md`。

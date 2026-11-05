@@ -31,3 +31,17 @@ if (range) range.value = ['09:00', '18:00'];
 ```
 
 单值恢复接收字符串；范围恢复接收同名双值 FormData。初始值在首次渲染完成时记录，后续程序赋值不重写 reset 基线。没有远程请求、保存排班或时区换算职责。
+
+## 日期时间范围与跨日排班
+
+<ClientOnly>
+  <su-date-time-range label="夜班" :value.prop="['2026-11-04T23:00', '2026-11-05T07:00']"></su-date-time-range>
+</ClientOnly>
+
+`su-date-time-range` 的 `value: DateTimeRangeValue` 是两个本地日期时间字符串组成的数组，格式为 `YYYY-MM-DDTHH:mm`。年份支持 0001—9999，分钟精度。起止日期可跨日、跨月和跨年，结束时间应大于或等于开始时间。此值表示业务所在地的日历时间，应用负责确定时区及夏令时歧义后再转换为服务端需要的值。
+
+`min` 和 `max` 使用同一格式，均为包含边界。`required` 要求填写两端，可选范围允许两端都空，半空范围会报错。非法日期、格式、范围顺序或边界均会使表单无效，原始 property 保留供宿主纠正。
+
+`label` 命名范围和起止输入框。设置 `name` 后，FormData 按开始、结束顺序提交两个同名字段。支持 `disabled`、原生 fieldset 继承禁用、`readonly`、表单 reset 和 FormData 状态恢复。用户修改派发 `change.detail.value` 的数组副本，程序化更新和 reset 静默执行。
+
+按需入口为 `silenceui/components/form/date-time-range`，根入口也导出 `SuDateTimeRange` 和 `DateTimeRangeValue`。可通过 `start-control`、`end-control` Parts 定制原生输入框。面板外观与键盘分段方式由浏览器提供。

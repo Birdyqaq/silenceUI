@@ -87,13 +87,29 @@ try {
     return gzipSync(content).length > 20 * 1024;
   });
 
+  const bundledIconCollections = entries.filter((entry) => {
+    if (!entry.endsWith('.js.map')) return false;
+    const map = JSON.parse(
+      execFileSync('tar', ['-xOzf', path.join(tempDirectory, tarball), entry], {
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+      })
+    );
+    return map.sources.some((source) =>
+      /@iconify-icons\/lucide\/(?:index\.|icons\.json)/.test(source)
+    );
+  });
+
   if (
+    bundledIconCollections.length > 0 ||
     missing.length > 0 ||
     forbidden.length > 0 ||
     componentEntries.length !== expectedComponentEntries ||
     oversizedEntries.length > 0 ||
     oversizedCompressed.length > 0
   ) {
+    if (bundledIconCollections.length)
+      console.error('Bundled full icon collection:', bundledIconCollections);
     if (missing.length > 0) console.error(`Missing package files: ${missing.join(', ')}`);
     if (forbidden.length > 0) console.error(`Unexpected package files: ${forbidden.join(', ')}`);
     if (componentEntries.length !== expectedComponentEntries) {

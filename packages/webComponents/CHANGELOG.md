@@ -2,6 +2,33 @@
 
 ## 未发布
 
+- 新增 FilterPanel 筛选面板及 Table 查询、重置联动示例。
+
+- 新增 BulkActions 批量操作栏及 Table 行选择联动示例。
+
+- 新增 AttachmentList 已保存附件列表，并补充 Upload 类型、大小和数量限制的可配置文档示例。
+
+- 新增 WeekSchedule 周排班和 SortableList 可排序列表，补充独立 API 文档、交互示例及组件总览入口。
+
+- 修复重新选文件后进行中的上传失去取消入口，以及 Table 翻页到渲染完成前接受旧保存回调的问题。
+
+- AutoComplete 新增限定候选值模式，Menu 新增可选收起浮层，文档新增 Tabs 路由示例。Upload 提供进度和取消事件，并新增第三方富文本编辑器表单桥接。
+
+- 新增 NotificationCenter 通知列表及分页、标记已读事件，Table 本地分页支持按需启用草稿恢复。
+
+- 新增 DateTimeRange，支持分钟精度的本地日期时间范围、跨日和 min/max，集成原生表单、reset、禁用与状态恢复。
+
+- AutoComplete 候选面板支持顶层定位、滚动跟随与稳定 CSS Parts，抽屉内可先用 Escape 收起候选。
+
+- 增加成员、角色与排班联动示例，补大数据、图标按需归档和浏览器矩阵验收，记录本地发布演练结果。
+
+- 增加主题状态变量与稳定 CSS Parts。Dropdown 和 Tooltip 共享视口定位，支持滚动容器内更新；Menu 保持内联子项。
+- 增加使用本地发布 tarball 的 Vue 和 React 消费示例，覆盖独立安装、构建及 Chromium 交互。
+
+- 新增 Segmented 单选视图切换、Result 结果展示和 AutoComplete 输入建议，支持键盘、输入法、原生表单及宿主管理的远程查询。
+
+- 新增 PageHeader，支持标题层级、返回事件和面包屑/操作插槽。
+
 - Table 增加文本/数字单元格编辑、键盘确认取消、同步/异步校验与宿主保存回调；失败保留草稿，失效请求可中止。
 
 - 完成计划第 11—13 天：Table 列显隐、固定分组内键盘排序、版本化列状态导入导出及宽度恢复，保留全隐藏恢复入口。

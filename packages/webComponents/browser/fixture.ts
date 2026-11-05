@@ -1,6 +1,7 @@
 import '../styles/theme.css';
 import type {} from '../types';
 import '../components/input';
+import '../components/navigation/page-header';
 import '../components/form/form';
 import '../components/form/form-item';
 import '../components/form/tree-select';
@@ -35,3 +36,21 @@ if (params.get('brand')) setThemeColors({ primary: '#7c3aed' });
 
 await Promise.all([wrapper.updateComplete, department.updateComplete, roles.updateComplete, document.querySelector('su-input')!.updateComplete]);
 document.documentElement.dataset.ready = 'true';
+import '../components/navigation/segmented';
+import '../components/feedback/result';
+import '../components/form/auto-complete';
+import '../components/navigation/menu';
+import '../components/navigation/dropdown';
+import '../components/feedback/tooltip';
+
+import '../components/feedback/drawer';
+
+import '../components/form/date-time-range';
+
+import '../components/data/calendar';
+
+import '../components/form/upload';
+import '../components/form/rich-text-field';
+
+import '../components/data/week-schedule';
+import '../components/data/sortable-list';

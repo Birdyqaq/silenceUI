@@ -2,6 +2,8 @@ import { LitElement, css, html, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseControlStyles } from '../../_shared/styles';
 
+import { positionFloating, trackFloating } from '../../_shared/floating';
+
 let descriptionId = 0;
 
 @customElement('su-tooltip')
@@ -13,7 +15,7 @@ export class SuTooltip extends LitElement {
   private focused = false;
   private focusTarget?: HTMLElement;
   private dismissed = false;
-  private observer?: ResizeObserver;
+  private stopTracking?: () => void;
   private leaveTimer?: ReturnType<typeof setTimeout>;
   private descriptions = new Map<HTMLElement, HTMLSpanElement>();
   private descriptionObserver?: MutationObserver;
@@ -31,8 +33,8 @@ export class SuTooltip extends LitElement {
         border: 0;
         z-index: 1100;
         width: max-content;
-        max-width: min(260px, calc(100vw - 16px));
-        max-height: calc(100vh - 16px);
+        max-width: min(260px, var(--su-floating-max-width, calc(100vw - 16px)));
+        max-height: var(--su-floating-max-height, calc(100vh - 16px));
         overflow: auto;
         box-sizing: border-box;
         overflow-wrap: anywhere;
@@ -98,13 +100,7 @@ export class SuTooltip extends LitElement {
       const bubble = this.bubble;
       if (bubble?.showPopover && !bubble.matches(':popover-open')) bubble.showPopover();
       this.position();
-      if (!this.observer && typeof ResizeObserver !== 'undefined') {
-        this.observer = new ResizeObserver(this.position);
-        this.observer.observe(this);
-        if (bubble) this.observer.observe(bubble);
-      }
-      window.addEventListener('resize', this.position);
-      window.addEventListener('scroll', this.position, true);
+      if (bubble) this.stopTracking ??= trackFloating(this, bubble, this.position);
     } else {
       this.hideBubblePopover();
       this.stopPositioning();
@@ -225,31 +221,7 @@ export class SuTooltip extends LitElement {
   private position = () => {
     const bubble = this.bubble;
     if (!this.open || !bubble || !this.isConnected) return;
-    const anchor = this.getBoundingClientRect();
-    const rect = bubble.getBoundingClientRect();
-    const width = document.documentElement.clientWidth || window.innerWidth;
-    const height = document.documentElement.clientHeight || window.innerHeight;
-    const gap = 8;
-    const spaces = {
-      top: anchor.top,
-      bottom: height - anchor.bottom,
-      left: anchor.left,
-      right: width - anchor.right,
-    };
-    const opposite = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const;
-    let side = Object.hasOwn(spaces, this.placement) ? this.placement : 'top';
-    const size = side === 'top' || side === 'bottom' ? rect.height : rect.width;
-    if (spaces[side] < size + gap * 2 && spaces[opposite[side]] > spaces[side])
-      side = opposite[side];
-    let x = anchor.left + (anchor.width - rect.width) / 2;
-    let y = anchor.top + (anchor.height - rect.height) / 2;
-    if (side === 'top') y = anchor.top - rect.height - gap;
-    if (side === 'bottom') y = anchor.bottom + gap;
-    if (side === 'left') x = anchor.left - rect.width - gap;
-    if (side === 'right') x = anchor.right + gap;
-    bubble.style.left = Math.max(gap, Math.min(x, width - rect.width - gap)) + 'px';
-    bubble.style.top = Math.max(gap, Math.min(y, height - rect.height - gap)) + 'px';
-    bubble.dataset.placement = side;
+    positionFloating(this, bubble, this.placement);
   };
 
   private hideBubblePopover() {
@@ -257,10 +229,8 @@ export class SuTooltip extends LitElement {
     if (bubble?.hidePopover && bubble.matches(':popover-open')) bubble.hidePopover();
   }
   private stopPositioning() {
-    window.removeEventListener('resize', this.position);
-    window.removeEventListener('scroll', this.position, true);
-    this.observer?.disconnect();
-    this.observer = undefined;
+    this.stopTracking?.();
+    this.stopTracking = undefined;
   }
 
   render() {
@@ -269,6 +239,7 @@ export class SuTooltip extends LitElement {
     return html`<slot @slotchange=${this.syncDescriptions}></slot>
       <div
         class="bubble ${this.open ? 'visible' : ''}"
+        part="bubble"
         role="tooltip"
         popover="manual"
         aria-hidden=${this.open ? 'false' : 'true'}

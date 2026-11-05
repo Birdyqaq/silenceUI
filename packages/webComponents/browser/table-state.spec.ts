@@ -185,3 +185,26 @@ for (const mode of ['light', 'dark', 'brand'])
         contentType: 'image/png',
       });
     });
+
+test('local pagination restores a suspended draft when its cell is reopened', async ({ page }) => {
+  await page.evaluate(() => {
+    const table = document.querySelector('se-table')!;
+    table.pagination = true;
+    table.pageSize = 1;
+    table.preservePageDrafts = true;
+    table.columns = table.columns.map((column) =>
+      column.key === 'name' ? { ...column, editable: { type: 'text' } } : column
+    );
+  });
+  const table = page.locator('se-table');
+  const first = table.getByRole('button', { name: '编辑姓名（1）', exact: true });
+  const editor = table.getByRole('textbox', { name: '编辑姓名', exact: true });
+  await first.click();
+  await editor.fill('跨页草稿');
+  await table.getByRole('button', { name: '下一页' }).click();
+  await expect(table.getByRole('button', { name: '编辑姓名（2）', exact: true })).toBeVisible();
+  await table.getByRole('button', { name: '上一页' }).click();
+  await first.click();
+  await expect(editor).toHaveValue('跨页草稿');
+  await expect(editor).toBeFocused();
+});

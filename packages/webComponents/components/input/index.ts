@@ -76,7 +76,7 @@ export class SuInput extends LitElement {
 
       input:focus {
         border-color: var(--su-color-primary);
-        box-shadow: 0 0 0 3px rgba(var(--su-color-primary-rgb), 0.16);
+        box-shadow: 0 0 0 3px var(--su-focus-halo, rgba(var(--su-color-primary-rgb), 0.16));
       }
 
       input:disabled {
@@ -86,9 +86,12 @@ export class SuInput extends LitElement {
         cursor: not-allowed;
       }
 
-      input.error {
+      input[aria-invalid='true']:not(:disabled) {
         border-color: var(--su-color-error);
-        background-color: rgba(var(--su-color-error-rgb, 239, 68, 68), 0.08);
+        background-color: var(
+          --su-error-surface,
+          rgba(var(--su-color-error-rgb, 239, 68, 68), 0.08)
+        );
       }
 
       .clear-btn {
@@ -172,6 +175,7 @@ export class SuInput extends LitElement {
         <div class="input-wrapper">
           <input
             id="input"
+            part="control"
             class="${this.error ? 'error' : ''} ${this.clearable ? 'clearable' : ''}"
             .value=${this.value}
             .placeholder=${this.placeholder}
@@ -188,6 +192,7 @@ export class SuInput extends LitElement {
           ${this.clearable && this.value
             ? html`<button
                 class="clear-btn"
+                part="clear-button"
                 type="button"
                 aria-label="清空"
                 ?disabled=${this.formValue.disabled || this.readonly}
