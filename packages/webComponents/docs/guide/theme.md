@@ -66,16 +66,18 @@ resetThemeColors(); // 恢复默认
 
 - **hover 色**：主色压暗 15%（也可显式传 `primaryHover` 覆盖）
 - **rgb 三元组**（`--su-color-*-rgb`）：用于浅色背景、聚焦光圈等半透明衍生色
-- **对比文字色**（`--su-color-*-contrast`）：按 YIQ 感知亮度自动选择深色或白色文字，保证按钮等彩色背景上的文字可读
+- **对比文字色**（`--su-color-*-contrast`）：按背景的相对亮度选择对比度更高的黑色或白色。主色按钮的 hover 背景单独派生 `--su-color-primary-hover-contrast`，包括显式提供的 `primaryHover`。
 
 ## 静态定制（CSS 覆盖）
 
-不需要运行时切换时，直接覆盖变量即可：
+不需要运行时切换时，可以直接覆盖 CSS 变量。覆盖彩色背景时，同时设置对应的 `-contrast` 文字色。静态覆盖不会触发颜色派生。
 
 ```css
 :root {
   --su-color-primary: #7c3aed;
+  --su-color-primary-contrast: #ffffff;
   --su-color-primary-hover: #6d28d9;
+  --su-color-primary-hover-contrast: #ffffff;
   --su-color-primary-rgb: 124, 58, 237;
   --su-radius-sm: 4px;
 }
@@ -89,6 +91,7 @@ resetThemeColors(); // 恢复默认
 | `--su-color-*-rgb`                                      | 对应色的 RGB 三元组     |
 | `--su-color-*-contrast`                                 | 叠加在对应色上的文字色  |
 | `--su-color-primary-hover`                              | 主色 hover 态           |
+| `--su-color-primary-hover-contrast`                     | 主色按钮 hover 文字色   |
 | `--su-text-1 / 2 / 3`                                   | 文字色（主/次/辅助）    |
 | `--su-bg-page / card / hover / muted`                   | 页面/卡片/悬停/禁用背景 |
 | `--su-overlay`                                          | 加载遮罩背景            |

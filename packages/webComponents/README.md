@@ -54,7 +54,7 @@ import { initTheme } from 'silenceui/theme';
 initTheme();
 ```
 
-独立入口与组件目录对应，并保留完整 TypeScript 类型。不要同时引入根入口和按需入口，否则根入口仍会注册全部组件。
+独立入口与组件目录对应，并提供 TypeScript 声明。ESM 根入口与按需入口复用同一组注册模块，同一页面可同时使用。只需部分组件时，请从独立入口导入，根入口始终会注册全部组件。
 
 ```html
 <su-container>
@@ -241,7 +241,9 @@ resetThemeColors(); // 恢复默认
 ```css
 :root {
   --su-color-primary: #7c3aed;
+  --su-color-primary-contrast: #ffffff;
   --su-color-primary-hover: #6d28d9;
+  --su-color-primary-hover-contrast: #ffffff;
   --su-color-primary-rgb: 124, 58, 237;
 }
 ```

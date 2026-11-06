@@ -66,8 +66,9 @@ utils/theme.ts       # 主题管理器（模式切换、自定义色、持久化
 ```text
 颜色语义层  --su-color-primary / success / warning / error / info
 衍生层      --su-color-*-rgb（浅色背景、聚焦光圈）
-            --su-color-*-contrast（叠加文字色，按 YIQ 亮度自动计算）
+            --su-color-*-contrast（叠加文字色，按相对亮度自动计算）
             --su-color-primary-hover（自动压暗 15%）
+            --su-color-primary-hover-contrast（主色 hover 背景上的文字色）
 中性色层    --su-text-1/2/3、--su-bg-page/card/hover/muted、--su-border-color、--su-overlay
 规格层      --su-radius-*、--su-font-size-*、--su-shadow-*
 ```

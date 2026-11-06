@@ -23,13 +23,14 @@ function collectComponentEntries(directory: string): Record<string, string> {
 }
 
 const entries = {
+  index: resolve(packageRoot, 'index.ts'),
   ...collectComponentEntries(componentsRoot),
   theme: resolve(packageRoot, 'utils/theme.ts'),
 };
 
 export default defineConfig({
   build: {
-    outDir: 'dist/components',
+    outDir: 'dist',
     emptyOutDir: false,
     minify: 'terser',
     sourcemap: true,
@@ -40,9 +41,11 @@ export default defineConfig({
     rollupOptions: {
       external: (id) => id === 'lit' || id.startsWith('lit/'),
       output: {
-        entryFileNames: '[name]/index.js',
-        chunkFileNames: '_chunks/[name]-[hash].js',
-        assetFileNames: '_assets/[name][extname]',
+        // 全量与按需 ESM 共享注册模块，确保每个标签仅注册一次。
+        entryFileNames: ({ name }) => (name === 'index' ? 'index.js' : 'components/[name]/index.js'),
+        chunkFileNames: 'components/_chunks/[name]-[hash].js',
+        assetFileNames: ({ name }) =>
+          name === 'style.css' ? 'style.css' : 'components/_assets/[name][extname]',
       },
     },
   },

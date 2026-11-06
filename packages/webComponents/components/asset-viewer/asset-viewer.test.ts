@@ -4,6 +4,7 @@ import './index';
 afterEach(() => {
   document.body.replaceChildren();
   document.body.style.overflow = '';
+  vi.unstubAllGlobals();
 });
 
 describe('asset viewer', () => {
@@ -26,15 +27,36 @@ describe('asset viewer', () => {
   });
 
   it('respects an explicit resource type', async () => {
+    const fetchResource = vi.fn().mockResolvedValue(new Response('Not a PDF'));
+    vi.stubGlobal('fetch', fetchResource);
     const viewer = document.createElement('se-asset-viewer');
     viewer.src = '/download?file=123';
     viewer.type = 'pdf';
     document.body.append(viewer);
     await viewer.updateComplete;
     viewer.shadowRoot!.querySelector<HTMLButtonElement>('.actions button')!.click();
-    await viewer.updateComplete;
-    expect(viewer.shadowRoot!.querySelector('iframe')?.getAttribute('src')).toBe(viewer.src);
+    await vi.waitFor(() => {
+      expect(viewer.shadowRoot!.querySelector('[role="alert"]')).toBeTruthy();
+    });
+    expect(fetchResource).toHaveBeenCalledWith(viewer.src, { signal: expect.any(AbortSignal) });
+    expect(viewer.shadowRoot!.querySelector('iframe')).toBeNull();
   });
+
+  it.each(['javascript:alert(1)', 'data:text/html,<h1>HTML</h1>'])(
+    'does not offer a preview or a download for %s',
+    async (src) => {
+      const viewer = document.createElement('se-asset-viewer');
+      viewer.src = src;
+      viewer.type = 'pdf';
+      document.body.append(viewer);
+      await viewer.updateComplete;
+      const trigger = viewer.shadowRoot!.querySelector<HTMLButtonElement>('.preview')!;
+      expect(trigger.disabled).toBe(true);
+      trigger.click();
+      await viewer.updateComplete;
+      expect(viewer.shadowRoot!.querySelector('a, iframe, [role="dialog"]')).toBeNull();
+    }
+  );
 
   it('uses a keyboard trigger and restores focus and scrolling on Escape', async () => {
     const viewer = document.createElement('se-asset-viewer');

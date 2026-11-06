@@ -52,13 +52,18 @@ function darken(hex: string, ratio: number): string {
   return `#${[r, g, b].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** 按感知亮度（YIQ）决定叠加文字用深色还是白色，保证可读性 */
+/** 根据背景的相对亮度选择对比度更高的黑色或白色。 */
 function contrastColor(hex: string): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return '#ffffff';
-  const [r, g, b] = rgb;
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 150 ? '#111827' : '#ffffff';
+  const [r, g, b] = rgb.map((channel) => {
+    const srgb = channel / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const againstBlack = (luminance + 0.05) / 0.05;
+  const againstWhite = 1.05 / (luminance + 0.05);
+  return againstBlack >= againstWhite ? '#000000' : '#ffffff';
 }
 
 function emitChange() {
@@ -114,11 +119,9 @@ function applyColors(colors: ThemeColors) {
   const root = document.documentElement;
   (Object.keys(COLOR_VAR_MAP) as (keyof ThemeColors)[]).forEach((key) => {
     const value = colors[key];
-    if (!value) return;
+    if (!value || key === 'primaryHover') return;
     root.style.setProperty(COLOR_VAR_MAP[key], value);
 
-    // primaryHover 是派生色本身，不再计算衍生变量
-    if (key === 'primaryHover') return;
     const rgb = hexToRgb(value);
     if (rgb) {
       root.style.setProperty(`${COLOR_VAR_MAP[key]}-rgb`, rgb.join(', '));
@@ -126,8 +129,10 @@ function applyColors(colors: ThemeColors) {
     root.style.setProperty(`${COLOR_VAR_MAP[key]}-contrast`, contrastColor(value));
   });
 
-  if (colors.primary && !colors.primaryHover) {
-    root.style.setProperty('--su-color-primary-hover', darken(colors.primary, 0.15));
+  const primaryHover = colors.primaryHover ?? (colors.primary && darken(colors.primary, 0.15));
+  if (primaryHover) {
+    root.style.setProperty('--su-color-primary-hover', primaryHover);
+    root.style.setProperty('--su-color-primary-hover-contrast', contrastColor(primaryHover));
   }
 }
 

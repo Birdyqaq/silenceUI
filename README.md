@@ -62,7 +62,7 @@ import 'silenceui';
 </su-card>
 ```
 
-按需注册与全量注册二选一：
+只用少量组件时，优先按需注册：
 
 ```ts
 import 'silenceui/style.css';
