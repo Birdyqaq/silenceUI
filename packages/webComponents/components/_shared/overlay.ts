@@ -11,7 +11,7 @@ const FOCUSABLE_SELECTOR = [
 
 let activeLocks = 0;
 let previousOverflow = '';
-const overlayStack: HTMLElement[] = [];
+const overlayStack: { element: HTMLElement; layer?: HTMLElement }[] = [];
 
 function collectFocusable(root: ParentNode, pendingUpdates?: Promise<unknown>[]): HTMLElement[] {
   const elements: HTMLElement[] = [];
@@ -77,19 +77,30 @@ export function unlockBodyScroll() {
   }
 }
 
-export function registerOverlay(element: HTMLElement) {
-  const existingIndex = overlayStack.indexOf(element);
+function updateOverlayLayers() {
+  overlayStack.forEach(({ layer }, index) => {
+    // Leave room for the distinct base z-indices of Modal and Drawer.
+    layer?.style.setProperty('--_su-overlay-offset', String(index * 2));
+  });
+}
+
+export function registerOverlay(element: HTMLElement, layer?: HTMLElement) {
+  const existingIndex = overlayStack.findIndex((entry) => entry.element === element);
   if (existingIndex >= 0) overlayStack.splice(existingIndex, 1);
-  overlayStack.push(element);
+  overlayStack.push({ element, layer });
+  updateOverlayLayers();
 }
 
 export function unregisterOverlay(element: HTMLElement) {
-  const index = overlayStack.indexOf(element);
-  if (index >= 0) overlayStack.splice(index, 1);
+  const index = overlayStack.findIndex((entry) => entry.element === element);
+  if (index < 0) return;
+  const [entry] = overlayStack.splice(index, 1);
+  entry.layer?.style.removeProperty('--_su-overlay-offset');
+  updateOverlayLayers();
 }
 
 export function isTopOverlay(element: HTMLElement) {
-  return overlayStack.at(-1) === element;
+  return overlayStack.at(-1)?.element === element;
 }
 
 export function getDeepActiveElement(): HTMLElement | null {
@@ -110,12 +121,12 @@ export function focusFirstElement(container: HTMLElement) {
   // 用户已移动焦点、弹层已关闭或失去顶层位置时，不再自动抢回。
   if (pendingUpdates.length) {
     const active = getDeepActiveElement();
-    const owner = overlayStack.find((element) => element.shadowRoot === container.getRootNode());
+    const owner = overlayStack.find(({ element }) => element.shadowRoot === container.getRootNode());
     void Promise.allSettled(pendingUpdates).then(() => {
       if (
         container.isConnected &&
         getDeepActiveElement() === active &&
-        (!owner || isTopOverlay(owner))
+        (!owner || isTopOverlay(owner.element))
       ) {
         focusFirstElement(container);
       }

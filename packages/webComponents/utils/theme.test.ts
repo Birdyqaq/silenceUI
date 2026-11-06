@@ -40,7 +40,19 @@ describe('theme integration', () => {
     expect(style.getPropertyValue('--su-color-primary')).toBe('#00ff00');
     expect(style.getPropertyValue('--su-color-primary-hover')).toBe('#00d900');
     expect(style.getPropertyValue('--su-color-primary-rgb')).toBe('0, 255, 0');
-    expect(style.getPropertyValue('--su-color-primary-contrast')).toBe('#ffffff');
+    expect(style.getPropertyValue('--su-color-primary-contrast')).toBe('#000000');
+  });
+
+  it('chooses contrast independently for the base and hover colors', () => {
+    setThemeColors({ primary: '#818181' });
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue('--su-color-primary-contrast')).toBe('#000000');
+    expect(style.getPropertyValue('--su-color-primary-hover-contrast')).toBe('#ffffff');
+
+    setThemeColors({ primaryHover: '#ff0' });
+    expect(style.getPropertyValue('--su-color-primary-hover-contrast')).toBe('#000000');
+    resetThemeColors();
+    expect(style.getPropertyValue('--su-color-primary-hover-contrast')).toBe('');
   });
 
   it('restores persisted mode and colors and resets custom variables', () => {

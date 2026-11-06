@@ -57,7 +57,7 @@ export class SuDrawer extends LitElement {
       .mask {
         position: fixed;
         inset: 0;
-        z-index: 1000;
+        z-index: calc(1000 + var(--_su-overlay-offset, 0));
         background: rgba(15, 23, 42, 0.5);
       }
 
@@ -129,7 +129,7 @@ export class SuDrawer extends LitElement {
     if (this.overlayActive) return;
     this.overlayActive = true;
     this.previouslyFocused = getDeepActiveElement();
-    registerOverlay(this);
+    registerOverlay(this, this.shadowRoot?.querySelector<HTMLElement>('.mask') ?? undefined);
     lockBodyScroll();
 
     queueMicrotask(() => {

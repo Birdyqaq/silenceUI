@@ -44,6 +44,8 @@ import '../components/navigation/dropdown';
 import '../components/feedback/tooltip';
 
 import '../components/feedback/drawer';
+import '../components/feedback/modal';
+import '../components/button';
 
 import '../components/form/date-time-range';
 
@@ -57,3 +59,4 @@ import '../components/data/sortable-list';
 import '../components/data/stat-card';
 
 import '../components/form/import-wizard';
+import '../components/asset-viewer';

@@ -157,7 +157,9 @@ useEffect(() => {
 ```css
 :root {
   --su-color-primary: #2563eb;
+  --su-color-primary-contrast: #ffffff;
   --su-color-primary-hover: #1d4ed8;
+  --su-color-primary-hover-contrast: #ffffff;
   --su-radius-sm: 4px;
 }
 ```

@@ -58,7 +58,7 @@ export class SuModal extends LitElement {
       .mask {
         position: fixed;
         inset: 0;
-        z-index: 999;
+        z-index: calc(999 + var(--_su-overlay-offset, 0));
         background: rgba(15, 23, 42, 0.55);
         display: grid;
         place-items: center;
@@ -146,7 +146,7 @@ export class SuModal extends LitElement {
     if (this.overlayActive) return;
     this.overlayActive = true;
     this.previouslyFocused = getDeepActiveElement();
-    registerOverlay(this);
+    registerOverlay(this, this.shadowRoot?.querySelector<HTMLElement>('.mask') ?? undefined);
     lockBodyScroll();
 
     // 等同一轮插槽内的 Lit 控件完成首次渲染，再查找其内部可聚焦元素。

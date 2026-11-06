@@ -69,7 +69,11 @@ const button = read('docs/components/button.md');
 for (const file of walk('components').filter((file) => file.endsWith('/index.ts'))) {
   const source = read(file);
   if (!source.includes('static formAssociated = true')) continue;
-  if (!/@property\(\{[^}]*reflect:\s*true[^}]*\}\)\s+name\s*=/.test(source))
+  // Button uses form association for fieldset disabled state and contributes no form value.
+  if (
+    file !== 'components/button/index.ts' &&
+    !/@property\(\{[^}]*reflect:\s*true[^}]*\}\)\s+name\s*=/.test(source)
+  )
     errors.push(`${file}: form name must reflect to attribute`);
   if (!source.includes('formDisabledCallback'))
     errors.push(`${file}: missing inherited-disabled integration`);

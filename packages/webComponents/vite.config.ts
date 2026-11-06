@@ -21,7 +21,7 @@ export default defineConfig({
       entry: resolve(__dirname, 'index.ts'),
       name: 'SilenceUi',
       fileName: 'index',
-      formats: ['es', 'umd', 'cjs'], // 打包生成的格式
+      formats: ['umd', 'cjs'],
     },
     rollupOptions: {
       external: [

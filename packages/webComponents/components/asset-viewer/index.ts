@@ -15,6 +15,20 @@ import {
 type AssetType = 'image' | 'video' | 'audio' | 'pdf' | 'unknown';
 let assetViewerInstanceId = 0;
 
+function isAssetSource(value: string): boolean {
+  if (!value.trim()) return false;
+  try {
+    const url = new URL(value, document.baseURI);
+    return (
+      ['http:', 'https:', 'blob:'].includes(url.protocol) ||
+      (url.protocol === 'data:' &&
+        /^data:(?:image\/|audio\/|video\/|application\/pdf[;,])/i.test(url.href))
+    );
+  } catch {
+    return false;
+  }
+}
+
 @customElement('se-asset-viewer')
 export class SeAssetViewer extends LitElement {
   @property({ type: String }) src = '';
@@ -24,10 +38,12 @@ export class SeAssetViewer extends LitElement {
   @property({ type: String }) type: AssetType = 'unknown';
   @state() private previewVisible = false;
   @state() private previewError = false;
+  @state() private pdfUrl = '';
 
   private readonly titleId = `se-asset-viewer-${++assetViewerInstanceId}-title`;
   private overlayActive = false;
   private previouslyFocused: HTMLElement | null = null;
+  private pdfRequest?: AbortController;
 
   private onKeydown = (event: KeyboardEvent) => {
     if (event.defaultPrevented || !this.previewVisible || !isTopOverlay(this)) return;
@@ -71,9 +87,24 @@ export class SeAssetViewer extends LitElement {
       const panel = this.shadowRoot?.querySelector<HTMLElement>('.overlay-content');
       if (panel) focusFirstElement(panel);
     }
+    if (
+      this.previewVisible &&
+      this.resolveType() === 'pdf' &&
+      !this.pdfUrl &&
+      !this.pdfRequest &&
+      !this.previewError
+    ) {
+      void this.loadPdf();
+    }
   }
 
   private deactivateOverlay(restoreFocus = true) {
+    this.pdfRequest?.abort();
+    this.pdfRequest = undefined;
+    if (this.pdfUrl) {
+      URL.revokeObjectURL(this.pdfUrl);
+      this.pdfUrl = '';
+    }
     this.shadowRoot?.querySelectorAll<HTMLMediaElement>('video, audio').forEach((media) => {
       if (!media.paused) media.pause();
     });
@@ -237,7 +268,7 @@ export class SeAssetViewer extends LitElement {
   }
 
   private openPreview() {
-    if (!this.src || this.previewVisible) return;
+    if (!isAssetSource(this.src) || this.previewVisible) return;
     this.previewError = false;
     this.previewVisible = true;
     this.dispatchEvent(
@@ -258,10 +289,30 @@ export class SeAssetViewer extends LitElement {
     this.previewError = true;
   }
 
+  private async loadPdf() {
+    const request = new AbortController();
+    this.pdfRequest = request;
+    const source = this.src;
+    try {
+      const response = await fetch(source, { signal: request.signal });
+      if (!response.ok) throw new Error('PDF request failed');
+      const file = await response.blob();
+      const header = await file.slice(0, 5).text();
+      if (header !== '%PDF-') throw new Error('Resource is not a PDF');
+      if (request.signal.aborted || source !== this.src) return;
+      // A fixed MIME type prevents an HTML response from being rendered as an active document.
+      this.pdfUrl = URL.createObjectURL(file.slice(0, file.size, 'application/pdf'));
+    } catch {
+      if (!request.signal.aborted && source === this.src) this.handlePreviewError();
+    } finally {
+      if (this.pdfRequest === request) this.pdfRequest = undefined;
+    }
+  }
+
   private renderPreviewThumb() {
     const kind = this.resolveType();
-    if (kind === 'image') {
-      const url = this.thumbnail || this.src;
+    const url = this.thumbnail || this.src;
+    if (kind === 'image' && isAssetSource(url)) {
       return html`<img src=${url} alt=${this.title || 'asset'} loading="lazy" />`;
     }
     const labelMap: Record<AssetType, string> = {
@@ -311,7 +362,12 @@ export class SeAssetViewer extends LitElement {
                   @error=${this.handlePreviewError}
                 />`
               : kind === 'pdf'
-                ? html`<iframe src=${this.src} title="PDF preview"></iframe>`
+                ? this.pdfUrl
+                  ? html`<iframe
+                      src=${this.pdfUrl + new URL(this.src, document.baseURI).hash}
+                      title="PDF preview"
+                    ></iframe>`
+                  : html`<p role="status">正在加载 PDF…</p>`
                 : kind === 'video'
                   ? html`<video src=${this.src} controls @error=${this.handlePreviewError}></video>`
                   : kind === 'audio'
@@ -327,12 +383,14 @@ export class SeAssetViewer extends LitElement {
   }
 
   render() {
+    const sourceAvailable = isAssetSource(this.src);
     return html`
       <div class="card">
         <button
           type="button"
           class="preview"
           aria-label=${`预览：${this.title || '资源'}`}
+          ?disabled=${!sourceAvailable}
           @click=${this.openPreview}
         >
           ${this.renderPreviewThumb()}
@@ -342,8 +400,10 @@ export class SeAssetViewer extends LitElement {
           <small>${this.resolveType().toUpperCase()} · 点击预览</small>
         </div>
         <div class="actions">
-          <button type="button" @click=${this.openPreview}>预览</button>
-          ${this.downloadable && this.src
+          <button type="button" ?disabled=${!sourceAvailable} @click=${this.openPreview}>
+            预览
+          </button>
+          ${this.downloadable && sourceAvailable
             ? html`<a class="button-link" href=${this.src} download target="_blank" rel="noreferrer"
                 >下载</a
               >`

@@ -1,9 +1,11 @@
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { JSDOM } from 'jsdom';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'silenceui-package-'));
@@ -30,6 +32,7 @@ const expectedComponentEntries = sourceEntries.length;
 const requiredFiles = [
   'package/dist/index.js',
   'package/dist/index.cjs',
+  'package/dist/index.umd.cjs',
   'package/dist/index.d.ts',
   'package/dist/style.css',
   'package/dist/components/button/index.js',
@@ -48,6 +51,28 @@ const requiredFiles = [
 ];
 
 const forbiddenFragments = ['/docs/', '/node_modules/', '.test.', '.stories.'];
+
+async function verifySharedEsmRegistration() {
+  const { window } = new JSDOM('', { url: 'https://silenceui.example/' });
+  try {
+    for (const key of ['window', 'document', 'HTMLElement', 'customElements']) {
+      globalThis[key] = key === 'window' ? window : window[key];
+    }
+
+    const { SuButton } = await import('silenceui/components/button');
+    assert.equal(window.customElements.get('su-button'), SuButton);
+    assert.equal(window.customElements.get('su-select'), undefined);
+
+    const root = await import('silenceui');
+    const theme = await import('silenceui/theme');
+    assert.equal(root.SuButton, SuButton);
+    assert.equal(window.customElements.get('su-button'), SuButton);
+    assert.equal(window.customElements.get('su-select'), root.SuSelect);
+    assert.equal(root.setThemeColors, theme.setThemeColors);
+  } finally {
+    window.close();
+  }
+}
 
 try {
   const packOutput = execFileSync('pnpm', ['pack', '--pack-destination', tempDirectory], {
@@ -125,6 +150,7 @@ try {
     }
     process.exitCode = 1;
   } else {
+    await verifySharedEsmRegistration();
     console.log(`Package verification passed: ${tarball} (${componentEntries.length} entries)`);
   }
 } finally {

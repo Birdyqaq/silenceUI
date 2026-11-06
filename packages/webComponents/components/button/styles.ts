@@ -110,10 +110,12 @@ export const styleMap = [
     :host([type='primary']) button {
       background: var(--su-color-primary);
       color: var(--su-color-primary-contrast, #fff);
+      transition-property: border-color, opacity;
     }
 
     :host([type='primary']) button:hover:not(:disabled) {
       background: var(--su-color-primary-hover);
+      color: var(--su-color-primary-hover-contrast, var(--su-color-primary-contrast, #fff));
     }
 
     :host([type='secondary']) button {
@@ -130,17 +132,9 @@ export const styleMap = [
       color: var(--su-color-success-contrast, #fff);
     }
 
-    :host([type='success']) button:hover:not(:disabled) {
-      filter: brightness(0.92);
-    }
-
     :host([type='warning']) button {
       background: var(--su-color-warning);
       color: var(--su-color-warning-contrast, #fff);
-    }
-
-    :host([type='warning']) button:hover:not(:disabled) {
-      filter: brightness(0.92);
     }
 
     :host([type='danger']) button {
@@ -148,17 +142,16 @@ export const styleMap = [
       color: var(--su-color-error-contrast, #fff);
     }
 
-    :host([type='danger']) button:hover:not(:disabled) {
-      filter: brightness(0.92);
-    }
-
     :host([type='info']) button {
       background: var(--su-color-info);
       color: var(--su-color-info-contrast, #fff);
     }
 
+    :host([type='success']) button:hover:not(:disabled),
+    :host([type='warning']) button:hover:not(:disabled),
+    :host([type='danger']) button:hover:not(:disabled),
     :host([type='info']) button:hover:not(:disabled) {
-      filter: brightness(0.92);
+      border-color: color-mix(in srgb, currentColor 32%, transparent);
     }
 
     :host([type='light']) button {

@@ -8,6 +8,7 @@ import '../icon';
 
 @customElement('su-button')
 export class SuButton extends LitElement {
+  static formAssociated = true;
   static styles = styleMap;
 
   @property({ type: String, reflect: true }) size: ButtonSize = 'medium';
@@ -43,7 +44,11 @@ export class SuButton extends LitElement {
   }
 
   private get isInactive() {
-    return this.disabled || this.loading;
+    return this.disabled || this.loading || this.matches(':disabled');
+  }
+
+  formDisabledCallback() {
+    this.requestUpdate();
   }
 
   private get resolvedNativeType(): 'button' | 'submit' | 'reset' {

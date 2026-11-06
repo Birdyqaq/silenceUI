@@ -47,9 +47,9 @@ import 'silenceui/components/form/select';
 import 'silenceui/components/table';
 ```
 
-入口路径与源码组件目录一致，例如 `data/tree`、`feedback/modal`、`navigation/menu`。每个入口只注册对应组件及其必要依赖；主题工具可从 `silenceui/theme` 引入。不要同时引入根入口和按需入口，否则根入口仍会注册全部组件。
+入口路径与源码组件目录一致，例如 `data/tree`、`feedback/modal`、`navigation/menu`。每个入口只注册对应组件及其必要依赖。ESM 根入口与按需入口复用同一组注册模块，可以在同一页面使用。要保持按需加载，请从对应入口导入组件、从 `silenceui/theme` 导入主题工具，根入口始终会注册全部组件。
 
-独立 ESM 入口复用 Lit 和共享代码块，根入口还包含全部组件与运行时，不能只比较单个入口文件来估算应用体积。以宿主项目的最终生产构建为准，并将 Lit、共享代码块和 CSS 计入下载成本。
+所有 ESM 入口复用 Lit 和共享代码块。比较应用体积时，请以宿主项目的最终生产构建为准，将 Lit、共享代码块和 CSS 计入下载成本。
 
 `pnpm package:verify` 会检查全部组件入口及其类型声明，每个入口 JS 文件上限为 80 KiB、gzip 上限为 20 KiB。这些是单文件回归阈值，不包含依赖代码块，也不是整个应用的体积承诺。入口数会随源码自动更新，当前组件清单见 [组件 API 基线](./component-inventory)。
 
@@ -68,6 +68,8 @@ import 'silenceui/components/table';
 | `unpkg` / `jsdelivr`        | `dist/index.umd.cjs` | CDN 直接引入                      |
 
 发布包会输出独立的 `dist/style.css`。使用 npm 包时建议通过 `silenceui/style.css` 引入；使用 CDN 时需要额外引入 CSS 链接。
+
+ESM、CommonJS 与 UMD 各自提供全量入口。同一页面请只选一种产物格式，避免不同格式重复注册自定义元素。
 
 ## CDN
 

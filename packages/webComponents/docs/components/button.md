@@ -119,6 +119,8 @@
 
 HTML 使用 `native-type="submit"` / `native-type="reset"`；JavaScript 对应 property 为 `button.nativeType`。它会作用于组件所在的最近一层原生 `<form>`，包括组件嵌套在其他 Shadow DOM 中的场景。
 
+支持表单关联自定义元素的浏览器会将 `fieldset[disabled]` 的禁用状态同步到按钮，且保留原生首个 `legend` 的例外规则。重新启用字段组时，按钮自身的 `disabled` 和 `loading` 仍然生效。
+
 ```html
 <form>
   <su-input name="title"></su-input>
