@@ -4,6 +4,88 @@ import './index';
 const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('SeTable', () => {
+  it('keeps local page and sorting on immutable refresh, then clamps a reduced dataset', async () => {
+    const table = document.createElement('se-table');
+    table.columns = [{ key: 'name', label: '姓名', sortable: true, filterable: true }];
+    table.pageSize = 2;
+    table.data = ['D', 'C', 'B', 'A'].map((name) => ({ id: name, name }));
+    document.body.append(table);
+    await table.updateComplete;
+    table.sortColumn(0);
+    await table.updateComplete;
+    table.currentPage = 2;
+    await table.updateComplete;
+    const changed = vi.fn();
+    table.addEventListener('sort-change', changed);
+    table.addEventListener('page-change', changed);
+    table.data = table.data.map((row) => ({ ...row }));
+    await table.updateComplete;
+    expect(table.currentPage).toBe(2);
+    expect(table.sortedData.map((row) => row.name)).toEqual(['A', 'B', 'C', 'D']);
+    expect(table.shadowRoot!.querySelector('th')!.getAttribute('aria-sort')).toBe('ascending');
+    table.data = [
+      { id: 'B', name: 'B' },
+      { id: 'A', name: 'A' },
+    ];
+    await table.updateComplete;
+    expect(table.currentPage).toBe(1);
+    expect(table.sortedData.map((row) => row.name)).toEqual(['A', 'B']);
+    expect(changed).not.toHaveBeenCalled();
+    table.remove();
+  });
+
+  it('still resets the page for a changed filter while retaining sort direction', async () => {
+    const table = document.createElement('se-table');
+    table.columns = [{ key: 'name', label: '姓名', sortable: true, filterable: true }];
+    table.pageSize = 1;
+    table.data = [
+      { id: 1, name: 'AB' },
+      { id: 2, name: 'AA' },
+      { id: 3, name: 'B' },
+    ];
+    document.body.append(table);
+    await table.updateComplete;
+    table.sortColumn(0);
+    await table.updateComplete;
+    table.currentPage = 2;
+    await table.updateComplete;
+    table.filters = { name: 'A' };
+    await table.updateComplete;
+    expect(table.currentPage).toBe(1);
+    expect(table.sortedData.map((row) => row.name)).toEqual(['AA', 'AB']);
+    table.remove();
+  });
+
+  it('selects and clears the current page while retaining selections on other pages', async () => {
+    const table = document.createElement('se-table');
+    table.columns = [{ key: 'name', label: '姓名' }];
+    table.pageSize = 2;
+    table.selectable = true;
+    table.data = [1, 2, 3, 4].map((id) => ({ id, name: String(id) }));
+    table.selectedKeys = ['1'];
+    const changed = vi.fn();
+    table.addEventListener('selection-change', changed);
+    document.body.append(table);
+    await table.updateComplete;
+    table.currentPage = 2;
+    await table.updateComplete;
+    const selectAll = table.shadowRoot!.querySelector<HTMLInputElement>('thead input')!;
+    selectAll.click();
+    await table.updateComplete;
+    expect(table.selectedKeys).toEqual(['1', '3', '4']);
+    expect(changed.mock.calls[0][0].detail.rows.map((row: { id: number }) => row.id)).toEqual([
+      1, 3, 4,
+    ]);
+    expect(table.shadowRoot!.querySelector('tbody input')!.getAttribute('aria-label')).toBe(
+      '选择第 3 行'
+    );
+    selectAll.click();
+    await table.updateComplete;
+    expect(table.selectedKeys).toEqual(['1']);
+    expect(changed).toHaveBeenCalledTimes(2);
+    table.remove();
+  });
+
   it('exposes a focusable sort button and announces each sort direction', async () => {
     const element = document.createElement('se-table');
     element.columns = [
