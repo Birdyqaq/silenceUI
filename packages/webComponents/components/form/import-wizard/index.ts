@@ -18,6 +18,17 @@ export interface ImportIssue {
 export interface ImportResult {
   message: string;
 }
+const steps = ['file', 'mapping', 'preview', 'result'] as const;
+export type ImportStep = (typeof steps)[number];
+export type ImportOperation = 'parse' | 'validate' | 'submit';
+export interface ImportWizardState {
+  readonly step: ImportStep;
+  readonly operation: ImportOperation | null;
+  readonly fileName: string | null;
+  readonly rowCount: number;
+  readonly issueCount: number;
+  readonly error: string;
+}
 export interface ImportAdapter {
   parse(file: File, signal: AbortSignal): Promise<ImportSheet>;
   validate(
@@ -39,13 +50,17 @@ export class SuImportWizard extends LitElement {
   @property() accept = '.csv,.xlsx';
   @property({ type: Number, attribute: 'max-size' }) maxSize = 10 * 1024 * 1024;
   @state() private step = 0;
-  @state() private pending = false;
+  @state() private operation: ImportOperation | null = null;
+  @state() private fileName: string | null = null;
   @state() private error = '';
   @state() private sheet?: ImportSheet;
   @state() private mapping: Record<string, string> = {};
   @state() private issues: ImportIssue[] = [];
+  @state() private errorsOnly = false;
   @state() private result = '';
   private controller?: AbortController;
+  private configuration?: { adapter: ImportAdapter; fields: ImportField[] };
+  private lastState?: ImportWizardState;
 
   static styles = [
     baseControlStyles,
@@ -78,6 +93,10 @@ export class SuImportWizard extends LitElement {
         display: grid;
         gap: 6px;
         margin-block: 12px;
+      }
+      .preview-filter {
+        display: flex;
+        align-items: center;
       }
       button,
       select,
@@ -116,17 +135,38 @@ export class SuImportWizard extends LitElement {
     `,
   ];
 
-  reset() {
-    this.controller?.abort();
+  getState(): ImportWizardState {
+    return {
+      step: steps[this.step],
+      operation: this.operation,
+      fileName: this.fileName,
+      rowCount: this.sheet?.rows.length ?? 0,
+      issueCount: this.issues.length,
+      error: this.error,
+    };
+  }
+
+  cancel(): boolean {
+    const controller = this.controller;
+    if (!controller) return false;
     this.controller = undefined;
-    this.pending = false;
+    this.operation = null;
+    controller.abort();
+    return true;
+  }
+
+  reset() {
+    this.configuration = undefined;
+    this.fileName = null;
     this.step = 0;
     this.sheet = undefined;
     this.mapping = {};
     this.issues = [];
+    this.errorsOnly = false;
     this.result = this.error = '';
-    const input = this.shadowRoot?.querySelector('input');
+    const input = this.shadowRoot?.querySelector<HTMLInputElement>('input[type="file"]');
     if (input) input.value = '';
+    this.cancel();
   }
 
   disconnectedCallback() {
@@ -134,9 +174,41 @@ export class SuImportWizard extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(changed: Map<PropertyKey, unknown>) {
-    if ((changed.has('adapter') || changed.has('fields')) && this.controller) this.reset();
-    else if ((changed.has('adapter') || changed.has('fields')) && this.step > 0) this.reset();
+  protected willUpdate() {
+    if (this.configurationChanged) this.reset();
+  }
+
+  protected updated() {
+    if (!this.isConnected) return;
+    const current = this.getState();
+    const previous = this.lastState;
+    if (
+      previous &&
+      previous.step === current.step &&
+      previous.operation === current.operation &&
+      previous.fileName === current.fileName &&
+      previous.rowCount === current.rowCount &&
+      previous.issueCount === current.issueCount &&
+      previous.error === current.error
+    )
+      return;
+    this.lastState = current;
+    this.dispatchEvent(
+      new CustomEvent<ImportWizardState>('import-state-change', {
+        detail: { ...current },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private get pending() {
+    return this.operation !== null;
+  }
+
+  private get configurationChanged() {
+    const config = this.configuration;
+    return config && (config.adapter !== this.adapter || config.fields !== this.fields);
   }
 
   private get validFields() {
@@ -151,42 +223,68 @@ export class SuImportWizard extends LitElement {
   }
 
   private async run(
+    phase: ImportOperation,
     operation: (adapter: ImportAdapter, signal: AbortSignal) => Promise<() => void>
-  ) {
-    if (this.pending || !this.adapter || !this.validFields || !this.isConnected) return;
+  ): Promise<boolean> {
+    if (
+      this.pending ||
+      !this.adapter ||
+      !this.validFields ||
+      !this.isConnected ||
+      this.configurationChanged
+    )
+      return false;
     const adapter = this.adapter;
-    const fields = this.fields;
+    this.configuration = { adapter, fields: this.fields };
     const controller = new AbortController();
+    const isCurrent = () => this.controller === controller && !this.configurationChanged;
     this.controller = controller;
-    this.pending = true;
+    this.operation = phase;
     this.error = '';
+    let apply: (() => void) | undefined;
+    let onAbort!: () => void;
+    const cancelled = new Promise<undefined>((resolve) => {
+      onAbort = () => resolve(undefined);
+      controller.signal.addEventListener('abort', onAbort, { once: true });
+    });
     try {
-      const apply = await operation(adapter, controller.signal);
-      if (
-        this.controller === controller &&
-        !controller.signal.aborted &&
-        this.adapter === adapter &&
-        this.fields === fields
-      )
-        apply();
+      const commit = await Promise.race([operation(adapter, controller.signal), cancelled]);
+      if (isCurrent()) apply = commit;
     } catch (error) {
-      if (this.controller === controller && !controller.signal.aborted)
-        this.error = error instanceof Error ? error.message : '操作失败，请重试';
+      if (isCurrent()) this.error = error instanceof Error ? error.message : '操作失败，请重试';
     } finally {
+      controller.signal.removeEventListener('abort', onAbort);
       if (this.controller === controller) {
-        this.pending = false;
+        this.operation = null;
         this.controller = undefined;
       }
     }
+    if (!apply) return false;
+    apply();
+    return true;
   }
 
   private choose(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    (event.target as HTMLInputElement).value = '';
-    if (!file || this.pending) return;
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) void this.loadFile(file);
+  }
+
+  async loadFile(file: File): Promise<boolean> {
+    if (
+      this.step !== 0 ||
+      this.pending ||
+      !this.isConnected ||
+      !this.adapter ||
+      !this.validFields ||
+      this.configurationChanged
+    )
+      return false;
+    this.fileName = file.name;
     if (!Number.isFinite(this.maxSize) || this.maxSize <= 0 || file.size > this.maxSize) {
       this.error = '文件超过大小限制或大小配置无效';
-      return;
+      return false;
     }
     const rules = this.accept
       .split(',')
@@ -203,10 +301,11 @@ export class SuImportWizard extends LitElement {
       )
     ) {
       this.error = '文件类型不符合要求';
-      return;
+      return false;
     }
-    void this.run(async (adapter, signal) => {
+    return this.run('parse', async (adapter, signal) => {
       const sheet = await adapter.parse(file, signal);
+      signal.throwIfAborted();
       if (
         !sheet ||
         !Array.isArray(sheet.columns) ||
@@ -234,24 +333,22 @@ export class SuImportWizard extends LitElement {
     });
   }
 
-  private get mapped() {
+  private get mappingError() {
+    if (!this.validFields) return '请配置目标字段';
+    const missing = this.fields.filter((field) => field.required && !this.mapping[field.key]);
+    if (missing.length) return `请选择必填字段：${missing.map((field) => field.label).join('、')}`;
     const values = Object.values(this.mapping).filter(Boolean);
-    return (
-      this.validFields &&
-      this.fields.every((f) => !f.required || this.mapping[f.key]) &&
-      new Set(values).size === values.length &&
-      values.length > 0
-    );
+    if (!values.length) return '请至少选择一个字段';
+    if (new Set(values).size !== values.length) return '同一个来源列不能映射到多个字段';
+    return '';
   }
 
   private validate() {
-    if (this.step !== 1 || !this.mapped || !this.sheet) return;
-    void this.run(async (adapter, signal) => {
-      const issues = await adapter.validate(
-        structuredClone(this.sheet!),
-        { ...this.mapping },
-        signal
-      );
+    if (this.step !== 1 || this.mappingError || !this.sheet) return;
+    const sheet = this.sheet;
+    void this.run('validate', async (adapter, signal) => {
+      const issues = await adapter.validate(structuredClone(sheet), { ...this.mapping }, signal);
+      signal.throwIfAborted();
       if (
         !Array.isArray(issues) ||
         issues.some(
@@ -259,7 +356,7 @@ export class SuImportWizard extends LitElement {
             !i ||
             !Number.isInteger(i.row) ||
             i.row < 1 ||
-            i.row > this.sheet!.rows.length ||
+            i.row > sheet.rows.length ||
             typeof i.message !== 'string' ||
             !i.message.trim()
         )
@@ -268,6 +365,7 @@ export class SuImportWizard extends LitElement {
       const copy = structuredClone(issues);
       return () => {
         this.issues = copy;
+        this.errorsOnly = false;
         this.step = 2;
       };
     });
@@ -275,12 +373,10 @@ export class SuImportWizard extends LitElement {
 
   private submit() {
     if (this.step !== 2 || this.issues.length || !this.sheet) return;
-    void this.run(async (adapter, signal) => {
-      const result = await adapter.submit(
-        structuredClone(this.sheet!),
-        { ...this.mapping },
-        signal
-      );
+    const sheet = this.sheet;
+    void this.run('submit', async (adapter, signal) => {
+      const result = await adapter.submit(structuredClone(sheet), { ...this.mapping }, signal);
+      signal.throwIfAborted();
       if (!result || typeof result.message !== 'string') throw new Error('导入结果格式无效');
       return () => {
         this.result = result.message;
@@ -296,7 +392,62 @@ export class SuImportWizard extends LitElement {
     });
   }
 
+  private renderPreview(sheet: ImportSheet) {
+    const columns = this.fields.flatMap((field) => {
+      const index = sheet.columns.indexOf(this.mapping[field.key]);
+      return index === -1 ? [] : [{ label: field.label, index }];
+    });
+    const errorRows = new Set(this.issues.map((issue) => issue.row));
+    const rowNumbers: number[] = [];
+    for (let row = 1; row <= sheet.rows.length && rowNumbers.length < 10; row++) {
+      if (!this.errorsOnly || errorRows.has(row)) rowNumbers.push(row);
+    }
+    return html`
+      <p>共 ${sheet.rows.length} 行，${errorRows.size} 行有错误（${this.issues.length} 项）。</p>
+      ${errorRows.size
+        ? html`<label class="preview-filter">
+            <input
+              type="checkbox"
+              .checked=${this.errorsOnly}
+              @change=${(event: Event) => {
+                this.errorsOnly = (event.target as HTMLInputElement).checked;
+              }}
+            />
+            只看错误行
+          </label>`
+        : nothing}
+      <div class="scroll" part="preview" role="region" aria-label="映射预览" tabindex="0">
+        <table>
+          <caption>
+            按目标字段预览前 ${rowNumbers.length} 行
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">源数据行号</th>
+              ${columns.map((column) => html`<th scope="col">${column.label}</th>`)}
+              ${errorRows.size ? html`<th scope="col">校验状态</th>` : nothing}
+            </tr>
+          </thead>
+          <tbody>
+            ${rowNumbers.map(
+              (row) =>
+                html`<tr>
+                  <th scope="row">${row}</th>
+                  ${columns.map(({ index }) => html`<td>${sheet.rows[row - 1][index]}</td>`)}
+                  ${errorRows.size
+                    ? html`<td>${errorRows.has(row) ? '有错误' : '通过'}</td>`
+                    : nothing}
+                </tr>`
+            )}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
   render() {
+    const renderedSheet = this.sheet;
+    const mappingError = this.step === 1 ? this.mappingError : '';
     return html`<section part="panel" aria-label="导入向导" aria-busy=${this.pending}>
       <ol aria-label="导入步骤">
         ${['选择文件', '字段映射', '校验预览', '导入结果'].map(
@@ -325,47 +476,45 @@ export class SuImportWizard extends LitElement {
                     ?disabled=${this.pending}
                     .value=${this.mapping[field.key] || ''}
                     @change=${(event: Event) => {
-                      if (!this.pending && this.step === 1)
+                      // Detached controls must not change a later import session.
+                      if (
+                        this.isConnected &&
+                        this.renderRoot.contains(event.currentTarget as Node) &&
+                        this.sheet === renderedSheet &&
+                        !this.configurationChanged &&
+                        !this.pending &&
+                        this.step === 1
+                      )
                         this.mapping = {
                           ...this.mapping,
                           [field.key]: (event.target as HTMLSelectElement).value,
                         };
                     }}
                   >
-                    <option value="">不导入</option>
+                    <option value="" ?selected=${!this.mapping[field.key]}>不导入</option>
                     ${this.sheet!.columns.map(
-                      (column) => html`<option value=${column}>${column}</option>`
+                      (column) =>
+                        html`<option
+                          value=${column}
+                          ?selected=${column === this.mapping[field.key]}
+                        >
+                          ${column}
+                        </option>`
                     )}
                   </select></label
                 >`
             )}
-            <p>每个来源列只能映射一次，至少选择一个字段。</p>
-            <button type="button" ?disabled=${this.pending || !this.mapped} @click=${this.validate}>
+            ${mappingError ? html`<p role="status">${mappingError}</p>` : nothing}
+            <button
+              type="button"
+              ?disabled=${this.pending || Boolean(mappingError)}
+              @click=${this.validate}
+            >
               校验数据
             </button>`
         : nothing}
       ${this.step === 2
-        ? html`<p>共 ${this.sheet!.rows.length} 行；${this.issues.length} 项错误。预览前 10 行。</p>
-            <div class="scroll" part="preview">
-              <table>
-                <caption>
-                  来源数据预览
-                </caption>
-                <thead>
-                  <tr>
-                    ${this.sheet!.columns.map((c) => html`<th scope="col">${c}</th>`)}
-                  </tr>
-                </thead>
-                <tbody>
-                  ${this.sheet!.rows.slice(0, 10).map(
-                    (row) =>
-                      html`<tr>
-                        ${row.map((value) => html`<td>${value}</td>`)}
-                      </tr>`
-                  )}
-                </tbody>
-              </table>
-            </div>
+        ? html`${this.renderPreview(this.sheet!)}
             ${this.issues.length
               ? html`<ul role="alert">
                     ${this.issues

@@ -984,6 +984,7 @@ export class seTable extends LitElement {
       this.sortedColumns = ordered.map((c) => ({ ...c, sortDirection: '' }));
       if (
         this.remote ||
+        (changedProperties.has('data') && !changedProperties.has('columns')) ||
         changedProperties.has('filters') ||
         changedProperties.has('filterModels') ||
         changedProperties.has('columnState')
@@ -999,7 +1000,16 @@ export class seTable extends LitElement {
           (a, b) =>
             this.compareValues(a[sort.key], b[sort.key]) * (sort.sortDirection === 'asc' ? 1 : -1)
         );
-      if (!this.remote) this.currentPage = 1;
+      if (
+        !this.remote &&
+        !changedProperties.has('currentPage') &&
+        (changedProperties.has('columns') ||
+          changedProperties.has('filters') ||
+          changedProperties.has('filterModels') ||
+          changedProperties.has('columnState') ||
+          changedProperties.has('remote'))
+      )
+        this.currentPage = 1;
       if (changedProperties.has('columns') || changedProperties.has('columnState'))
         this.columnWidths = Object.fromEntries(
           states.filter((s) => s.width !== undefined).map((s) => [s.key, s.width!])
@@ -1254,10 +1264,6 @@ export class seTable extends LitElement {
     );
   }
 
-  private isRowSelected(row: TableRow, rowIndex: number) {
-    return this.selectedKeys.includes(this.getRowKey(row, rowIndex));
-  }
-
   private emitSelectionChange(keys: string[]) {
     this.selectedKeys = keys;
     const keySet = new Set(keys);
@@ -1282,10 +1288,11 @@ export class seTable extends LitElement {
   /** 全选/取消全选当前可见数据（当前页或已加载数据） */
   private toggleAllSelection() {
     const visibleKeys = this.sourceData.map((row, index) => this.getRowKey(row, index));
-    const allSelected =
-      visibleKeys.length > 0 && visibleKeys.every((key) => this.selectedKeys.includes(key));
+    const selected = new Set(this.selectedKeys);
+    const visible = new Set(visibleKeys);
+    const allSelected = visibleKeys.length > 0 && visibleKeys.every((key) => selected.has(key));
     const keys = allSelected
-      ? this.selectedKeys.filter((key) => !visibleKeys.includes(key))
+      ? this.selectedKeys.filter((key) => !visible.has(key))
       : [...new Set([...this.selectedKeys, ...visibleKeys])];
     this.emitSelectionChange(keys);
   }
@@ -1434,6 +1441,7 @@ export class seTable extends LitElement {
 
   private renderRows() {
     const virtual = this.virtualState;
+    const selected = new Set(this.selectedKeys);
     const hasData = virtual.rows.length > 0;
     if (!hasData) {
       return html`
@@ -1495,7 +1503,8 @@ export class seTable extends LitElement {
                   >
                     <input
                       type="checkbox"
-                      .checked="${this.isRowSelected(row, rowIndex)}"
+                      aria-label=${`选择第 ${globalRowIndex + 1} 行`}
+                      .checked="${selected.has(this.getRowKey(row, rowIndex))}"
                       @change="${() => this.toggleRowSelection(row, rowIndex)}"
                     />
                   </td>
@@ -1589,7 +1598,8 @@ export class seTable extends LitElement {
   private renderSelectionHeader() {
     if (!this.selectable) return nothing;
     const visibleKeys = this.sourceData.map((row, index) => this.getRowKey(row, index));
-    const selectedVisible = visibleKeys.filter((key) => this.selectedKeys.includes(key));
+    const selected = new Set(this.selectedKeys);
+    const selectedVisible = visibleKeys.filter((key) => selected.has(key));
     const allSelected = visibleKeys.length > 0 && selectedVisible.length === visibleKeys.length;
     const indeterminate = selectedVisible.length > 0 && !allSelected;
     return html`

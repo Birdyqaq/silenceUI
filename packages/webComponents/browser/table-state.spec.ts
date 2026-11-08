@@ -53,6 +53,54 @@ test('column keyboard visibility, order and width restore', async ({ page }) => 
   ).toBe(190);
 });
 
+test('local refresh retains sorting and page, with named row selection controls', async ({
+  page,
+}) => {
+  await page.evaluate(async () => {
+    const table = document.querySelector('se-table')!;
+    table.pagination = table.selectable = true;
+    table.pageSize = 2;
+    table.columns = [{ key: 'name', label: '姓名', sortable: true }];
+    table.data = ['D', 'C', 'B', 'A'].map((name) => ({ id: name, name }));
+    await table.updateComplete;
+    table.sortColumn(0);
+    await table.updateComplete;
+    table.currentPage = 2;
+    await table.updateComplete;
+    table.data = table.data.map((row) => ({ ...row }));
+    await table.updateComplete;
+  });
+  const table = page.locator('se-table');
+  await expect(table).toHaveJSProperty('currentPage', 2);
+  await expect(table.locator('th[aria-sort]')).toHaveAttribute('aria-sort', 'ascending');
+  await expect(table.locator('tbody tr')).toHaveText(['C', 'D']);
+  const row = table.getByRole('checkbox', { name: '选择第 3 行', exact: true });
+  await row.focus();
+  await page.keyboard.press('Space');
+  await expect(table).toHaveJSProperty('selectedKeys', ['C']);
+});
+
+test('bulk selection covers loaded virtual rows and clears them', async ({ page }) => {
+  await page.evaluate(async () => {
+    const table = document.querySelector('se-table')!;
+    table.columns = [{ key: 'name', label: '姓名' }];
+    table.selectable = table.virtualScroll = true;
+    table.data = Array.from({ length: 20000 }, (_, id) => ({ id, name: String(id) }));
+    await table.updateComplete;
+  });
+  const table = page.locator('se-table');
+  const all = table.getByRole('checkbox', { name: '全选', exact: true });
+  await all.check();
+  await expect
+    .poll(() =>
+      table.evaluate((node) => (node as HTMLElementTagNameMap['se-table']).selectedKeys.length)
+    )
+    .toBe(20000);
+  expect(await table.locator('tbody tr').count()).toBeLessThan(60);
+  await all.uncheck();
+  await expect(table).toHaveJSProperty('selectedKeys', []);
+});
+
 test('edits a fixed cell without selecting its row; remote retry and focus recovery', async ({
   page,
 }) => {

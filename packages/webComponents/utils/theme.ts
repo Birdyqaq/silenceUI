@@ -21,6 +21,7 @@ const MODE_STORAGE_KEY = 'su-theme-mode';
 const COLORS_STORAGE_KEY = 'su-theme-colors';
 const DARK_CLASS = 'su-theme-dark';
 const THEME_ATTR = 'data-su-theme';
+let currentColors: ThemeColors | undefined;
 
 const COLOR_VAR_MAP: Record<keyof ThemeColors, string> = {
   primary: '--su-color-primary',
@@ -69,7 +70,7 @@ function contrastColor(hex: string): string {
 function emitChange() {
   window.dispatchEvent(
     new CustomEvent('su-theme-change', {
-      detail: { mode: getThemeMode(), colors: getStoredColors() },
+      detail: { mode: getThemeMode(), colors: { ...getCurrentColors() } },
     })
   );
 }
@@ -78,17 +79,39 @@ function getStoredColors(): ThemeColors {
   try {
     return normalizeColors(JSON.parse(localStorage.getItem(COLORS_STORAGE_KEY) ?? '{}'));
   } catch {
-    return {};
+    return currentColors ?? {};
   }
 }
 
-/** 只接受已知字段中的非空颜色字符串，隔离过期或损坏的存储数据。 */
+function getCurrentColors(): ThemeColors {
+  return (currentColors ??= getStoredColors());
+}
+
+/** Resolve browser-supported opaque sRGB colors before deriving contrast and RGB tokens. */
+function normalizeColor(value: string): string | undefined {
+  const color = value.trim();
+  if (/^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color)) return color;
+  const probe = document.createElement('span');
+  probe.style.color = color;
+  if (!probe.style.color) return;
+  probe.hidden = true;
+  document.documentElement.append(probe);
+  const resolved = getComputedStyle(probe).color;
+  probe.remove();
+  const match = resolved.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+  if (!match || (match[4] !== undefined && Number(match[4]) !== 1)) return;
+  return '#' + match.slice(1, 4).map((channel) => Number(channel).toString(16).padStart(2, '0')).join('');
+}
+
+/** 只接受已知字段中可解析的不透明颜色。 */
 function normalizeColors(value: unknown): ThemeColors {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const colors: ThemeColors = {};
   for (const key of Object.keys(COLOR_VAR_MAP) as (keyof ThemeColors)[]) {
     const color = (value as Record<string, unknown>)[key];
-    if (typeof color === 'string' && color.trim()) colors[key] = color.trim();
+    if (typeof color !== 'string') continue;
+    const normalized = normalizeColor(color);
+    if (normalized) colors[key] = normalized;
   }
   return colors;
 }
@@ -139,10 +162,11 @@ function applyColors(colors: ThemeColors) {
 /** 自定义主题色（合并到已有的自定义色上）。primary 会自动派生 hover 色与 rgb 变量 */
 export function setThemeColors(colors: ThemeColors) {
   colors = normalizeColors(colors);
-  const merged = { ...getStoredColors(), ...colors };
+  const merged = { ...getCurrentColors(), ...colors };
   // 换主色时重新派生 hover，除非本次同时明确提供 hover 色。
   if (colors.primary && !colors.primaryHover) delete merged.primaryHover;
   applyColors(merged);
+  currentColors = merged;
   try {
     localStorage.setItem(COLORS_STORAGE_KEY, JSON.stringify(merged));
   } catch {
@@ -153,6 +177,7 @@ export function setThemeColors(colors: ThemeColors) {
 
 /** 清除自定义颜色，恢复 theme.css 默认值 */
 export function resetThemeColors() {
+  currentColors = {};
   const root = document.documentElement;
   Object.values(COLOR_VAR_MAP).forEach((cssVar) => {
     root.style.removeProperty(cssVar);
@@ -182,5 +207,6 @@ export function initTheme() {
     root.classList.toggle(DARK_CLASS, mode === 'dark');
   }
   const colors = getStoredColors();
+  currentColors = colors;
   if (Object.keys(colors).length > 0) applyColors(colors);
 }
