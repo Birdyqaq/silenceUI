@@ -309,6 +309,16 @@ const filterPanelDetail: import('../dist/components/form/filter-panel/index').Fi
   };
 filterPanel.expanded = filterPanelDetail.expanded;
 
-const importWizard: import("../dist/index").SuImportWizard = document.createElement("su-import-wizard");
-const importAdapter: import("../dist/components/form/import-wizard/index").ImportAdapter | undefined = importWizard.adapter;
+const importWizard: import('../dist/index').SuImportWizard =
+  document.createElement('su-import-wizard');
+const importAdapter: import('../dist/components/form/import-wizard/index').ImportAdapter | undefined =
+  importWizard.adapter;
+const importState: import('../dist/index').ImportWizardState = importWizard.getState();
+const importOperation: import('../dist/components/form/import-wizard/index').ImportOperation | null =
+  importState.operation;
+const fileLoaded: Promise<boolean> = importWizard.loadFile(new File(['name'], 'users.csv'));
+const importCancelled: boolean = importWizard.cancel();
 void importAdapter;
+void importOperation;
+void fileLoaded;
+void importCancelled;
