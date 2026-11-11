@@ -124,13 +124,13 @@ JSON 字符串解析失败时组件会回退为空数组，不会抛出运行时
 
 ## 框架接入
 
-Vue 需要把 `su-` / `se-` 标签标记为原生自定义元素：
+Vue 需要把 `su-*`、`se-*` 和 `line-component` 标签标记为原生自定义元素：
 
 ```ts
 vue({
   template: {
     compilerOptions: {
-      isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+      isCustomElement: (tag) => tag === 'line-component' || tag.startsWith('su-') || tag.startsWith('se-'),
     },
   },
 });

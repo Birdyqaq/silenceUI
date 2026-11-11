@@ -114,7 +114,7 @@ export default defineConfig({
     vue({
       template: {
         compilerOptions: {
-          isCustomElement: (tag) => tag.startsWith('su-') || tag.startsWith('se-'),
+          isCustomElement: (tag) => tag === 'line-component' || tag.startsWith('su-') || tag.startsWith('se-'),
         },
       },
     }),
