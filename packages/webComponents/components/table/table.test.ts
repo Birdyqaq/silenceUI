@@ -62,7 +62,7 @@ describe('SeTable', () => {
     table.pageSize = 2;
     table.selectable = true;
     table.data = [1, 2, 3, 4].map((id) => ({ id, name: String(id) }));
-    table.selectedKeys = ['1'];
+    table.selectedKeys = ['1', '3'];
     const changed = vi.fn();
     table.addEventListener('selection-change', changed);
     document.body.append(table);
@@ -70,8 +70,12 @@ describe('SeTable', () => {
     table.currentPage = 2;
     await table.updateComplete;
     const selectAll = table.shadowRoot!.querySelector<HTMLInputElement>('thead input')!;
+    expect(selectAll.checked).toBe(false);
+    expect(selectAll.indeterminate).toBe(true);
     selectAll.click();
     await table.updateComplete;
+    expect(selectAll.checked).toBe(true);
+    expect(selectAll.indeterminate).toBe(false);
     expect(table.selectedKeys).toEqual(['1', '3', '4']);
     expect(changed.mock.calls[0][0].detail.rows.map((row: { id: number }) => row.id)).toEqual([
       1, 3, 4,
@@ -81,6 +85,8 @@ describe('SeTable', () => {
     );
     selectAll.click();
     await table.updateComplete;
+    expect(selectAll.checked).toBe(false);
+    expect(selectAll.indeterminate).toBe(false);
     expect(table.selectedKeys).toEqual(['1']);
     expect(changed).toHaveBeenCalledTimes(2);
     table.remove();

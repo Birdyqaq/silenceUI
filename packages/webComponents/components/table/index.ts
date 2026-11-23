@@ -1289,12 +1289,14 @@ export class seTable extends LitElement {
   private toggleAllSelection() {
     const visibleKeys = this.sourceData.map((row, index) => this.getRowKey(row, index));
     const selected = new Set(this.selectedKeys);
-    const visible = new Set(visibleKeys);
     const allSelected = visibleKeys.length > 0 && visibleKeys.every((key) => selected.has(key));
-    const keys = allSelected
-      ? this.selectedKeys.filter((key) => !visible.has(key))
-      : [...new Set([...this.selectedKeys, ...visibleKeys])];
-    this.emitSelectionChange(keys);
+    if (allSelected) {
+      const visible = new Set(visibleKeys);
+      this.emitSelectionChange(this.selectedKeys.filter((key) => !visible.has(key)));
+    } else {
+      for (const key of visibleKeys) selected.add(key);
+      this.emitSelectionChange([...selected]);
+    }
   }
 
   private get virtualState() {
@@ -1439,9 +1441,8 @@ export class seTable extends LitElement {
     );
   }
 
-  private renderRows() {
+  private renderRows(selected: ReadonlySet<string>) {
     const virtual = this.virtualState;
-    const selected = new Set(this.selectedKeys);
     const hasData = virtual.rows.length > 0;
     if (!hasData) {
       return html`
@@ -1595,13 +1596,20 @@ export class seTable extends LitElement {
     return html`<div class="status-line">${this.loadMoreText}</div>`;
   }
 
-  private renderSelectionHeader() {
+  private renderSelectionHeader(selected: ReadonlySet<string>) {
     if (!this.selectable) return nothing;
-    const visibleKeys = this.sourceData.map((row, index) => this.getRowKey(row, index));
-    const selected = new Set(this.selectedKeys);
-    const selectedVisible = visibleKeys.filter((key) => selected.has(key));
-    const allSelected = visibleKeys.length > 0 && selectedVisible.length === visibleKeys.length;
-    const indeterminate = selectedVisible.length > 0 && !allSelected;
+    const rows = this.sourceData;
+    let hasSelected = false;
+    let hasUnselected = false;
+    if (selected.size) {
+      for (const [index, row] of rows.entries()) {
+        if (selected.has(this.getRowKey(row, index))) hasSelected = true;
+        else hasUnselected = true;
+        if (hasSelected && hasUnselected) break;
+      }
+    }
+    const allSelected = hasSelected && !hasUnselected;
+    const indeterminate = hasSelected && hasUnselected;
     return html`
       <th
         class="selection-cell ${this.sortedColumns.some((column) => column.fixed === 'left')
@@ -1621,6 +1629,7 @@ export class seTable extends LitElement {
   }
 
   render() {
+    const selected = new Set(this.selectable ? this.selectedKeys : undefined);
     const scrollable = this.infiniteScroll || this.shouldUseVirtualScroll;
     const all = this.normalizedState;
     return html`
@@ -1743,7 +1752,7 @@ export class seTable extends LitElement {
           <table>
             <thead class="${this.stickyHeader && scrollable ? 'sticky' : ''}">
               <tr>
-                ${this.renderSelectionHeader()}
+                ${this.renderSelectionHeader(selected)}
                 ${this.expandable
                   ? html`<th class="expansion-cell" aria-label="行展开"></th>`
                   : nothing}
@@ -1815,7 +1824,7 @@ export class seTable extends LitElement {
               </tr>
             </thead>
             <tbody>
-              ${this.renderRows()}
+              ${this.renderRows(selected)}
             </tbody>
           </table>
         </div>
